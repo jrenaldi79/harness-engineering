@@ -93,12 +93,12 @@ Read `$REFERENCES_DIR/enforcement-scripts.md` first to understand the enforcemen
 **Node/TypeScript path (fast path):**
 
 ```bash
-node $SCRIPTS_DIR/install-enforcement.js --target=<project-root>
+node $SCRIPTS_DIR/install-enforcement.js --target=<project-root> --framework=<framework>
 ```
 
 This also creates:
 - `.claude/settings.json` with pre-approved commands (test, lint, build, git) and a deny list blocking destructive operations (rm -rf /, git push --force, etc.). Normal file removal still works — Claude prompts for approval so the user stays in control.
-- `.claude/rules/*.md` — path-scoped rules (TDD, code quality, testing, TypeScript) that auto-load when Claude works on matching file patterns. These use `globs:` YAML frontmatter for path-scoping.
+- `.claude/rules/*.md` — path-scoped rules (TDD, code quality, testing, TypeScript, and React for vite/nextjs) that auto-load when Claude works on matching file patterns. These use `globs:` YAML frontmatter for path-scoping.
 
 **All other stacks (adaptive path — Claude creates equivalent enforcement):**
 
