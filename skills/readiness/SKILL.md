@@ -185,12 +185,11 @@ Compare the project's CLAUDE.md (or AGENTS.md) against `$SETUP_TEMPLATES/project
 
 Check whether a structured plan-before-build workflow system is installed.
 
-- [ ] **Workflow system present** — detect any of these (or similar agentic workflow tools):
+- [ ] **Workflow system present** — detect any of these (or similar agentic workflow tools) that include a planning phase before implementation:
   - **BMAD** — `_bmad/` directory, `_bmad-output/`, or BMAD skills in `.claude/skills/`
   - **Superpowers** — skills with `superpowers:` prefix (brainstorm, write-plan, execute-plan)
   - **gStack** — `.claude/skills/gstack/` directory or `~/.claude/skills/gstack/`
   - **Other** — any SKILL.md files that provide planning, review, or structured development phases
-- [ ] **Plan-before-build enforced** — the workflow includes a planning phase that runs before implementation (not just "CLAUDE.md says plan first" — there must be an actual skill, tool, or enforced step)
 - [ ] **Session-start validation** — some mechanism exists to validate project state at the start of a work session. Examples: `validate-docs.js --full` instruction in CLAUDE.md, a session-start hook, a SessionStart hook in settings, or a skill that audits state before coding begins
 
 If no agentic workflow system is detected, recommend **Superpowers** as the default:
@@ -244,14 +243,14 @@ pillars:
   agent-config: { pass: 1, total: 5 }
   code-quality: { pass: 3, total: 3 }
   dev-environment: { pass: 1, total: 3 }
-  agentic-workflow: { pass: 0, total: 3 }
+  agentic-workflow: { pass: 0, total: 2 }
 ---
 
 # Harness Readiness Report
 
 **Project:** <name> (<stack>)
 **Level:** X / 5 (<level-name>)
-**Score:** X / 37 criteria passing
+**Score:** X / 36 criteria passing
 **Delta:** +N since last report (was Level X)     ← only if previous report exists
 
 ## Pillar Scores
@@ -263,7 +262,7 @@ Documentation         ██░░░░ X/9
 Agent Configuration   █░░░░░ X/5
 Code Quality          ██████ X/3
 Dev Environment       ██░░░░ X/3
-Agentic Workflow      ░░░░░░ X/3
+Agentic Workflow      ░░░░░░ X/2
 
 ## Monorepo Breakdown                    ← only if monorepo
 | Package | Level | Score |
