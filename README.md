@@ -13,9 +13,9 @@
 
 </div>
 
-AI coding agents are stateless with finite context windows. Every tool call, every file read, every thinking block compounds - and eventually the agent loses its original instructions, forgets earlier decisions, and starts producing churn instead of progress. [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) called this discipline "context engineering": the art of filling the context window with just the right information at just the right time.
+[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance — no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prose. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
 
-Harness engineering is context engineering applied to coding agents. It's how you structure rule files, plan before building, enforce quality mechanically, and keep documentation in sync with code - so your agent stays aligned across long sessions instead of going off the rails.
+Harness engineering is context engineering applied to coding agents. It's how you structure rule files, plan before building, enforce quality mechanically, and keep documentation in sync with code — so your agent stays aligned across long sessions instead of going off the rails.
 
 This repo is two things:
 
@@ -37,7 +37,7 @@ This repo is two things:
 - [Quick Start](#quick-start)
 - [What You Get](#what-you-get)
 - [How It Works](#how-it-works)
-  - [Two-Tier CLAUDE.md System](#two-tier-claudemd-system)
+  - [CLAUDE.md and Path-Scoped Rules](#claudemd-and-path-scoped-rules)
   - [Progressive Disclosure](#progressive-disclosure)
   - [Auto-Generated Sections](#auto-generated-sections)
   - [Git Hook Enforcement](#git-hook-enforcement)
@@ -155,11 +155,13 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 - **Augment Code**: [Your Agent's Context Is a Junk Drawer](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer) (Feb 2026): Research-backed analysis of why more context makes agents worse. By Sylvain Giuliani.
 - **Boris Cherny**: Creator of Claude Code at Anthropic. Tips shared via [Threads](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/) and [interviews](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny).
 - **Thariq Shihipar** ([@trq212](https://x.com/trq212)): Claude Code team at Anthropic. Published lessons on [prompt caching](https://x.com/trq212/status/2024574133011673516), [agent design](https://x.com/trq212/status/2027463795355095314), and [spec-driven development](https://x.com/trq212/status/2005315275026260309).
-- **Andrej Karpathy**: AI researcher, former head of AI at Tesla, co-founder of OpenAI. Coined "context engineering" as the [successor to prompt engineering](https://x.com/karpathy/status/1937902205765607626).
+- **Andrej Karpathy**: AI researcher, former head of AI at Tesla, co-founder of OpenAI. Coined "context engineering" as the [successor to prompt engineering](https://x.com/karpathy/status/1937902205765607626). Later [acknowledged](https://x.com/karpathy/status/2035173492447224237) that agents "do not listen to my instructions" in AGENTS.md — they bloat abstractions, copy-paste code, and ignore style guidance. The case for mechanical enforcement over advisory prose.
 - **Birgitta Böckeler**: Principal technologist at Thoughtworks. [Context engineering for coding agents](https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html) on Martin Fowler's site.
 - **Simon Willison**: Creator of Datasette, Django co-creator. [Agentic engineering patterns](https://simonwillison.net/guides/agentic-engineering-patterns/) and practical CLAUDE.md guidance.
 - **Jesse Vincent**: Creator of [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. Discovered that [compliance beats comprehension](https://blog.fsck.com/2026/03/09/superpowers-5/) in skill design.
 - **DHH**: Creator of Ruby on Rails, co-founder of Basecamp/37signals. [Convention over configuration](https://x.com/dhh/status/2018574874675929544) as the foundation for agent-friendly codebases.
+- **Akshay Kothari**: COO of Notion. Shared his [Claude Code development setup](https://www.linkedin.com/posts/akothari_my-claude-code-setup-after-extensive-experimentation-activity-7336065911014084610-HEdh/) emphasizing CLAUDE.md as single source of truth, pre-commit hooks, lint-staged, and file size enforcement. Validated our mechanical enforcement approach.
+- **Factory.ai**: [Using Linters to Direct Agents](https://factory.ai/news/using-linters-to-direct-agents) (Sep 2025) by Alvin Sng. "Agents write the code; linters write the law." Formalized seven lint rule categories and the thesis that advisory guidance explains the "why" while linting enforces the "how."
 
 | Best Practice | Sources | What They Found | This Kit's Implementation |
 |---|---|---|---|
@@ -169,8 +171,9 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 | **Finite attention budget** | Augment, Karpathy, Anthropic | Karpathy: "Context engineering is the delicate art of filling the context window with just the right information." Augment: Instruction-following degrades as constraint density increases. Anthropic: "All components compete for the same finite resource." | 200-300 line CLAUDE.md target. Templates use `<!-- TIP -->` comments to guide what to include vs. omit. |
 | **Failure-backed rules only** | Augment, Willison, DHH | Augment: "Would the agent make a mistake without this? If no, delete it." Willison: Only universally applicable instructions. DHH: Conventions create 20 years of training data, so don't re-explain what agents already know. | Templates include only actionable rules: commands, gotchas, constraints. No generic best practices or restated conventions. |
 | **Repository as system of record** | OpenAI, Augment, Thariq | OpenAI: "What Codex can't see doesn't exist." Augment: Don't restate what's in code. Thariq: "The file system is an elegant way of representing state that your agent could read into context." | Templates encode architecture, commands, and gotchas in CLAUDE.md and `docs/`. AUTO markers write generated content to files. |
-| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments. Stricter constraints produce more reliable output." Vincent: "Advisory language tests comprehension; hard gates test compliance." | Pre-commit hooks enforce mechanically: ESLint auto-fix, secret scan, file size check. Rules live in tools, not prose. |
-| **Mechanical enforcement** | OpenAI, Boris, Thariq | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification: "catch hallucinations or skipped steps." | Pre-commit hooks run 5 checks automatically: lint, secret scan, file size, doc generation, drift warning. |
+| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent, Factory.ai, Karpathy | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments." Vincent: "Hard gates test compliance." Factory.ai: "Agents write the code; linters write the law." Karpathy: "The agents do not listen to my instructions" — they bloat abstractions and ignore style guidance in AGENTS.md. | Three-layer enforcement: git hooks block violations mechanically, `.claude/rules/` provides path-scoped advisory context, CLAUDE.md sets global principles. Priority: mechanical > rules > prose. |
+| **Grep-ability** | Factory.ai | Named exports over defaults, absolute imports, consistent error types. When every symbol has exactly one name across the codebase, agents can search/replace with confidence during multi-file refactors. Default exports let consumers pick any name, breaking grep-based navigation. | `rules/typescript.md` advises naming conventions. ESLint template includes `import/no-default-export`. |
+| **Mechanical enforcement** | OpenAI, Boris, Thariq, Akshay Kothari | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification. Akshay: Notion's Claude Code setup uses pre-commit hooks, lint-staged, file size limits, and secret scanning — same stack this kit provides. | Pre-commit hooks run 6 checks automatically: lint, secret scan, file size, test colocation, doc generation, drift warning. |
 | **Auto-generated docs** | OpenAI | A "doc-gardening" agent scans for stale documentation and opens fix-up PRs. | `generate-docs.js` auto-regenerates CLAUDE.md sections from source code on every commit via AUTO markers. |
 | **Drift detection / self-improvement** | OpenAI, Augment, Boris | OpenAI: Documentation "rots instantly." Boris: "Update your CLAUDE.md so you don't make that mistake again." Claude writes rules for itself, compounding institutional knowledge. | `validate-docs.js` warns when source files change without CLAUDE.md updates. Global template includes self-improvement loop guidance. |
 | **Enforce invariants, not implementations** | OpenAI, Augment, DHH | OpenAI: "Set boundaries, allow autonomy locally." DHH: "Convention over configuration." Agents predict conventional code extremely well. Augment: Don't restate conventions your linter already enforces. | File size limits (300 lines), complexity red flags, and configurable `CONFIG` objects. Rules are strict; how you meet them is flexible. |
@@ -178,7 +181,7 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 | **Spec-driven development** | Thariq, Boris | Thariq: Have Claude interview you with 40+ questions to build a comprehensive spec before coding. Execute in a separate session. Boris: "Start in Plan mode, iterate until satisfied, then auto-accept." | Referenced in Planning Tools section. BMAD's analysis phase and Superpowers brainstorming implement this pattern. |
 | **Parallel sessions via worktrees** | Boris | "The single biggest productivity unlock, and the top tip from the team." Run 3-5+ Claude sessions simultaneously with separate git worktrees. | Referenced in Planning Tools section. Superpowers `using-git-worktrees` skill automates this. |
 | **Design for prompt caching** | Thariq | "You fundamentally have to design agents for prompt caching first." Static content first, dynamic last. Never switch models mid-conversation; use subagents instead. | Two-tier CLAUDE.md is inherently cache-friendly: static global + static project files loaded once at conversation start. |
-| **Codify repetitive workflows** | Boris, Thariq | Boris: "Convert anything done more than once daily into a slash command." Check into git for team sharing. Include inline bash preprocessing to pre-compute context. | Bootstrap creates `scripts/` directory with 5 enforcement scripts. Templates encourage building project-specific commands and skills. |
+| **Codify repetitive workflows** | Boris, Thariq | Boris: "Convert anything done more than once daily into a slash command." Check into git for team sharing. Include inline bash preprocessing to pre-compute context. | Bootstrap creates `scripts/` directory with 6 enforcement scripts. Templates encourage building project-specific commands and skills. |
 | **Subagent dispatch over swarms** | Boris, Vincent | Boris: Use subagents to keep main context clean by offloading subtasks to preserve focus. Vincent: Decompose plans into dependency-aware atomic units; dispatch one subagent per task with two-stage review. Sequential dispatch with a controller avoids crosstalk and merge conflicts. | Referenced in Planning Tools section. Superpowers `subagent-driven-development` and `dispatching-parallel-agents` implement this. |
 | **Golden principles** | OpenAI | Opinionated rules encoded in the repo, with background tasks that scan for deviations and open refactoring PRs. | Global CLAUDE.md template encodes universal standards (TDD, naming, security). Enforcement scripts catch deviations on every commit. |
 | **Structured architecture** | OpenAI | Rigid layered domain architecture with validated dependency directions, enforced by custom linters and structural tests. | Bootstrap creates `src/`, `tests/`, `scripts/`, `docs/` structure. Templates guide modular design with file and function size constraints. |
@@ -219,6 +222,7 @@ What happens during setup:
 | Hooks | Sets up pre-commit and pre-push git hooks |
 | Configs | Copies linter, formatter, and environment configs |
 | Permissions | Creates `.claude/settings.json` with allow/deny lists for safe defaults |
+| Rules | Installs `.claude/rules/` with path-scoped rules (TDD, code quality, testing, TypeScript) |
 | CLAUDE.md | Generates tailored `CLAUDE.md` files for global and project scope |
 
 Works on **macOS, Linux, and Windows**.
@@ -248,6 +252,7 @@ harness-engineering/
 │   │   ├── lib/
 │   │   │   ├── check-secrets.js      # Blocks commits containing API keys or tokens
 │   │   │   ├── check-file-sizes.js   # Blocks files over 300 lines
+│   │   │   ├── check-test-colocation.js # Blocks source files without colocated tests
 │   │   │   ├── validate-docs.js      # Warns when CLAUDE.md drifts from code
 │   │   │   ├── generate-docs.js      # Auto-regenerates CLAUDE.md sections from source
 │   │   │   └── generate-docs-helpers.js
@@ -257,6 +262,11 @@ harness-engineering/
 │   ├── templates/
 │   │   ├── global-claude.md          # Cross-project standards (TDD, quality, conventions)
 │   │   ├── project-claude.md         # Per-project guidance (architecture, commands, gotchas)
+│   │   ├── rules/                    # Path-scoped rules (auto-loaded by file pattern)
+│   │   │   ├── tdd.md               # TDD enforcement (src/**, lib/**)
+│   │   │   ├── code-quality.md      # File size limits, complexity (src/**, scripts/**)
+│   │   │   ├── testing.md           # Test patterns (tests/**, *.test.*)
+│   │   │   └── typescript.md        # Naming, imports (*.ts, *.tsx, *.js)
 │   │   ├── eslint-base.js            # Baseline ESLint rules
 │   │   ├── lint-staged.config.js     # Auto-fix on staged files
 │   │   ├── .prettierrc               # Code formatting
@@ -272,9 +282,9 @@ harness-engineering/
 
 ## How It Works
 
-### Two-Tier CLAUDE.md System
+### CLAUDE.md and Path-Scoped Rules
 
-Claude Code reads `CLAUDE.md` files at two levels. The global file sets universal standards. The project file provides project-specific context.
+Claude Code reads `CLAUDE.md` files at two levels, plus `.claude/rules/` for path-scoped guidance. The global file sets universal standards. The project file provides project-specific context. Rules files load automatically when Claude works on matching file patterns.
 
 | | Global CLAUDE.md | Project CLAUDE.md |
 |---|---|---|
@@ -287,30 +297,37 @@ Claude Code reads `CLAUDE.md` files at two levels. The global file sets universa
 
 #### What Belongs Where
 
-**Global** (shared across projects): TDD enforcement, operating principles, file size limits, naming conventions, security checklists.
+**Global CLAUDE.md** (shared across projects): Operating principles, workflow guidelines, security checklists, rule enforcement hierarchy.
 
-**Project** (specific to one codebase): Architecture diagrams, essential commands, directory structure, module index, critical gotchas, docs map.
+**Project CLAUDE.md** (specific to one codebase): Architecture diagrams, essential commands, directory structure, module index, critical gotchas, docs map.
+
+**`.claude/rules/`** (path-scoped, loaded on demand): TDD enforcement (when touching `src/`), file size limits and complexity checks (when touching code files), test patterns (when touching `tests/`), naming and import conventions (when touching `.ts`/`.js` files). Rules use `globs:` YAML frontmatter so they only load when Claude works on matching files — keeping the context window lean.
+
+This three-layer system means CLAUDE.md stays under 200-300 lines (global context every session), while detailed path-specific guidance loads automatically only when relevant.
+
+> **History:** `.claude/rules/` was introduced in Claude Code v2.0.64 (December 2025). Rules use YAML frontmatter with `globs:` to scope activation by file pattern. The feature was inspired by Cursor's `.cursor/rules/` (which shipped earlier in 2025) and uses a nearly identical format. Note: the official docs reference `paths:` as the frontmatter key, but community testing ([Issue #17204](https://github.com/anthropics/claude-code/issues/17204)) found that `globs:` works more reliably.
 
 ---
 
 ### Progressive Disclosure
 
-Not everything belongs in `CLAUDE.md`. The agent reads the full file on every conversation, so bloat costs tokens and dilutes signal. Use three tiers:
+Not everything belongs in `CLAUDE.md`. The agent reads the full file on every conversation, so bloat costs tokens and dilutes signal. Use four tiers:
 
 | Tier | What | Where | When Loaded |
 |------|------|-------|-------------|
-| **1** | Architecture, commands, quality rules, gotchas | `CLAUDE.md` | Every conversation |
+| **1** | Architecture, commands, operating principles, gotchas | `CLAUDE.md` | Every conversation |
+| **1.5** | Path-scoped rules (TDD, code quality, test patterns) | `.claude/rules/` | Auto-loaded when touching matching files |
 | **2** | Detailed topic documentation | `docs/*.md` | On demand, via Docs Map links |
 | **3** | Design documents, plans, decision records | `docs/plans/` | Rarely, when exploring history |
 
 **Rule of thumb:**
 
-| Keep in CLAUDE.md | Move to docs/ |
-|---|---|
-| Agent needs it for every task | Only needed for specific domains |
-| Changes with code structure | Stable reference material |
-| Under 20 lines per topic | Over 20 lines of detail |
-| Commands, rules, constraints | Tutorials, explanations, history |
+| Keep in CLAUDE.md | Move to `.claude/rules/` | Move to `docs/` |
+|---|---|---|
+| Agent needs it for every task | Only needed when working on specific file types | Only needed for specific domains |
+| Changes with code structure | Enforces coding standards per path | Stable reference material |
+| Under 20 lines per topic | Path-scoped with `globs:` frontmatter | Over 20 lines of detail |
+| Commands, operating principles, gotchas | TDD, quality checks, naming, test patterns | Tutorials, explanations, history |
 
 The **Docs Map** pattern in `CLAUDE.md` links to topic docs so agents can find detail when they need it:
 
@@ -378,8 +395,9 @@ Hooks are the mechanical enforcement layer. They run automatically and block com
 | **1. lint-staged** | Runs ESLint with auto-fix on staged files | Yes, if unfixable errors |
 | **2. Secret scan** | Pattern-matches for API keys, tokens, private keys | Yes, if secrets found |
 | **3. File size check** | Rejects files over 300 lines | Yes, if oversized |
-| **4. Doc generation** | Regenerates AUTO markers, auto-stages `CLAUDE.md` | No |
-| **5. Drift warning** | Warns if source files changed without `CLAUDE.md` update | No |
+| **4. Test colocation** | Verifies source files in `src/` have matching `.test.*` or `.spec.*` files | Yes, if missing tests |
+| **5. Doc generation** | Regenerates AUTO markers, auto-stages `CLAUDE.md` | No |
+| **6. Drift warning** | Warns if source files changed without `CLAUDE.md` update | No |
 
 #### Pre-Push (runs on every push)
 
@@ -432,6 +450,7 @@ Every enforcement script has a `CONFIG` object at the top. Edit patterns, limits
 |--------|------------------|
 | `check-secrets.js` | `CONFIG.patterns` (secret regexes), `CONFIG.allowlistPaths` (excluded files) |
 | `check-file-sizes.js` | `CONFIG.maxLines` (default: 300), `CONFIG.include`/`CONFIG.exclude` (file globs) |
+| `check-test-colocation.js` | `CONFIG.include`/`CONFIG.exclude` (file globs), `CONFIG.testSuffixes` (default: `.test`, `.spec`) |
 | `validate-docs.js` | `CONFIG.docFile`, `CONFIG.trackedDirs`, `CONFIG.mappings` |
 | `generate-docs.js` | `TREE_DIRS` (directories to scan), `SKIP_DIRS` in helpers (directories to exclude) |
 

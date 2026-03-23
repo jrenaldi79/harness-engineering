@@ -4,12 +4,14 @@
 # 1. lint-staged (linter on staged files)
 # 2. Secret detection
 # 3. File size enforcement
-# 4. Auto-regenerate doc sections
-# 5. CLAUDE.md drift warning
+# 4. Test colocation enforcement
+# 5. Auto-regenerate doc sections
+# 6. CLAUDE.md drift warning
 
 npx lint-staged
 
 node scripts/check-secrets.js
 node scripts/check-file-sizes.js
+node scripts/check-test-colocation.js
 node scripts/generate-docs.js
 node scripts/validate-docs.js

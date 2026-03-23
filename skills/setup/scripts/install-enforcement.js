@@ -2,19 +2,21 @@
  * Copies enforcement tooling into a target project.
  *
  * Usage:
- *   node install-enforcement.js --target=<project-root> [--skip-install]
+ *   node install-enforcement.js --target=<project-root> [--framework=<fw>] [--skip-install]
  *
  * Actions:
  *   1. Creates scripts/ and .husky/ in target if needed
- *   2. Copies 5 enforcement scripts (skip if already exists)
+ *   2. Copies 6 enforcement scripts (skip if already exists)
  *   3. Runs npx husky init (unless --skip-install)
  *   4. Copies hooks → .husky/ (chmod 755)
  *   5. Copies configs with eslint rename
- *   6. Handles .gitignore (create or append)
- *   7. Copies .env.example (skip if exists)
- *   8. Merges npm scripts into package.json
- *   9. Adds lint-staged config to package.json
- *  10. Installs dev deps (unless --skip-install)
+ *   6. Copies .claude/settings.json (skip if exists)
+ *   7. Copies .claude/rules/*.md path-scoped rules (skip if exists)
+ *   8. Handles .gitignore (create or append)
+ *   9. Copies .env.example (skip if exists)
+ *  10. Merges npm scripts into package.json
+ *  11. Adds lint-staged config to package.json
+ *  12. Installs dev deps (unless --skip-install)
  */
 
 'use strict';
@@ -28,9 +30,10 @@ const childProcess = require('node:child_process');
 // ---------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const flags = { target: null, skipInstall: false };
+  const flags = { target: null, skipInstall: false, framework: 'none' };
   for (const arg of argv.slice(2)) {
     if (arg.startsWith('--target=')) flags.target = arg.slice('--target='.length);
+    else if (arg.startsWith('--framework=')) flags.framework = arg.slice('--framework='.length);
     else if (arg === '--skip-install') flags.skipInstall = true;
   }
   if (!flags.target) {
@@ -65,6 +68,7 @@ const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 const ENFORCEMENT_SCRIPTS = [
   'check-secrets.js',
   'check-file-sizes.js',
+  'check-test-colocation.js',
   'validate-docs.js',
   'generate-docs.js',
   'generate-docs-helpers.js',
@@ -124,6 +128,20 @@ function copySettings(targetDir) {
   );
 }
 
+const REACT_FRAMEWORKS = new Set(['vite', 'nextjs']);
+
+function copyRules(targetDir, framework) {
+  const rulesSourceDir = path.join(TEMPLATES_DIR, 'rules');
+  const rulesDestDir = path.join(targetDir, '.claude', 'rules');
+  fs.mkdirSync(rulesDestDir, { recursive: true });
+  const ruleFiles = fs.readdirSync(rulesSourceDir).filter(f => f.endsWith('.md'));
+  for (const file of ruleFiles) {
+    // Only copy react.md for React-based frameworks (vite, nextjs)
+    if (file === 'react.md' && !REACT_FRAMEWORKS.has(framework)) continue;
+    copyIfAbsent(path.join(rulesSourceDir, file), path.join(rulesDestDir, file));
+  }
+}
+
 function handleGitignore(targetDir) {
   const src = path.join(TEMPLATES_DIR, 'gitignore-template');
   const dest = path.join(targetDir, '.gitignore');
@@ -173,6 +191,7 @@ function main() {
   copyHooks(targetDir);
   copyConfigs(targetDir);
   copySettings(targetDir);
+  copyRules(targetDir, flags.framework);
   handleGitignore(targetDir);
   copyIfAbsent(path.join(TEMPLATES_DIR, '.env.example'), path.join(targetDir, '.env.example'));
   mergePackageJson(targetDir);

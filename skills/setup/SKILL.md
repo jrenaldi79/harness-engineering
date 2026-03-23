@@ -93,10 +93,12 @@ Read `$REFERENCES_DIR/enforcement-scripts.md` first to understand the enforcemen
 **Node/TypeScript path (fast path):**
 
 ```bash
-node $SCRIPTS_DIR/install-enforcement.js --target=<project-root>
+node $SCRIPTS_DIR/install-enforcement.js --target=<project-root> --framework=<framework>
 ```
 
-This also creates `.claude/settings.json` with pre-approved commands (test, lint, build, git) and a deny list blocking destructive operations (rm -rf /, git push --force, etc.). Normal file removal still works — Claude prompts for approval so the user stays in control.
+This also creates:
+- `.claude/settings.json` with pre-approved commands (test, lint, build, git) and a deny list blocking destructive operations (rm -rf /, git push --force, etc.). Normal file removal still works — Claude prompts for approval so the user stays in control.
+- `.claude/rules/*.md` — path-scoped rules (TDD, code quality, testing, TypeScript, and React for vite/nextjs) that auto-load when Claude works on matching file patterns. These use `globs:` YAML frontmatter for path-scoping.
 
 **All other stacks (adaptive path — Claude creates equivalent enforcement):**
 
@@ -118,6 +120,7 @@ Steps for the adaptive path:
 6. Make both hook files executable: `chmod +x .git/hooks/pre-commit .git/hooks/pre-push`
 7. Install and configure the linter and formatter for the chosen stack
 8. Create `.claude/settings.json` by copying `$TEMPLATES_DIR/settings.json` into the target project. Adjust the allow list entries to match the stack's commands (e.g., replace `npm test` with `pytest` for Python, `go test ./...` for Go)
+9. Copy `.claude/rules/*.md` from `$TEMPLATES_DIR/rules/` into the target project. For non-TypeScript stacks, adapt `rules/typescript.md` to the relevant language conventions (e.g., PEP 8 for Python, Go naming conventions for Go)
 
 ---
 
