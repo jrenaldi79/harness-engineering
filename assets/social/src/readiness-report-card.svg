@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="1200" height="780" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', monospace">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0f0f1a"/>

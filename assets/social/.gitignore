@@ -1,0 +1,2 @@
+# Rebuild PNGs from src/ SVGs:
+# npx sharp-cli -i src/readiness-report-card.svg -o readiness-report-card.png resize 1200
