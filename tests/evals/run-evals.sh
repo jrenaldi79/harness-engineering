@@ -52,10 +52,10 @@ fi
 
 mkdir -p "$RESULTS_DIR"
 
-# Read test cases from config
+# Read test cases from config — ONLY extract names/fixtures/descriptions, never expected values
 PROMPT=$(jq -r '.prompt' "$CONFIG")
 TIMEOUT=$(jq -r '.timeout_seconds' "$CONFIG")
-TEST_CASES=$(jq -c '.test_cases[]' "$CONFIG")
+TEST_CASES=$(jq -c '.test_cases[] | {name, fixture, description}' "$CONFIG")
 
 TOTAL=0
 PASSED=0
@@ -106,7 +106,7 @@ run_test_case() {
   if [ "$DRY_RUN" = true ]; then
     echo -e "  ${BLUE}[DRY RUN] Would execute:${NC}"
     echo "    cd $tmp_dir"
-    echo "    claude --plugin-dir $PLUGIN_DIR -p \"$PROMPT\" --allowedTools 'Bash,Read,Glob,Grep,Write,Agent' --output-format json"
+    echo "    claude --plugin-dir $PLUGIN_DIR -p \"...\" --allowedTools 'Bash,Read,Glob,Grep,Write,Agent' --permission-mode acceptEdits --output-format json"
     echo ""
     return 0
   fi
@@ -122,8 +122,9 @@ run_test_case() {
     cd "$tmp_dir" && \
     timeout "${TIMEOUT}s" claude \
       --plugin-dir "$PLUGIN_DIR" \
-      -p "$PROMPT" \
+      -p "You are analyzing the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $PROMPT" \
       --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
+      --permission-mode acceptEdits \
       --output-format json \
       2>"$result_dir/stderr.log"
   ) || exit_code=$?
