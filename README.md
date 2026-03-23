@@ -21,7 +21,9 @@ This repo is two things:
 
 1. **A field guide** to harness engineering — mapping 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
 
-2. **A Claude Code plugin** (`/setup`) that sets up a project through Socratic questioning: `CLAUDE.md` templates, TDD enforcement, git hooks (secret scan, file size limits, auto-generated docs, drift detection), and integrated agentic workflows (BMAD, Superpowers, Sidecar). Supports any language or stack — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
+2. **A Claude Code plugin** with two skills:
+   - **`/readiness`** — Analyzes any existing codebase and produces a scored readiness report across 8 pillars and 5 maturity levels. Shows you exactly where you stand, what's missing, and what to fix first. Saves reports for delta tracking over time. Works with any language or stack.
+   - **`/setup`** — Sets up a project through Socratic questioning: `CLAUDE.md` templates, TDD enforcement, git hooks (secret scan, file size limits, auto-generated docs, drift detection), and integrated agentic workflows (BMAD, Superpowers, Sidecar). Supports any language or stack — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
 
 
 <div align="center">
@@ -34,6 +36,7 @@ This repo is two things:
 
 - [Agentic Planning & Execution](#agentic-planning--execution)
 - [Mapping to Industry Best Practices](#mapping-to-industry-best-practices)
+- [Readiness Analysis](#readiness-analysis)
 - [Quick Start](#quick-start)
 - [What You Get](#what-you-get)
 - [How It Works](#how-it-works)
@@ -161,7 +164,7 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 - **Jesse Vincent**: Creator of [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. Discovered that [compliance beats comprehension](https://blog.fsck.com/2026/03/09/superpowers-5/) in skill design.
 - **DHH**: Creator of Ruby on Rails, co-founder of Basecamp/37signals. [Convention over configuration](https://x.com/dhh/status/2018574874675929544) as the foundation for agent-friendly codebases.
 - **Akshay Kothari**: COO of Notion. Shared his [Claude Code development setup](https://www.linkedin.com/posts/akothari_my-claude-code-setup-after-extensive-experimentation-activity-7336065911014084610-HEdh/) emphasizing CLAUDE.md as single source of truth, pre-commit hooks, lint-staged, and file size enforcement. Validated our mechanical enforcement approach.
-- **Factory.ai**: [Using Linters to Direct Agents](https://factory.ai/news/using-linters-to-direct-agents) (Sep 2025) by Alvin Sng. "Agents write the code; linters write the law." Formalized seven lint rule categories and the thesis that advisory guidance explains the "why" while linting enforces the "how."
+- **Factory.ai**: [Using Linters to Direct Agents](https://factory.ai/news/using-linters-to-direct-agents) (Sep 2025) by Alvin Sng. "Agents write the code; linters write the law." Formalized seven lint rule categories. Also published [Agent Readiness](https://factory.ai/news/agent-readiness) — a framework for measuring how well a codebase supports autonomous development across eight pillars and five maturity levels, with automated remediation via agent-powered PRs. Inspired our `/readiness` skill.
 
 | Best Practice | Sources | What They Found | This Kit's Implementation |
 |---|---|---|---|
@@ -192,6 +195,64 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 
 ---
 
+## Readiness Analysis
+
+Before running `/setup`, use `/readiness` to understand where your codebase stands. The readiness skill evaluates your project across **8 pillars** and **37 criteria**, producing a scored report with a maturity level from 1 to 5.
+
+```
+/readiness
+```
+
+### 8 Evaluation Pillars
+
+| Pillar | What It Checks | Scope |
+|---|---|---|
+| **Style & Validation** | Linter, formatter, lint-on-commit, no default exports | Repo |
+| **Testing** | Test runner, colocation, coverage, TDD enforcement | App |
+| **Git Hooks & Enforcement** | Pre-commit, pre-push, secret scanning, file size limits, smart caching | Repo |
+| **Documentation** | CLAUDE.md quality — Commands, Architecture, Gotchas, AUTO sections, drift, content quality | App |
+| **Agent Configuration** | Settings, allow/deny lists, path-scoped rules, enforcement hierarchy | Repo |
+| **Code Quality** | File size limits, secret scanning, consistent style | App |
+| **Dev Environment** | .env.example, build commands, dependency health | Repo |
+| **Agentic Workflow** | Planning system installed (BMAD, Superpowers, gStack), plan-before-build, session-start validation | Repo |
+
+### 5 Maturity Levels
+
+| Level | Name | What It Means |
+|---|---|---|
+| 1 | **Bare** | Has manifest + git. That's it. |
+| 2 | **Basic** | Linter + formatter + test runner exist and work. |
+| 3 | **Enforced** | Git hooks block bad commits. CLAUDE.md exists with essential sections. Agent settings configured. |
+| 4 | **Automated** | Auto-generated docs, drift detection, path-scoped rules, smart test caching. Agentic workflow installed. |
+| 5 | **Autonomous** | Full harness coverage. TDD enforced. Docs in sync. Plan-before-build + session-start validation. |
+
+### How It Works
+
+The readiness skill is **agent-guided, not script-based**. The SKILL.md provides a structured evaluation framework — the agent does the actual analysis using its intelligence. This makes it stack-agnostic (works with any language), adaptive (understands nuance like "tests exist but are stubs"), and low-maintenance.
+
+It uses the `/setup` skill's templates, scripts, and references as a **reference library** — reading them to understand what good enforcement looks like, then comparing against what's actually in your project. This means it produces **surgical recommendations** ("Add a Commands section to your existing CLAUDE.md") rather than blunt ones ("Run /setup to overwrite everything").
+
+The skill runs **3 parallel subagents** to keep the main context clean:
+1. **Style, Testing & Code Quality** — reads enforcement script references
+2. **Hooks, Config, Environment & Workflow** — reads hook and settings templates
+3. **Documentation** — reads CLAUDE.md templates and quality guide
+
+### Report Output
+
+Reports are saved to `.claude/readiness-report.md` with YAML frontmatter for machine-parseable delta tracking. Run `/readiness` again later to see what improved or regressed.
+
+The skill also provides **conversational insights** — prose analysis of what's working, what's costing you time, and nuanced observations the checklist can't capture.
+
+### Monorepo Support
+
+For monorepos (workspaces, Nx, Turborepo, Cargo workspace, Go workspace), repo-scoped criteria are evaluated once and app-scoped criteria are evaluated per package. The overall level is gated by the weakest app.
+
+### Remediation
+
+After the report, the skill offers to apply surgical fixes — editing existing files, adding missing sections, creating new files only where nothing exists. If no agentic workflow system is detected, it recommends [Superpowers](https://github.com/obra/superpowers) and can help install it.
+
+---
+
 ## Quick Start
 
 **Prerequisites:** [Claude Code](https://claude.ai/code) with plugin support, [Git](https://git-scm.com/), and [Node.js](https://nodejs.org/) (v18+) for Node/TypeScript projects.
@@ -203,7 +264,15 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 /plugin install jrenaldi79/harness-engineering
 ```
 
-### 2. Set up your project
+### 2. Assess your codebase (existing projects)
+
+```
+/readiness
+```
+
+For existing projects, start here. The readiness report shows where you stand and what to improve. For new projects, skip to step 3.
+
+### 3. Set up your project
 
 ```
 /setup
@@ -227,7 +296,7 @@ What happens during setup:
 
 Works on **macOS, Linux, and Windows**.
 
-### 3. Start building
+### 4. Start building
 
 ```bash
 git add -A && git commit -m "Initial project setup"
@@ -243,6 +312,8 @@ The pre-commit hook runs automatically. If everything passes, your harness is ac
 harness-engineering/
 ├── .claude-plugin/
 │   └── plugin.json               # Plugin manifest
+├── skills/readiness/
+│   └── SKILL.md                  # Codebase analysis — runs on /readiness
 ├── skills/setup/
 │   ├── SKILL.md                  # Main orchestrator — runs on /setup
 │   ├── scripts/

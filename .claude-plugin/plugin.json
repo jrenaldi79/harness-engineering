@@ -1,6 +1,6 @@
 {
   "name": "harness-engineering",
-  "description": "Bootstrap and enforce best practices for AI coding agent projects. Scaffolds projects with TDD, secret scanning, file size limits, auto-generated docs, and git hooks.",
+  "description": "Analyze and enforce best practices for AI coding agent projects. Assess codebase readiness across 8 pillars with /readiness, then scaffold enforcement with /setup: TDD, secret scanning, file size limits, auto-generated docs, and git hooks.",
   "version": "1.0.0",
   "author": {
     "name": "John Renaldi"
