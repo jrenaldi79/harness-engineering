@@ -1,0 +1,9 @@
+{
+  "name": "bare-project",
+  "version": "1.0.0",
+  "description": "A minimal project with nothing configured — should score Level 1 (Bare)",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "description": "Readiness skill evaluation suite — tests the /readiness skill against fixture repos with known maturity levels",
+  "plugin_dir": "../../",
+  "skill": "readiness",
+  "prompt": "Run a readiness analysis on this project. Output the full readiness report.",
+  "run_count": 1,
+  "timeout_seconds": 300,
+  "test_cases": [
+    {
+      "name": "level-1-bare",
+      "fixture": "fixtures/level-1-bare",
+      "description": "Minimal project with only package.json and source files. No linting, testing, hooks, or docs.",
+      "expected": {
+        "level": { "min": 1, "max": 1 },
+        "report_file_created": true,
+        "yaml_frontmatter": {
+          "required_fields": ["generated", "level", "level_name", "score", "total", "stack", "monorepo", "pillars"]
+        },
+        "pillars": {
+          "style-validation": { "pass_max": 0 },
+          "testing": { "pass_max": 0 },
+          "git-hooks": { "pass_max": 0 },
+          "documentation": { "pass_max": 0 },
+          "agent-config": { "pass_max": 0 },
+          "code-quality": { "pass_max": 1, "must_fail": ["No obvious hardcoded secrets"] },
+          "dev-environment": { "pass_max": 1 },
+          "agentic-workflow": { "pass_max": 0 }
+        },
+        "recommendations": {
+          "must_mention": ["linter", "test runner", "CLAUDE.md", "pre-commit"],
+          "must_not_mention": ["run /setup"]
+        },
+        "insights": {
+          "must_detect": ["hardcoded secret", "sk-ant"]
+        }
+      }
+    },
+    {
+      "name": "level-3-enforced",
+      "fixture": "fixtures/level-3-enforced",
+      "description": "Project with linting, formatting, tests, hooks, CLAUDE.md, and agent settings. Missing: secret scanning, file size enforcement, TDD rules, auto-gen docs, agentic workflow.",
+      "expected": {
+        "level": { "min": 2, "max": 3 },
+        "report_file_created": true,
+        "yaml_frontmatter": {
+          "required_fields": ["generated", "level", "level_name", "score", "total", "stack", "monorepo", "pillars"]
+        },
+        "pillars": {
+          "style-validation": { "pass_min": 2 },
+          "testing": { "pass_min": 2 },
+          "git-hooks": { "pass_min": 2 },
+          "documentation": { "pass_min": 3 },
+          "agent-config": { "pass_min": 2 },
+          "code-quality": { "pass_min": 2 },
+          "dev-environment": { "pass_min": 1 },
+          "agentic-workflow": { "pass_max": 0 }
+        },
+        "recommendations": {
+          "must_mention": ["secret scanning", ".env.example", "TDD", "agentic workflow"],
+          "must_not_mention": ["run /setup"]
+        }
+      }
+    },
+    {
+      "name": "level-5-autonomous",
+      "fixture": "fixtures/level-5-autonomous",
+      "description": "Fully harness project with all 8 pillars covered. Should score Level 4-5.",
+      "expected": {
+        "level": { "min": 4, "max": 5 },
+        "report_file_created": true,
+        "yaml_frontmatter": {
+          "required_fields": ["generated", "level", "level_name", "score", "total", "stack", "monorepo", "pillars"]
+        },
+        "pillars": {
+          "style-validation": { "pass_min": 3 },
+          "testing": { "pass_min": 3 },
+          "git-hooks": { "pass_min": 3 },
+          "documentation": { "pass_min": 6 },
+          "agent-config": { "pass_min": 4 },
+          "code-quality": { "pass_min": 3 },
+          "dev-environment": { "pass_min": 2 },
+          "agentic-workflow": { "pass_min": 1 }
+        },
+        "recommendations": {
+          "must_not_mention": ["run /setup", "install linter", "install test runner"]
+        }
+      }
+    }
+  ]
+}
