@@ -450,6 +450,7 @@ Every enforcement script has a `CONFIG` object at the top. Edit patterns, limits
 |--------|------------------|
 | `check-secrets.js` | `CONFIG.patterns` (secret regexes), `CONFIG.allowlistPaths` (excluded files) |
 | `check-file-sizes.js` | `CONFIG.maxLines` (default: 300), `CONFIG.include`/`CONFIG.exclude` (file globs) |
+| `check-test-colocation.js` | `CONFIG.include`/`CONFIG.exclude` (file globs), `CONFIG.testSuffixes` (default: `.test`, `.spec`) |
 | `validate-docs.js` | `CONFIG.docFile`, `CONFIG.trackedDirs`, `CONFIG.mappings` |
 | `generate-docs.js` | `TREE_DIRS` (directories to scan), `SKIP_DIRS` in helpers (directories to exclude) |
 
