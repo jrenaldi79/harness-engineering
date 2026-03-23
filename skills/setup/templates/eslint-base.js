@@ -9,5 +9,8 @@ module.exports = {
     'semi': ['error', 'always'],
     'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'prefer-const': 'error',
+    'max-lines-per-function': ['error', { max: 50, skipBlankLines: true, skipComments: true }],
+    'no-console': ['error', { allow: ['warn', 'error'] }],
+    'import/no-default-export': 'error',
   },
 };

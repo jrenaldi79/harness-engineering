@@ -141,11 +141,13 @@ Not everything Factory does is worth copying. Some of their categories are genui
 
 ---
 
-## Future Work Summary
+## Implemented Improvements
 
-| Action | Effort | Impact |
-|---|---|---|
-| Add `max-lines-per-function: 50` + `no-console` to ESLint config template | 5 min | High — enforces what we already advise |
-| Add `import/no-default-export` to ESLint config template | 5 min | Medium — improves agent grep-ability |
-| Add test colocation check script | 30 min | High — mechanically enforces our TDD philosophy |
-| Expand `rules/typescript.md` to explain *why* absolute imports matter | 10 min | Low — improves advice quality |
+These gaps have been addressed:
+
+| Action | Status |
+|---|---|
+| `max-lines-per-function: 50` + `no-console` in ESLint config template | Done — `eslint-base.js` |
+| `import/no-default-export` in ESLint config template | Done — `eslint-base.js` |
+| Test colocation check script | Done — `check-test-colocation.js` |
+| Absolute imports explanation in `rules/typescript.md` | Done — expanded with rationale |

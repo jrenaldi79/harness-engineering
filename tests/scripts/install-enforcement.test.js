@@ -44,12 +44,13 @@ afterEach(() => {
 // Enforcement scripts
 // ---------------------------------------------------------------------------
 describe('enforcement scripts', () => {
-  it('copies all 5 enforcement scripts to target scripts/', () => {
+  it('copies all 6 enforcement scripts to target scripts/', () => {
     runScript([`--target=${tmpDir}`, '--skip-install'], tmpDir);
 
     const scripts = [
       'check-secrets.js',
       'check-file-sizes.js',
+      'check-test-colocation.js',
       'validate-docs.js',
       'generate-docs.js',
       'generate-docs-helpers.js',

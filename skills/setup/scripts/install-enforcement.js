@@ -6,7 +6,7 @@
  *
  * Actions:
  *   1. Creates scripts/ and .husky/ in target if needed
- *   2. Copies 5 enforcement scripts (skip if already exists)
+ *   2. Copies 6 enforcement scripts (skip if already exists)
  *   3. Runs npx husky init (unless --skip-install)
  *   4. Copies hooks → .husky/ (chmod 755)
  *   5. Copies configs with eslint rename
@@ -67,6 +67,7 @@ const TEMPLATES_DIR = path.join(__dirname, '..', 'templates');
 const ENFORCEMENT_SCRIPTS = [
   'check-secrets.js',
   'check-file-sizes.js',
+  'check-test-colocation.js',
   'validate-docs.js',
   'generate-docs.js',
   'generate-docs-helpers.js',
