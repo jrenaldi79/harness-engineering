@@ -37,7 +37,7 @@ This repo is two things:
 - [Quick Start](#quick-start)
 - [What You Get](#what-you-get)
 - [How It Works](#how-it-works)
-  - [Two-Tier CLAUDE.md System](#two-tier-claudemd-system)
+  - [CLAUDE.md and Path-Scoped Rules](#claudemd-and-path-scoped-rules)
   - [Progressive Disclosure](#progressive-disclosure)
   - [Auto-Generated Sections](#auto-generated-sections)
   - [Git Hook Enforcement](#git-hook-enforcement)
@@ -169,7 +169,7 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 | **Finite attention budget** | Augment, Karpathy, Anthropic | Karpathy: "Context engineering is the delicate art of filling the context window with just the right information." Augment: Instruction-following degrades as constraint density increases. Anthropic: "All components compete for the same finite resource." | 200-300 line CLAUDE.md target. Templates use `<!-- TIP -->` comments to guide what to include vs. omit. |
 | **Failure-backed rules only** | Augment, Willison, DHH | Augment: "Would the agent make a mistake without this? If no, delete it." Willison: Only universally applicable instructions. DHH: Conventions create 20 years of training data, so don't re-explain what agents already know. | Templates include only actionable rules: commands, gotchas, constraints. No generic best practices or restated conventions. |
 | **Repository as system of record** | OpenAI, Augment, Thariq | OpenAI: "What Codex can't see doesn't exist." Augment: Don't restate what's in code. Thariq: "The file system is an elegant way of representing state that your agent could read into context." | Templates encode architecture, commands, and gotchas in CLAUDE.md and `docs/`. AUTO markers write generated content to files. |
-| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments. Stricter constraints produce more reliable output." Vincent: "Advisory language tests comprehension; hard gates test compliance." | Pre-commit hooks enforce mechanically: ESLint auto-fix, secret scan, file size check. Rules live in tools, not prose. |
+| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments. Stricter constraints produce more reliable output." Vincent: "Advisory language tests comprehension; hard gates test compliance." | Three-layer enforcement: git hooks block violations mechanically, `.claude/rules/` provides path-scoped advisory context, CLAUDE.md sets global principles. Priority: mechanical > rules > prose. |
 | **Mechanical enforcement** | OpenAI, Boris, Thariq | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification: "catch hallucinations or skipped steps." | Pre-commit hooks run 5 checks automatically: lint, secret scan, file size, doc generation, drift warning. |
 | **Auto-generated docs** | OpenAI | A "doc-gardening" agent scans for stale documentation and opens fix-up PRs. | `generate-docs.js` auto-regenerates CLAUDE.md sections from source code on every commit via AUTO markers. |
 | **Drift detection / self-improvement** | OpenAI, Augment, Boris | OpenAI: Documentation "rots instantly." Boris: "Update your CLAUDE.md so you don't make that mistake again." Claude writes rules for itself, compounding institutional knowledge. | `validate-docs.js` warns when source files change without CLAUDE.md updates. Global template includes self-improvement loop guidance. |
@@ -219,6 +219,7 @@ What happens during setup:
 | Hooks | Sets up pre-commit and pre-push git hooks |
 | Configs | Copies linter, formatter, and environment configs |
 | Permissions | Creates `.claude/settings.json` with allow/deny lists for safe defaults |
+| Rules | Installs `.claude/rules/` with path-scoped rules (TDD, code quality, testing, TypeScript) |
 | CLAUDE.md | Generates tailored `CLAUDE.md` files for global and project scope |
 
 Works on **macOS, Linux, and Windows**.
@@ -257,6 +258,11 @@ harness-engineering/
 │   ├── templates/
 │   │   ├── global-claude.md          # Cross-project standards (TDD, quality, conventions)
 │   │   ├── project-claude.md         # Per-project guidance (architecture, commands, gotchas)
+│   │   ├── rules/                    # Path-scoped rules (auto-loaded by file pattern)
+│   │   │   ├── tdd.md               # TDD enforcement (src/**, lib/**)
+│   │   │   ├── code-quality.md      # File size limits, complexity (src/**, scripts/**)
+│   │   │   ├── testing.md           # Test patterns (tests/**, *.test.*)
+│   │   │   └── typescript.md        # Naming, imports (*.ts, *.tsx, *.js)
 │   │   ├── eslint-base.js            # Baseline ESLint rules
 │   │   ├── lint-staged.config.js     # Auto-fix on staged files
 │   │   ├── .prettierrc               # Code formatting
@@ -272,9 +278,9 @@ harness-engineering/
 
 ## How It Works
 
-### Two-Tier CLAUDE.md System
+### CLAUDE.md and Path-Scoped Rules
 
-Claude Code reads `CLAUDE.md` files at two levels. The global file sets universal standards. The project file provides project-specific context.
+Claude Code reads `CLAUDE.md` files at two levels, plus `.claude/rules/` for path-scoped guidance. The global file sets universal standards. The project file provides project-specific context. Rules files load automatically when Claude works on matching file patterns.
 
 | | Global CLAUDE.md | Project CLAUDE.md |
 |---|---|---|
@@ -287,30 +293,35 @@ Claude Code reads `CLAUDE.md` files at two levels. The global file sets universa
 
 #### What Belongs Where
 
-**Global** (shared across projects): TDD enforcement, operating principles, file size limits, naming conventions, security checklists.
+**Global CLAUDE.md** (shared across projects): Operating principles, workflow guidelines, security checklists, rule enforcement hierarchy.
 
-**Project** (specific to one codebase): Architecture diagrams, essential commands, directory structure, module index, critical gotchas, docs map.
+**Project CLAUDE.md** (specific to one codebase): Architecture diagrams, essential commands, directory structure, module index, critical gotchas, docs map.
+
+**`.claude/rules/`** (path-scoped, loaded on demand): TDD enforcement (when touching `src/`), file size limits and complexity checks (when touching code files), test patterns (when touching `tests/`), naming and import conventions (when touching `.ts`/`.js` files). Rules use `globs:` YAML frontmatter so they only load when Claude works on matching files — keeping the context window lean.
+
+This three-layer system means CLAUDE.md stays under 200-300 lines (global context every session), while detailed path-specific guidance loads automatically only when relevant.
 
 ---
 
 ### Progressive Disclosure
 
-Not everything belongs in `CLAUDE.md`. The agent reads the full file on every conversation, so bloat costs tokens and dilutes signal. Use three tiers:
+Not everything belongs in `CLAUDE.md`. The agent reads the full file on every conversation, so bloat costs tokens and dilutes signal. Use four tiers:
 
 | Tier | What | Where | When Loaded |
 |------|------|-------|-------------|
-| **1** | Architecture, commands, quality rules, gotchas | `CLAUDE.md` | Every conversation |
+| **1** | Architecture, commands, operating principles, gotchas | `CLAUDE.md` | Every conversation |
+| **1.5** | Path-scoped rules (TDD, code quality, test patterns) | `.claude/rules/` | Auto-loaded when touching matching files |
 | **2** | Detailed topic documentation | `docs/*.md` | On demand, via Docs Map links |
 | **3** | Design documents, plans, decision records | `docs/plans/` | Rarely, when exploring history |
 
 **Rule of thumb:**
 
-| Keep in CLAUDE.md | Move to docs/ |
-|---|---|
-| Agent needs it for every task | Only needed for specific domains |
-| Changes with code structure | Stable reference material |
-| Under 20 lines per topic | Over 20 lines of detail |
-| Commands, rules, constraints | Tutorials, explanations, history |
+| Keep in CLAUDE.md | Move to `.claude/rules/` | Move to `docs/` |
+|---|---|---|
+| Agent needs it for every task | Only needed when working on specific file types | Only needed for specific domains |
+| Changes with code structure | Enforces coding standards per path | Stable reference material |
+| Under 20 lines per topic | Path-scoped with `globs:` frontmatter | Over 20 lines of detail |
+| Commands, operating principles, gotchas | TDD, quality checks, naming, test patterns | Tutorials, explanations, history |
 
 The **Docs Map** pattern in `CLAUDE.md` links to topic docs so agents can find detail when they need it:
 
