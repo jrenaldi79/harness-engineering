@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520" width="1200" height="780" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', monospace">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 780" width="1200" height="1170" font-family="'SF Mono', 'Fira Code', 'JetBrains Mono', monospace">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0%" stop-color="#0f0f1a"/>
@@ -27,100 +27,101 @@
   </defs>
 
   <!-- Background -->
-  <rect width="800" height="520" rx="16" fill="url(#bg)"/>
-  <rect x="1" y="1" width="798" height="518" rx="15" fill="none" stroke="#2a2a4a" stroke-width="1"/>
+  <rect width="800" height="780" rx="16" fill="url(#bg)"/>
+  <rect x="1" y="1" width="798" height="778" rx="15" fill="none" stroke="#2a2a4a" stroke-width="1"/>
 
   <!-- Terminal dots -->
-  <circle cx="28" cy="24" r="6" fill="#ff5f57"/>
-  <circle cx="48" cy="24" r="6" fill="#febc2e"/>
-  <circle cx="68" cy="24" r="6" fill="#28c840"/>
+  <circle cx="32" cy="28" r="8" fill="#ff5f57"/>
+  <circle cx="56" cy="28" r="8" fill="#febc2e"/>
+  <circle cx="80" cy="28" r="8" fill="#28c840"/>
 
   <!-- Title bar -->
-  <text x="400" y="28" text-anchor="middle" fill="#6b7280" font-size="12">harness readiness report</text>
+  <text x="400" y="33" text-anchor="middle" fill="#6b7280" font-size="16">harness readiness report</text>
 
   <!-- Divider -->
-  <line x1="24" y1="44" x2="776" y2="44" stroke="#2a2a4a" stroke-width="1"/>
+  <line x1="24" y1="52" x2="776" y2="52" stroke="#2a2a4a" stroke-width="1"/>
 
   <!-- Header -->
-  <text x="40" y="76" fill="#a78bfa" font-size="14" font-weight="bold">$</text>
-  <text x="56" y="76" fill="#e2e8f0" font-size="14"> /readiness</text>
+  <text x="40" y="92" fill="#a78bfa" font-size="22" font-weight="bold">$</text>
+  <text x="62" y="92" fill="#e2e8f0" font-size="22"> /readiness</text>
 
   <!-- Project info -->
-  <text x="40" y="108" fill="#6b7280" font-size="13">Project:</text>
-  <text x="112" y="108" fill="#e2e8f0" font-size="13">my-project (Node.js / TypeScript)</text>
+  <text x="40" y="132" fill="#6b7280" font-size="18">Project:</text>
+  <text x="138" y="132" fill="#e2e8f0" font-size="18">my-project (Node.js / TypeScript)</text>
 
   <!-- Level badge -->
-  <rect x="40" y="122" width="180" height="32" rx="6" fill="#1e1e3a" stroke="#8b5cf6" stroke-width="1"/>
-  <text x="54" y="143" fill="#a78bfa" font-size="14" font-weight="bold">Level 3 / 5</text>
-  <text x="156" y="143" fill="#6b7280" font-size="12">Enforced</text>
+  <rect x="40" y="152" width="220" height="42" rx="8" fill="#1e1e3a" stroke="#8b5cf6" stroke-width="1"/>
+  <text x="58" y="180" fill="#a78bfa" font-size="20" font-weight="bold">Level 3 / 5</text>
+  <text x="196" y="180" fill="#6b7280" font-size="16">Enforced</text>
 
   <!-- Score -->
-  <rect x="232" y="122" width="140" height="32" rx="6" fill="#1e1e3a" stroke="#2a2a4a" stroke-width="1"/>
-  <text x="246" y="143" fill="#e2e8f0" font-size="14">Score:</text>
-  <text x="306" y="143" fill="#4ade80" font-size="14" font-weight="bold">28 / 36</text>
+  <rect x="274" y="152" width="180" height="42" rx="8" fill="#1e1e3a" stroke="#2a2a4a" stroke-width="1"/>
+  <text x="292" y="180" fill="#e2e8f0" font-size="20">Score:</text>
+  <text x="370" y="180" fill="#4ade80" font-size="20" font-weight="bold">28 / 36</text>
 
   <!-- Divider -->
-  <line x1="40" y1="170" x2="760" y2="170" stroke="#2a2a4a" stroke-width="1"/>
+  <line x1="40" y1="216" x2="760" y2="216" stroke="#2a2a4a" stroke-width="1"/>
 
   <!-- Pillar header -->
-  <text x="40" y="196" fill="#6b7280" font-size="11" letter-spacing="2">PILLAR SCORES</text>
+  <text x="40" y="250" fill="#6b7280" font-size="16" letter-spacing="2">PILLAR SCORES</text>
 
   <!-- Pillar 1: Style & Validation - 4/4 (100%) -->
-  <text x="40" y="228" fill="#94a3b8" font-size="13">Style &amp; Validation</text>
-  <rect x="260" y="216" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="216" width="400" height="16" rx="3" fill="url(#bar-green)" opacity="0.9"/>
-  <text x="672" y="228" fill="#4ade80" font-size="13" font-weight="bold">4/4</text>
+  <text x="40" y="294" fill="#94a3b8" font-size="18">Style &amp; Validation</text>
+  <rect x="280" y="278" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="278" width="400" height="22" rx="4" fill="url(#bar-green)" opacity="0.9"/>
+  <text x="694" y="295" fill="#4ade80" font-size="18" font-weight="bold">4/4</text>
 
   <!-- Pillar 2: Testing - 4/5 (80%) -->
-  <text x="40" y="258" fill="#94a3b8" font-size="13">Testing</text>
-  <rect x="260" y="246" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="246" width="320" height="16" rx="3" fill="url(#bar-green)" opacity="0.9"/>
-  <text x="672" y="258" fill="#4ade80" font-size="13" font-weight="bold">4/5</text>
+  <text x="40" y="338" fill="#94a3b8" font-size="18">Testing</text>
+  <rect x="280" y="322" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="322" width="320" height="22" rx="4" fill="url(#bar-green)" opacity="0.9"/>
+  <text x="694" y="339" fill="#4ade80" font-size="18" font-weight="bold">4/5</text>
 
   <!-- Pillar 3: Git Hooks - 5/5 (100%) -->
-  <text x="40" y="288" fill="#94a3b8" font-size="13">Git Hooks</text>
-  <rect x="260" y="276" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="276" width="400" height="16" rx="3" fill="url(#bar-green)" opacity="0.9"/>
-  <text x="672" y="288" fill="#4ade80" font-size="13" font-weight="bold">5/5</text>
+  <text x="40" y="382" fill="#94a3b8" font-size="18">Git Hooks</text>
+  <rect x="280" y="366" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="366" width="400" height="22" rx="4" fill="url(#bar-green)" opacity="0.9"/>
+  <text x="694" y="383" fill="#4ade80" font-size="18" font-weight="bold">5/5</text>
 
   <!-- Pillar 4: Documentation - 6/9 (67%) -->
-  <text x="40" y="318" fill="#94a3b8" font-size="13">Documentation</text>
-  <rect x="260" y="306" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="306" width="267" height="16" rx="3" fill="url(#bar-yellow)" opacity="0.9"/>
-  <text x="672" y="318" fill="#facc15" font-size="13" font-weight="bold">6/9</text>
+  <text x="40" y="426" fill="#94a3b8" font-size="18">Documentation</text>
+  <rect x="280" y="410" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="410" width="267" height="22" rx="4" fill="url(#bar-yellow)" opacity="0.9"/>
+  <text x="694" y="427" fill="#facc15" font-size="18" font-weight="bold">6/9</text>
 
   <!-- Pillar 5: Agent Config - 3/5 (60%) -->
-  <text x="40" y="348" fill="#94a3b8" font-size="13">Agent Configuration</text>
-  <rect x="260" y="336" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="336" width="240" height="16" rx="3" fill="url(#bar-yellow)" opacity="0.9"/>
-  <text x="672" y="348" fill="#facc15" font-size="13" font-weight="bold">3/5</text>
+  <text x="40" y="470" fill="#94a3b8" font-size="18">Agent Configuration</text>
+  <rect x="280" y="454" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="454" width="240" height="22" rx="4" fill="url(#bar-yellow)" opacity="0.9"/>
+  <text x="694" y="471" fill="#facc15" font-size="18" font-weight="bold">3/5</text>
 
   <!-- Pillar 6: Code Quality - 3/3 (100%) -->
-  <text x="40" y="378" fill="#94a3b8" font-size="13">Code Quality</text>
-  <rect x="260" y="366" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="366" width="400" height="16" rx="3" fill="url(#bar-green)" opacity="0.9"/>
-  <text x="672" y="378" fill="#4ade80" font-size="13" font-weight="bold">3/3</text>
+  <text x="40" y="514" fill="#94a3b8" font-size="18">Code Quality</text>
+  <rect x="280" y="498" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="498" width="400" height="22" rx="4" fill="url(#bar-green)" opacity="0.9"/>
+  <text x="694" y="515" fill="#4ade80" font-size="18" font-weight="bold">3/3</text>
 
   <!-- Pillar 7: Dev Environment - 3/3 (100%) -->
-  <text x="40" y="408" fill="#94a3b8" font-size="13">Dev Environment</text>
-  <rect x="260" y="396" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <rect x="260" y="396" width="400" height="16" rx="3" fill="url(#bar-green)" opacity="0.9"/>
-  <text x="672" y="408" fill="#4ade80" font-size="13" font-weight="bold">3/3</text>
+  <text x="40" y="558" fill="#94a3b8" font-size="18">Dev Environment</text>
+  <rect x="280" y="542" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <rect x="280" y="542" width="400" height="22" rx="4" fill="url(#bar-green)" opacity="0.9"/>
+  <text x="694" y="559" fill="#4ade80" font-size="18" font-weight="bold">3/3</text>
 
   <!-- Pillar 8: Agentic Workflow - 0/2 (0%) -->
-  <text x="40" y="438" fill="#94a3b8" font-size="13">Agentic Workflow</text>
-  <rect x="260" y="426" width="400" height="16" rx="3" fill="#1e1e3a"/>
-  <text x="672" y="438" fill="#ef4444" font-size="13" font-weight="bold">0/2</text>
+  <text x="40" y="602" fill="#94a3b8" font-size="18">Agentic Workflow</text>
+  <rect x="280" y="586" width="400" height="22" rx="4" fill="#1e1e3a"/>
+  <text x="694" y="603" fill="#ef4444" font-size="18" font-weight="bold">0/2</text>
 
   <!-- Footer -->
-  <line x1="40" y1="460" x2="760" y2="460" stroke="#2a2a4a" stroke-width="1"/>
+  <line x1="40" y1="640" x2="760" y2="640" stroke="#2a2a4a" stroke-width="1"/>
 
   <!-- Next level hint -->
-  <text x="40" y="486" fill="#6b7280" font-size="12">Next level:</text>
-  <text x="120" y="486" fill="#a78bfa" font-size="12">Install agentic workflow + auto-gen docs to reach</text>
-  <text x="530" y="486" fill="#facc15" font-size="12" font-weight="bold">Level 4 (Automated)</text>
+  <text x="40" y="676" fill="#6b7280" font-size="17">Next level:</text>
+  <text x="160" y="676" fill="#a78bfa" font-size="17">Install agentic workflow + auto-gen</text>
+  <text x="160" y="700" fill="#a78bfa" font-size="17">docs to reach</text>
+  <text x="310" y="700" fill="#facc15" font-size="17" font-weight="bold">Level 4 (Automated)</text>
 
   <!-- Branding -->
-  <text x="40" y="508" fill="#4a4a6a" font-size="11">harness-engineering</text>
-  <text x="760" y="508" text-anchor="end" fill="#4a4a6a" font-size="11">github.com/jrenaldi79/harness-engineering</text>
+  <text x="40" y="750" fill="#4a4a6a" font-size="15">harness-engineering</text>
+  <text x="760" y="750" text-anchor="end" fill="#4a4a6a" font-size="15">github.com/jrenaldi79/harness-engineering</text>
 </svg>
