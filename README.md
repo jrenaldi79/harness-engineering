@@ -13,9 +13,9 @@
 
 </div>
 
-AI coding agents are stateless with finite context windows. Every tool call, every file read, every thinking block compounds - and eventually the agent loses its original instructions, forgets earlier decisions, and starts producing churn instead of progress. [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) called this discipline "context engineering": the art of filling the context window with just the right information at just the right time.
+[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance — no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prose. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
 
-Harness engineering is context engineering applied to coding agents. It's how you structure rule files, plan before building, enforce quality mechanically, and keep documentation in sync with code - so your agent stays aligned across long sessions instead of going off the rails.
+Harness engineering is context engineering applied to coding agents. It's how you structure rule files, plan before building, enforce quality mechanically, and keep documentation in sync with code — so your agent stays aligned across long sessions instead of going off the rails.
 
 This repo is two things:
 
