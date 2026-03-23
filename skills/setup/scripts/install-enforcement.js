@@ -10,11 +10,13 @@
  *   3. Runs npx husky init (unless --skip-install)
  *   4. Copies hooks → .husky/ (chmod 755)
  *   5. Copies configs with eslint rename
- *   6. Handles .gitignore (create or append)
- *   7. Copies .env.example (skip if exists)
- *   8. Merges npm scripts into package.json
- *   9. Adds lint-staged config to package.json
- *  10. Installs dev deps (unless --skip-install)
+ *   6. Copies .claude/settings.json (skip if exists)
+ *   7. Copies .claude/rules/*.md path-scoped rules (skip if exists)
+ *   8. Handles .gitignore (create or append)
+ *   9. Copies .env.example (skip if exists)
+ *  10. Merges npm scripts into package.json
+ *  11. Adds lint-staged config to package.json
+ *  12. Installs dev deps (unless --skip-install)
  */
 
 'use strict';
@@ -124,6 +126,16 @@ function copySettings(targetDir) {
   );
 }
 
+function copyRules(targetDir) {
+  const rulesSourceDir = path.join(TEMPLATES_DIR, 'rules');
+  const rulesDestDir = path.join(targetDir, '.claude', 'rules');
+  fs.mkdirSync(rulesDestDir, { recursive: true });
+  const ruleFiles = fs.readdirSync(rulesSourceDir).filter(f => f.endsWith('.md'));
+  for (const file of ruleFiles) {
+    copyIfAbsent(path.join(rulesSourceDir, file), path.join(rulesDestDir, file));
+  }
+}
+
 function handleGitignore(targetDir) {
   const src = path.join(TEMPLATES_DIR, 'gitignore-template');
   const dest = path.join(targetDir, '.gitignore');
@@ -173,6 +185,7 @@ function main() {
   copyHooks(targetDir);
   copyConfigs(targetDir);
   copySettings(targetDir);
+  copyRules(targetDir);
   handleGitignore(targetDir);
   copyIfAbsent(path.join(TEMPLATES_DIR, '.env.example'), path.join(targetDir, '.env.example'));
   mergePackageJson(targetDir);

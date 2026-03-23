@@ -143,35 +143,11 @@ scripts/
 
 ## Code Quality Rules
 
-### File Size Limits (HARD LIMITS)
-
-| Entity | Max Lines | Action If Exceeded |
-|--------|-----------|-------------------|
-| **Any file** | 300 lines | MUST refactor immediately |
-| **Any function** | 50 lines | MUST break into smaller functions |
+Code quality rules (file size limits, complexity red flags, monitoring commands) are in `.claude/rules/code-quality.md` — auto-loaded when working on source files.
 
 ### Documentation Sync (HARD RULE)
 
 Any commit that adds, removes, or renames a file in `src/`, `bin/`, or `scripts/` MUST include a CLAUDE.md update in the same commit. This is not optional. The pre-commit hook will warn if CLAUDE.md is not staged alongside tracked file changes.
-
-### Complexity Red Flags
-
-**STOP and refactor immediately if you see:**
-
-- **>5 nested if/else statements** -> Extract to separate functions
-- **>3 try/catch blocks in one function** -> Split error handling
-- **>10 imports** -> Consider splitting the module
-- **Duplicate logic** -> Extract to shared utilities
-
-### Code Quality Monitoring
-
-```bash
-# Check line counts (monitor file sizes, target <300 lines)
-find src -name "*.js" -exec wc -l {} + | sort -n
-
-# Find large files (>300 lines need refactoring)
-find src -name "*.js" -exec wc -l {} + | awk '$1 > 300'
-```
 
 ---
 
@@ -253,16 +229,8 @@ module.exports = {
 
 ### Before Starting New Work
 
-- [ ] Check file sizes: `find src -name "*.js" -exec wc -l {} + | sort -n`
 - [ ] Review CLAUDE.md for current architecture
 - [ ] Check test coverage: `npm test -- --coverage`
-
-### During Development
-
-- [ ] Write tests first (TDD)
-- [ ] Monitor file growth (<300 lines)
-- [ ] Use structured logging (not console.log)
-- [ ] Single responsibility per function
 
 ### Before Committing
 
@@ -270,16 +238,7 @@ module.exports = {
 - [ ] Run `npm run lint` - no lint errors
 - [ ] Update CLAUDE.md if architecture changed
 
----
-
-## Code Review Checklist
-
-- [ ] Tests written first (TDD) and passing
-- [ ] No file >300 lines
-- [ ] No function >50 lines
-- [ ] Structured logging (not console.log)
-- [ ] Doc comments on public APIs
-- [ ] Documentation updated if architecture changed
+Detailed quality checks (file sizes, TDD, complexity) are in `.claude/rules/` and enforced by git hooks.
 
 ---
 
@@ -328,6 +287,12 @@ Every line in this file is part of the agent's prompt — make each one earn its
      a symlink so all agents share the same context:
      ln -s CLAUDE.md AGENTS.md
      This keeps a single source of truth. -->
+
+---
+
+## Adding New Rules
+
+New path-scoped rules go in `.claude/rules/` (not this file). See global CLAUDE.md for the full rule enforcement hierarchy: mechanical enforcement > path-scoped rules > CLAUDE.md prose.
 
 ---
 

@@ -8,73 +8,7 @@ This file provides universal guidance to Claude Code when working with projects 
 
 ## MANDATORY: Test-Driven Development (TDD) First
 
-**EVERY feature request MUST start with writing tests before any implementation.**
-
-When receiving ANY feature request, your FIRST response should be:
-1. "Following TDD - I'll write tests first to define what success looks like"
-2. Write comprehensive failing tests using the Red-Green-Refactor cycle
-3. Only then proceed with implementation to make tests pass
-
-### TDD Process - ALWAYS FOLLOW
-
-1. **Red Phase** (REQUIRED FIRST STEP):
-   - Write failing tests for the functionality you want to implement
-   - Run tests to confirm they fail (shows "red" in test runner)
-   - This validates that your test actually tests something
-
-2. **Green Phase**:
-   - Implement the simplest code that makes the test pass
-   - Focus on making it work, not making it optimal
-   - Run tests to confirm they now pass (shows "green")
-
-3. **Refactor Phase**:
-   - Clean up and optimize your implementation without changing behavior
-   - Run tests after each refactor to ensure nothing is broken
-   - Improve both implementation code AND test code
-
-4. **Finalization Phase**:
-   - Run full test suite
-   - Validate test coverage >90% where applicable
-
-5. **Documentation Check**:
-   - If `src/`, `bin/`, or `scripts/` files were added/removed/renamed, run `node scripts/generate-docs.js` to auto-update CLAUDE.md (if available)
-   - Run `node scripts/validate-docs.js --full` to verify no drift (if available)
-
-### TDD Enforcement Checklist
-
-**Before writing ANY implementation code, Claude MUST:**
-
-1. **Explicitly state**: "Following TDD - writing tests first"
-2. **Create test file** in appropriate `tests/` or `__tests__/` directory
-3. **Write failing tests** that define expected behavior
-4. **Run tests and show RED output** proving tests fail
-5. **Only then write implementation**
-6. **Run tests again and show GREEN output** proving tests pass
-
-**Red Flags - STOP immediately if:**
-- Creating files in `src/` before creating tests
-- Using `Write` tool for implementation before tests exist
-- Planning describes implementation details before test strategy
-- User asks for feature and you immediately start coding
-
-### TDD Self-Check Questions
-
-Before writing implementation, ask yourself:
-1. Have I written tests that will fail without this code?
-2. Have I run those tests and confirmed they're RED?
-3. Can I describe what "passing" looks like in concrete test assertions?
-
-If the answer to ANY of these is "no", STOP and write tests first.
-
-### When TDD Can Be Skipped
-
-TDD may be relaxed ONLY for:
-- Documentation-only changes (*.md files)
-- Configuration files (package.json, tsconfig.json)
-- Simple refactoring with existing test coverage
-- Emergency hotfixes (with tests added immediately after)
-
-**All other code changes require tests first.**
+**EVERY feature request MUST start with writing tests before any implementation.** Full TDD process, enforcement checklist, and self-check questions are in `.claude/rules/tdd.md` (auto-loaded when working on source files).
 
 ---
 
@@ -145,6 +79,12 @@ These are high-priority behavioral rules that govern how Claude Code approaches 
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
 - **Minimal Impact**: Changes should only touch what's necessary. Avoid introducing bugs.
 
+### Rule Enforcement Hierarchy
+
+- **Mechanical first**: If a rule can be checked by a script, add it to git hooks. Scripts don't forget or make exceptions.
+- **Rules/ for context**: Back mechanical checks with `.claude/rules/` files explaining the *why* — Claude sees the reasoning when working on matching files.
+- **CLAUDE.md for global**: Only put rules in CLAUDE.md if they apply to every task regardless of file type.
+
 ---
 
 ## Universal Workflow Guidelines
@@ -190,22 +130,6 @@ These are high-priority behavioral rules that govern how Claude Code approaches 
 - Validate and sanitize user inputs to prevent injection attacks
 - Implement proper authentication and authorization patterns
 
-### File Size Limits
-
-| Entity | Max Lines | Action If Exceeded |
-|--------|-----------|-------------------|
-| **Any file** | 300 lines | MUST refactor immediately |
-| **Any function** | 50 lines | MUST break into smaller functions |
-
-### Complexity Red Flags
-
-**STOP and refactor immediately if you see:**
-
-- **>5 nested if/else statements** -> Extract to separate functions
-- **>3 try/catch blocks in one function** -> Split error handling
-- **>10 imports** -> Consider splitting the module
-- **Duplicate logic** -> Extract to shared utilities
-
 ### Code Organization
 - Write concise, technical code with accurate examples
 - Use functional and declarative programming patterns
@@ -219,29 +143,6 @@ These are high-priority behavioral rules that govern how Claude Code approaches 
 - Set up error tracking to capture and alert on application errors
 - Use correlation IDs to track requests across services where applicable
 - Implement health check endpoints for services
-
-### Naming Conventions
-- Use meaningful and descriptive names for variables, functions, and components
-- Use PascalCase for type names and interfaces
-- Use camelCase for variables and functions
-- Use UPPER_CASE for constants
-- Use lowercase with dashes for directories (e.g., `utils/auth-helper`)
-
-### TypeScript Import/Export Best Practices
-- Use path aliases for clean, maintainable imports (e.g., `@/lib/...`)
-- Use explicit `type` imports for TypeScript types
-- Use explicit file paths for type imports (include `/index`)
-- When encountering module resolution errors, check import syntax, file extensions, and `tsconfig.json` paths
-- Prefer explicit imports over barrel exports for better tree-shaking
-
-### Testing Focus
-- **Unit Tests**: Test critical functionality (business logic, utility functions)
-- **Integration Tests**: Test full request/response cycles for APIs
-- **Component Tests**: Test behavior with different props/state combinations
-- **Prefer single test runs** during development for performance: `npm test path/to/test.ts`
-- Run unit tests after completing medium-sized tasks to catch bugs early
-- Mock dependencies until they're built, then swap to real implementations
-- Write maintainable tests with descriptive names grouped in describe blocks
 
 ### Development Server Validation
 After starting any development server:
@@ -298,10 +199,43 @@ Examples of project-specific guidance:
 
 ---
 
+## Adding New Rules
+
+When adding new coding rules or guidelines:
+
+1. **Path-scoped rules** (apply to specific file types) -> Add to `.claude/rules/`
+   - Use YAML frontmatter with `globs:` to scope activation
+   - Example: TDD rules scoped to `src/**`, test patterns scoped to `tests/**`
+   - These only load when Claude works on matching files (saves context)
+
+2. **Global rules** (apply to all tasks regardless of file type) -> Add to `CLAUDE.md`
+   - Operating principles, workflow guidelines, architecture decisions
+   - Keep CLAUDE.md under 200 lines — if it grows, extract to rules/
+
+3. **Mechanical enforcement** (rules that must never be violated) -> Add a git hook script
+   - If a rule can be checked programmatically, back it with a pre-commit/pre-push hook
+   - Advisory rules (CLAUDE.md, rules/) can be ignored; git hooks cannot
+   - Example: 300-line file limit is both a rule (`rules/code-quality.md`) AND a hook (`check-file-sizes.js`)
+
+**Priority:** Mechanical enforcement > path-scoped rules > CLAUDE.md prose.
+When possible, enforce rules mechanically AND document them in rules/ for context.
+
+### Path-Scoped Rules (`.claude/rules/`)
+
+| Rule File | Activates For | Content |
+|-----------|---------------|---------|
+| `tdd.md` | `src/**`, `lib/**` | TDD process, enforcement checklist, self-check questions |
+| `code-quality.md` | `src/**`, `lib/**`, `scripts/**` | File size limits, complexity red flags, monitoring commands |
+| `testing.md` | `tests/**`, `**/*.test.*`, `**/*.spec.*` | Test types, best practices, review checklist |
+| `typescript.md` | `src/**/*.ts`, `src/**/*.tsx`, `src/**/*.js` | Naming conventions, import/export practices |
+
+---
+
 ## Maintenance Guidelines
 
 Update this file when:
-- [ ] Adding new universal best practices
+- [ ] Adding new universal best practices that apply to ALL tasks
 - [ ] Discovering patterns that apply across multiple projects
-- [ ] Adding new testing or TDD guidance
 - [ ] Changing global security or deployment practices
+
+For path-specific rules (TDD, code quality, testing, naming), update `.claude/rules/` instead.
