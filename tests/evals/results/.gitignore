@@ -1,0 +1,4 @@
+# Eval run results are ephemeral — don't commit them
+*
+!.gitkeep
+!.gitignore

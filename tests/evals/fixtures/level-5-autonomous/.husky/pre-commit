@@ -1,0 +1,6 @@
+#!/bin/sh
+# Lint-staged for formatting + linting
+npx lint-staged
+
+# Secret scanning
+node .claude/scripts/check-secrets.js
