@@ -259,10 +259,19 @@ After the report, the skill offers to apply surgical fixes — editing existing 
 
 ### 1. Install the plugin
 
+In Claude Code, run:
+
 ```
-# Install the plugin from GitHub
 /plugin install jrenaldi79/harness-engineering
 ```
+
+That's it. Once installed, you don't need to remember any commands — just ask naturally:
+
+> "How ready is my codebase for AI agents?"
+> "Analyze my project"
+> "Set up enforcement in my project"
+
+Claude will recognize what you need and invoke the right skill automatically. You can also use the slash commands directly: `/readiness` and `/setup`.
 
 ### 2. Assess your codebase (existing projects)
 
@@ -270,13 +279,19 @@ After the report, the skill offers to apply surgical fixes — editing existing 
 /readiness
 ```
 
-For existing projects, start here. The readiness report shows where you stand and what to improve. For new projects, skip to step 3.
+Or just ask: *"How ready is my project?"*, *"Analyze my codebase"*, *"What should I improve?"*
+
+For existing projects, start here. The readiness report scores your project across 8 pillars, assigns a maturity level (1-5), and gives you prioritized recommendations. It saves the report to `.claude/readiness-report.md` so you can track improvement over time.
+
+For new/empty projects, skip to step 3.
 
 ### 3. Set up your project
 
 ```
 /setup
 ```
+
+Or just ask: *"Set up my project"*, *"Bootstrap this repo"*, *"Add quality enforcement"*
 
 The `/setup` skill walks you through Socratic questions to determine your stack (language, framework, testing approach, deployment target), then scaffolds and configures the project. It works with any language — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
 
@@ -303,6 +318,14 @@ git add -A && git commit -m "Initial project setup"
 ```
 
 The pre-commit hook runs automatically. If everything passes, your harness is active.
+
+### Troubleshooting
+
+| Problem | Solution |
+|---|---|
+| `/plugin install` not recognized | Make sure you're using [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the CLI), not the web chat. Plugin support requires Claude Code. |
+| Skills don't trigger after install | Restart your Claude Code session. Skills load on session start. |
+| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin install jrenaldi79/harness-engineering`. |
 
 ---
 
