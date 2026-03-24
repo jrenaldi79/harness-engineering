@@ -50,6 +50,32 @@ if ! command -v jq &>/dev/null; then
   exit 1
 fi
 
+# Validate marketplace.json schema before running evals
+MARKETPLACE="$PLUGIN_DIR/.claude-plugin/marketplace.json"
+if [ -f "$MARKETPLACE" ]; then
+  echo -e "${BLUE}Validating marketplace.json schema...${NC}"
+  SCHEMA_ERRORS=""
+
+  # owner must be an object, not a string
+  OWNER_TYPE=$(jq -r '.owner | type' "$MARKETPLACE")
+  if [ "$OWNER_TYPE" != "object" ]; then
+    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - owner must be an object (got $OWNER_TYPE)"
+  fi
+
+  # each plugin source must match owner/repo format
+  BAD_SOURCES=$(jq -r '.plugins[]?.source // empty' "$MARKETPLACE" | grep -vE '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$' || true)
+  if [ -n "$BAD_SOURCES" ]; then
+    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - invalid plugin source(s): $BAD_SOURCES"
+  fi
+
+  if [ -n "$SCHEMA_ERRORS" ]; then
+    echo -e "${RED}Error: marketplace.json has schema errors:${SCHEMA_ERRORS}${NC}"
+    exit 1
+  fi
+  echo -e "${GREEN}  marketplace.json schema OK${NC}"
+  echo ""
+fi
+
 mkdir -p "$RESULTS_DIR"
 
 # Read test cases from config — ONLY extract names/fixtures/descriptions, never expected values
