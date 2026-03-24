@@ -138,7 +138,7 @@ User runs /setup
 | Module | Purpose |
 |--------|---------|
 | `skills/readiness/SKILL.md` | Harness Readiness Report |
-| `skills/setup/SKILL.md` | setup skill definition |
+| `skills/setup/SKILL.md` | Setup Report |
 | `skills/setup/scripts/generate-claude-md.js` | Generate tailored CLAUDE.md files for a project from templates. |
 | `skills/setup/scripts/init-project.js` | Project scaffolding script for Node/TypeScript projects. |
 | `skills/setup/scripts/install-enforcement.js` | Copies enforcement tooling into a target project. |
