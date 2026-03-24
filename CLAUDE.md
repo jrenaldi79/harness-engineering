@@ -58,7 +58,16 @@ harness-engineering/
 │       └── references/       # Stack patterns, enforcement docs, quality guide
 ├── tests/
 │   ├── scripts/              # Unit tests for setup scripts (Jest)
-│   └── evals/                # E2E evaluation suites (readiness: 3 fixtures, setup: 2 fixtures)
+│   └── evals/                # E2E evaluation suites
+│       ├── eval-config.json         # Readiness eval test cases
+│       ├── grader.js                # Readiness report grader
+│       ├── setup-eval-config.json   # Setup eval test cases
+│       ├── setup-grader.js          # Setup output grader
+│       ├── run-evals.sh             # Shared runner (--config to select suite)
+│       └── fixtures/                # Test project templates
+│           ├── level-{1,3,5}-*/     # Readiness fixtures (3 maturity levels)
+│           ├── setup-bare/          # Empty dir for greenfield setup
+│           └── setup-existing-node/ # Existing Express project for enhancement
 ├── assets/                   # Pipeline diagram SVG, social images
 └── README.md                 # Reference guide and documentation
 ```
@@ -98,6 +107,9 @@ User runs /setup
 | `skills/setup/scripts/install-enforcement.js` | Copies enforcement scripts, hooks, configs into target project |
 | `skills/setup/scripts/generate-claude-md.js` | Generates tailored CLAUDE.md from templates |
 | `scripts/install-hooks.sh` | Installs this repo's git hooks from `scripts/hooks/` |
+| `tests/evals/run-evals.sh` | Shared eval runner with `--config` flag for readiness/setup suites |
+| `tests/evals/grader.js` | Readiness report grader (YAML frontmatter, pillars, recommendations) |
+| `tests/evals/setup-grader.js` | Setup output grader (file creation, JSON validity, hooks, config) |
 <!-- /AUTO:modules -->
 
 ---
