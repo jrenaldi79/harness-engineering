@@ -159,18 +159,84 @@ function buildTreeRecursive(dirPath, prefix, lines) {
 }
 
 // ---------------------------------------------------------------------------
+// Source Directory Detection
+// ---------------------------------------------------------------------------
+
+const KNOWN_SOURCE_DIRS = new Set([
+  'src', 'lib', 'app', 'apps', 'packages', 'services', 'modules',
+  'cmd', 'internal', 'pkg', 'bin', 'components',
+  'scripts', 'tests', 'test', 'spec',
+]);
+
+const SOURCE_EXTENSIONS = new Set([
+  '.js', '.ts', '.tsx', '.jsx', '.mjs', '.cjs',
+  '.py', '.go', '.rs', '.c', '.cpp', '.h', '.hpp',
+  '.java', '.kt', '.rb', '.php', '.swift', '.cs',
+]);
+
+/**
+ * Detect source directories in a project by name and content.
+ * @param {string} rootDir - Project root directory
+ * @returns {string[]} Array of directory names with trailing slash
+ */
+function detectSourceDirs(rootDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(rootDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const dirs = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith('.') || SKIP_DIRS.has(entry.name)) {
+      continue;
+    }
+    if (KNOWN_SOURCE_DIRS.has(entry.name)) {
+      if (dirHasFiles(path.join(rootDir, entry.name), false)) {
+        dirs.push(`${entry.name}/`);
+      }
+      continue;
+    }
+    if (dirHasFiles(path.join(rootDir, entry.name), true)) {
+      dirs.push(`${entry.name}/`);
+    }
+  }
+  return dirs.sort();
+}
+
+function dirHasFiles(dirPath, sourceOnly) {
+  try {
+    for (const e of fs.readdirSync(dirPath, { withFileTypes: true })) {
+      if (e.isFile()) {
+        if (!sourceOnly) return true;
+        if (SOURCE_EXTENSIONS.has(path.extname(e.name).toLowerCase())) return true;
+      }
+      if (e.isDirectory() && !SKIP_DIRS.has(e.name) && dirHasFiles(path.join(dirPath, e.name), sourceOnly)) {
+        return true;
+      }
+    }
+  } catch { /* empty */ }
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // Module Index Builder
 // ---------------------------------------------------------------------------
 
 /**
- * Build a markdown table of src/ modules with JSDoc descriptions and exports.
+ * Build a markdown table of modules from all detected source directories.
  * @param {string} rootDir - Project root directory
  * @returns {string} Markdown table
  */
 function buildModuleIndex(rootDir) {
-  const srcDir = path.join(rootDir, 'src');
+  const sourceDirs = detectSourceDirs(rootDir);
   const rows = [];
-  collectModules(srcDir, rows);
+  for (const dir of sourceDirs) {
+    const dirName = dir.replace(/\/$/, '');
+    const fullPath = path.join(rootDir, dirName);
+    collectModules(fullPath, rows, dirName);
+  }
 
   const header = '| Module | Purpose | Key Exports |';
   const sep = '|--------|---------|-------------|';
@@ -179,10 +245,10 @@ function buildModuleIndex(rootDir) {
 }
 
 /**
- * Recursively collect module info from a src/ directory.
+ * Recursively collect module info from a directory.
  * @param {string} dirPath - Directory to scan
- * @param {Array<{module: string, purpose: string, exports: string}>} rows - Accumulator
- * @param {string} [relPrefix=''] - Relative path prefix for nested dirs
+ * @param {Array<{module: string, purpose: string, exports: string}>} rows
+ * @param {string} [relPrefix=''] - Relative path prefix
  */
 function collectModules(dirPath, rows, relPrefix = '') {
   let entries;
@@ -219,5 +285,6 @@ module.exports = {
   extractJSDocDescription,
   extractExports,
   buildDirectoryTree,
+  detectSourceDirs,
   buildModuleIndex,
 };

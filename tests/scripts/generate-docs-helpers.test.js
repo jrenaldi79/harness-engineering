@@ -9,7 +9,6 @@ const os = require('node:os');
 
 const {
   buildDirectoryTree,
-  buildModuleIndex,
   extractJSDocDescription,
   extractExports,
 } = require('../../skills/setup/scripts/lib/generate-docs-helpers');
@@ -203,60 +202,4 @@ describe('buildDirectoryTree', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// buildModuleIndex
-// ---------------------------------------------------------------------------
-describe('buildModuleIndex', () => {
-  it('builds a markdown table with module info', () => {
-    const srcDir = path.join(tmpDir, 'src');
-    fs.mkdirSync(srcDir, { recursive: true });
-    fs.writeFileSync(path.join(srcDir, 'cli.js'), [
-      '/** CLI Argument Parser */',
-      'function parseArgs() {}',
-      'module.exports = { parseArgs };',
-    ].join('\n'));
-
-    const table = buildModuleIndex(tmpDir);
-    expect(table).toContain('| Module');
-    expect(table).toContain('| Purpose');
-    expect(table).toContain('| Key Exports');
-    expect(table).toContain('cli.js');
-    expect(table).toContain('CLI Argument Parser');
-    expect(table).toContain('parseArgs');
-  });
-
-  it('includes files in subdirectories', () => {
-    const srcDir = path.join(tmpDir, 'src');
-    const utilsDir = path.join(srcDir, 'utils');
-    fs.mkdirSync(utilsDir, { recursive: true });
-    fs.writeFileSync(path.join(utilsDir, 'logger.js'), [
-      '/** Structured logging */',
-      'exports.logger = {};',
-    ].join('\n'));
-
-    const table = buildModuleIndex(tmpDir);
-    expect(table).toContain('utils/logger.js');
-    expect(table).toContain('Structured logging');
-  });
-
-  it('returns header-only table for empty src/', () => {
-    const srcDir = path.join(tmpDir, 'src');
-    fs.mkdirSync(srcDir, { recursive: true });
-
-    const table = buildModuleIndex(tmpDir);
-    const lines = table.trim().split('\n');
-    // Header row + separator row, no data rows
-    expect(lines.length).toBe(2);
-  });
-
-  it('handles files with no JSDoc gracefully', () => {
-    const srcDir = path.join(tmpDir, 'src');
-    fs.mkdirSync(srcDir, { recursive: true });
-    fs.writeFileSync(path.join(srcDir, 'bare.js'), 'const x = 1;\n');
-
-    const table = buildModuleIndex(tmpDir);
-    expect(table).toContain('bare.js');
-    // Purpose column should still be present (just empty or dash)
-    expect(table).toContain('|');
-  });
-});
+// detectSourceDirs and buildModuleIndex tests are in detect-source-dirs.test.js
