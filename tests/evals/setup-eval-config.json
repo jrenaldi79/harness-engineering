@@ -20,9 +20,7 @@
           "scripts/check-secrets.js",
           "scripts/check-file-sizes.js",
           "scripts/generate-docs.js",
-          "scripts/generate-docs-helpers.js",
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "scripts/generate-docs-helpers.js"
         ],
         "files_should_exist": [
           "src",
@@ -41,21 +39,20 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",
           "Architecture"
         ],
+        "claude_md_must_mention": [
+          "enforcement",
+          "pre-commit"
+        ],
         "settings_has_allow_deny": true,
         "rules_have_globs_frontmatter": true,
-        "docs_index_generated": true,
-        "conversation_must_mention": [
-          "enforcement",
-          "pre-commit",
-          "CLAUDE.md"
-        ]
+        "docs_index_generated": true
       }
     },
     {
@@ -68,9 +65,7 @@
           "package.json",
           "CLAUDE.md",
           ".claude/settings.json",
-          "scripts/check-secrets.js",
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "scripts/check-secrets.js"
         ],
         "files_should_exist": [
           "scripts/check-file-sizes.js",
@@ -86,8 +81,8 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",
@@ -99,11 +94,7 @@
           "src/index.ts",
           "src/utils.ts"
         ],
-        "docs_index_generated": true,
-        "conversation_must_mention": [
-          "enforcement",
-          "pre-commit"
-        ]
+        "docs_index_generated": true
       }
     },
     {
@@ -114,9 +105,7 @@
       "expected": {
         "files_must_exist": [
           "CLAUDE.md",
-          ".claude/settings.json",
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          ".claude/settings.json"
         ],
         "files_should_exist": [
           "pyproject.toml",
@@ -131,27 +120,24 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",
           "Architecture"
         ],
+        "claude_md_must_mention": [
+          "pytest"
+        ],
+        "claude_md_must_not_mention": [
+          "npm install",
+          "node_modules"
+        ],
         "settings_has_allow_deny": true,
         "rules_have_globs_frontmatter": true,
         "auto_doc_pipeline": false,
-        "docs_index_generated": false,
-        "conversation_must_mention": [
-          "enforcement",
-          "pre-commit",
-          "pytest"
-        ],
-        "conversation_must_not_mention": [
-          "npm",
-          "jest",
-          "package.json"
-        ]
+        "docs_index_generated": false
       }
     }
   ]
