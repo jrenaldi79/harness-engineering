@@ -50,6 +50,7 @@
         ],
         "settings_has_allow_deny": true,
         "rules_have_globs_frontmatter": true,
+        "docs_index_generated": true,
         "conversation_must_mention": [
           "enforcement",
           "pre-commit",
@@ -98,6 +99,7 @@
           "src/index.ts",
           "src/utils.ts"
         ],
+        "docs_index_generated": true,
         "conversation_must_mention": [
           "enforcement",
           "pre-commit"
