@@ -2,7 +2,7 @@
 
 # Harness Engineering and Best Practices for Coding Agents
 
-**A reference and Claude Code plugin for long-running AI coding agent harnesses**
+**A reference guide and Claude Code plugin for long-running AI coding agent harnesses**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?labelColor=1A1C29)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?labelColor=1A1C29)](https://nodejs.org)
@@ -13,13 +13,13 @@
 
 </div>
 
-[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance, no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prose. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
+[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance, no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prompting. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
 
 Harness engineering is context engineering applied to coding agents: structuring rule files, planning before building, enforcing quality with automation, and keeping documentation in sync with code so the agent stays aligned across long sessions.
 
 This repo contains:
 
-1. **A reference** that maps 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
+1. **A reference guide** that maps 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
 
 2. **A Claude Code plugin** that configures your developer environment for agent-assisted development. Install the plugin and get two skills that do the actual work:
    - **`/readiness`**: Analyzes any existing codebase and produces a scored readiness report across 8 pillars and 5 maturity levels. Shows you exactly where you stand, what's missing, and what to fix first. Saves reports for delta tracking over time. Works with any language or stack.
