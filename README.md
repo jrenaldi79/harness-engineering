@@ -21,9 +21,9 @@ This repo is two things:
 
 1. **A field guide** to harness engineering — mapping 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
 
-2. **A Claude Code plugin** with two skills:
+2. **A Claude Code plugin** that configures your developer environment for agent-assisted development. Install the plugin and get two skills that do the actual work:
    - **`/readiness`** — Analyzes any existing codebase and produces a scored readiness report across 8 pillars and 5 maturity levels. Shows you exactly where you stand, what's missing, and what to fix first. Saves reports for delta tracking over time. Works with any language or stack.
-   - **`/setup`** — Sets up a project through Socratic questioning: `CLAUDE.md` templates, TDD enforcement, git hooks (secret scan, file size limits, auto-generated docs, drift detection), and integrated agentic workflows (BMAD, Superpowers, Sidecar). Supports any language or stack — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
+   - **`/setup`** — Configures your project end-to-end through Socratic questioning. It scaffolds `CLAUDE.md` files, installs enforcement scripts (secret scanning, file size limits, test colocation, auto-generated docs, drift detection), wires up git hooks that run those scripts on every commit and push, sets up linter/formatter configs, and creates `.claude/settings.json` with safe permission defaults. The scripts and hooks it installs are the mechanical enforcement layer — they catch what instructions and prose cannot. Supports any language or stack; Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
 
 
 <div align="center">
@@ -34,10 +34,10 @@ This repo is two things:
 
 ## Table of Contents
 
+- [Quick Start](#quick-start)
 - [Agentic Planning & Execution](#agentic-planning--execution)
 - [Mapping to Industry Best Practices](#mapping-to-industry-best-practices)
 - [Readiness Analysis](#readiness-analysis)
-- [Quick Start](#quick-start)
 - [What You Get](#what-you-get)
 - [How It Works](#how-it-works)
   - [CLAUDE.md and Path-Scoped Rules](#claudemd-and-path-scoped-rules)
@@ -47,6 +47,83 @@ This repo is two things:
   - [Quality Gates](#quality-gates)
 - [Customization](#customization)
 - [Design Decisions](#design-decisions)
+
+---
+
+## Quick Start
+
+**Prerequisites:** [Claude Code](https://claude.ai/code) with plugin support, [Git](https://git-scm.com/), and [Node.js](https://nodejs.org/) (v18+) for Node/TypeScript projects.
+
+### 1. Install the plugin
+
+In Claude Code, run:
+
+```
+/plugin marketplace add jrenaldi79/harness-engineering
+/plugin install harness-engineering@harness-engineering
+```
+
+That's it. Once installed, you don't need to remember any commands — just ask naturally:
+
+> "How ready is my codebase for AI agents?"
+> "Analyze my project"
+> "Set up enforcement in my project"
+
+Claude will recognize what you need and invoke the right skill automatically. You can also use the slash commands directly: `/readiness` and `/setup`.
+
+### 2. Assess your codebase (existing projects)
+
+```
+/readiness
+```
+
+Or just ask: *"How ready is my project?"*, *"Analyze my codebase"*, *"What should I improve?"*
+
+For existing projects, start here. The readiness report scores your project across 8 pillars, assigns a maturity level (1-5), and gives you prioritized recommendations. It saves the report to `.claude/readiness-report.md` so you can track improvement over time.
+
+For new/empty projects, skip to step 3.
+
+### 3. Set up your project
+
+```
+/setup
+```
+
+Or just ask: *"Set up my project"*, *"Bootstrap this repo"*, *"Add quality enforcement"*
+
+The `/setup` skill walks you through Socratic questions to determine your stack (language, framework, testing approach, deployment target), then scaffolds and configures the project. It works with any language — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
+
+What happens during setup:
+
+| Step | What Happens |
+|------|-------------|
+| Discovery | Socratic questions determine your stack, language, and project goals |
+| Init | Creates project structure and initializes git |
+| Dependencies | Installs tooling appropriate for your stack |
+| Scripts | Copies enforcement scripts into `scripts/` |
+| Hooks | Sets up pre-commit and pre-push git hooks |
+| Configs | Copies linter, formatter, and environment configs |
+| Permissions | Creates `.claude/settings.json` with allow/deny lists for safe defaults |
+| Rules | Installs `.claude/rules/` with path-scoped rules (TDD, code quality, testing, TypeScript) |
+| CLAUDE.md | Generates tailored `CLAUDE.md` files for global and project scope |
+
+Works on **macOS, Linux, and Windows**.
+
+### 4. Start building
+
+```bash
+git add -A && git commit -m "Initial project setup"
+```
+
+The pre-commit hook runs automatically. If everything passes, your harness is active.
+
+### Troubleshooting
+
+| Problem | Solution |
+|---|---|
+| `/plugin install` not recognized | Make sure you're using [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the CLI), not the web chat. Plugin support requires Claude Code. |
+| Skills don't trigger after install | Restart your Claude Code session. Skills load on session start. |
+| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin marketplace add jrenaldi79/harness-engineering` then `/plugin install harness-engineering@harness-engineering`. |
 
 ---
 
@@ -250,83 +327,6 @@ For monorepos (workspaces, Nx, Turborepo, Cargo workspace, Go workspace), repo-s
 ### Remediation
 
 After the report, the skill offers to apply surgical fixes — editing existing files, adding missing sections, creating new files only where nothing exists. If no agentic workflow system is detected, it recommends [Superpowers](https://github.com/obra/superpowers) and can help install it.
-
----
-
-## Quick Start
-
-**Prerequisites:** [Claude Code](https://claude.ai/code) with plugin support, [Git](https://git-scm.com/), and [Node.js](https://nodejs.org/) (v18+) for Node/TypeScript projects.
-
-### 1. Install the plugin
-
-In Claude Code, run:
-
-```
-/plugin marketplace add jrenaldi79/harness-engineering
-/plugin install harness-engineering@harness-engineering
-```
-
-That's it. Once installed, you don't need to remember any commands — just ask naturally:
-
-> "How ready is my codebase for AI agents?"
-> "Analyze my project"
-> "Set up enforcement in my project"
-
-Claude will recognize what you need and invoke the right skill automatically. You can also use the slash commands directly: `/readiness` and `/setup`.
-
-### 2. Assess your codebase (existing projects)
-
-```
-/readiness
-```
-
-Or just ask: *"How ready is my project?"*, *"Analyze my codebase"*, *"What should I improve?"*
-
-For existing projects, start here. The readiness report scores your project across 8 pillars, assigns a maturity level (1-5), and gives you prioritized recommendations. It saves the report to `.claude/readiness-report.md` so you can track improvement over time.
-
-For new/empty projects, skip to step 3.
-
-### 3. Set up your project
-
-```
-/setup
-```
-
-Or just ask: *"Set up my project"*, *"Bootstrap this repo"*, *"Add quality enforcement"*
-
-The `/setup` skill walks you through Socratic questions to determine your stack (language, framework, testing approach, deployment target), then scaffolds and configures the project. It works with any language — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
-
-What happens during setup:
-
-| Step | What Happens |
-|------|-------------|
-| Discovery | Socratic questions determine your stack, language, and project goals |
-| Init | Creates project structure and initializes git |
-| Dependencies | Installs tooling appropriate for your stack |
-| Scripts | Copies enforcement scripts into `scripts/` |
-| Hooks | Sets up pre-commit and pre-push git hooks |
-| Configs | Copies linter, formatter, and environment configs |
-| Permissions | Creates `.claude/settings.json` with allow/deny lists for safe defaults |
-| Rules | Installs `.claude/rules/` with path-scoped rules (TDD, code quality, testing, TypeScript) |
-| CLAUDE.md | Generates tailored `CLAUDE.md` files for global and project scope |
-
-Works on **macOS, Linux, and Windows**.
-
-### 4. Start building
-
-```bash
-git add -A && git commit -m "Initial project setup"
-```
-
-The pre-commit hook runs automatically. If everything passes, your harness is active.
-
-### Troubleshooting
-
-| Problem | Solution |
-|---|---|
-| `/plugin install` not recognized | Make sure you're using [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the CLI), not the web chat. Plugin support requires Claude Code. |
-| Skills don't trigger after install | Restart your Claude Code session. Skills load on session start. |
-| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin marketplace add jrenaldi79/harness-engineering` then `/plugin install harness-engineering@harness-engineering`. |
 
 ---
 
