@@ -5,6 +5,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const args = {};
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -139,27 +140,16 @@ if (pathExists(claudeMdPath)) {
 
 // ─── 6. Settings allow/deny structure ───
 if (expected.settings_has_allow_deny) {
-  const settingsPath = path.join(fixtureDir, '.claude/settings.json');
-  if (!pathExists(settingsPath)) {
-    check('Settings has allow/deny lists', false, 'settings.json not found');
+  const sp = path.join(fixtureDir, '.claude/settings.json');
+  if (!pathExists(sp)) {
+    check('Settings has allow/deny', false, 'Not found');
   } else {
     try {
-      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-      const perms = settings.permissions || {};
-      const hasAllow = Array.isArray(perms.allow) && perms.allow.length > 0;
-      const hasDeny = Array.isArray(perms.deny) && perms.deny.length > 0;
-      check(
-        'Settings has allow list',
-        hasAllow,
-        hasAllow ? `${perms.allow.length} entries` : 'Missing or empty',
-      );
-      check(
-        'Settings has deny list',
-        hasDeny,
-        hasDeny ? `${perms.deny.length} entries` : 'Missing or empty',
-      );
+      const perms = JSON.parse(fs.readFileSync(sp, 'utf8')).permissions || {};
+      check('Settings has allow list', Array.isArray(perms.allow) && perms.allow.length > 0);
+      check('Settings has deny list', Array.isArray(perms.deny) && perms.deny.length > 0);
     } catch (err) {
-      check('Settings has allow/deny lists', false, err.message);
+      check('Settings has allow/deny', false, err.message);
     }
   }
 }
@@ -206,6 +196,32 @@ if (expected.auto_doc_pipeline) {
     check('Auto-doc: AUTO:modules marker', /<!--\s*AUTO:modules\s*-->/.test(c));
   } else {
     check('Auto-doc: CLAUDE.md has AUTO markers', false, 'CLAUDE.md not found');
+  }
+}
+
+// ─── 8b. Auto-doc: run generate-docs --check to verify markers match reality ───
+if (expected.auto_doc_pipeline) {
+  const scriptPath = path.join(fixtureDir, 'scripts/generate-docs.js');
+  if (pathExists(scriptPath)) {
+    try {
+      execFileSync(process.execPath, [scriptPath, '--check'], {
+        cwd: fixtureDir, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
+      });
+      check('Auto-doc: --check passes (markers match filesystem)', true);
+    } catch (err) {
+      const msg = (err.stderr || err.message || '').toString().slice(0, 120);
+      check('Auto-doc: --check passes (markers match filesystem)', false, msg);
+    }
+  }
+}
+
+// ─── 8c. Setup report structure checks ───
+if (pathExists(reportPath)) {
+  const reportContent = fs.readFileSync(reportPath, 'utf8');
+  const sections = ['What Was Installed', 'Verification Results', 'Key Commands'];
+  for (const s of sections) {
+    const found = reportContent.toLowerCase().includes(s.toLowerCase());
+    check(`Report has "${s}" section`, found, found ? '' : 'Not found');
   }
 }
 
