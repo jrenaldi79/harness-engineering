@@ -36,6 +36,7 @@ fi
 
 if [ -n "$HEAD_SHA" ] && [ "$HEAD_SHA" = "$CACHED_SHA" ]; then
   echo "Tests already passed for $HEAD_SHA - skipping."
+  exit 0
 fi
 
 echo "Pre-push checks passed."
