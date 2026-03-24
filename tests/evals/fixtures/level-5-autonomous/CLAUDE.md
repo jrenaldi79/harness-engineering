@@ -14,19 +14,29 @@
 
 ## Architecture
 
-<!-- AUTO:architecture -->
-```
+<!-- AUTO:tree -->
+scripts/
+├── generate-docs-helpers.js  # Helper functions for generate-docs.js.
+└── generate-docs.js  # Auto-generate CLAUDE.md sections from source code.
 src/
-  index.ts              — Entry point, starts Express server
-  app.ts                — Express app factory (createApp)
-  app.test.ts           — App integration tests
-  routes/
-    health.ts           — GET /health endpoint
-    health.test.ts      — Health endpoint tests
-    users.ts            — CRUD /users endpoints
-    users.test.ts       — Users endpoint tests
-```
-<!-- /AUTO:architecture -->
+├── routes/
+│   ├── health.test.ts
+│   ├── health.ts
+│   ├── users.test.ts
+│   └── users.ts
+├── app.test.ts
+├── app.ts
+└── index.ts
+<!-- /AUTO:tree -->
+
+## Key Modules
+
+<!-- AUTO:modules -->
+| Module | Purpose | Key Exports |
+|--------|---------|-------------|
+| `scripts/generate-docs-helpers.js` | Helper functions for generate-docs.js. | `name()` |
+| `scripts/generate-docs.js` | Auto-generate CLAUDE.md sections from source code. | `replaceMarkers()`, `validateCrossLinks()`, `buildDocsIndex()`, `checkMarkersAreCurrent()` |
+<!-- /AUTO:modules -->
 
 ## Critical Gotchas
 

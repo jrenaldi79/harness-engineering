@@ -56,7 +56,7 @@
           "agentic-workflow": { "pass_max": 0 }
         },
         "recommendations": {
-          "must_mention": ["secret scanning", ".env.example", "TDD", "agentic workflow"],
+          "must_mention": ["secret scanning", ".env.example", "TDD", "agentic workflow", "auto-gen"],
           "must_not_mention": ["run /setup"]
         }
       }
@@ -82,7 +82,7 @@
           "agentic-workflow": { "pass_min": 1 }
         },
         "recommendations": {
-          "must_not_mention": ["run /setup", "install linter", "install test runner"]
+          "must_not_mention": ["run /setup", "install linter", "install test runner", "add auto-generated sections"]
         }
       }
     }
