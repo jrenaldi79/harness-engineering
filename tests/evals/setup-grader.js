@@ -174,7 +174,58 @@ if (expected.rules_have_globs_frontmatter) {
   }
 }
 
-// ─── 8. Existing files preserved ───
+// ─── 8. Auto-documentation pipeline ───
+if (expected.auto_doc_pipeline) {
+  // Check generate-docs scripts exist
+  const genDocsPath = path.join(fixtureDir, 'scripts/generate-docs.js');
+  const genHelpersPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
+  check(
+    'Auto-doc: generate-docs.js exists',
+    pathExists(genDocsPath),
+    pathExists(genDocsPath) ? '' : 'Not found',
+  );
+  check(
+    'Auto-doc: generate-docs-helpers.js exists',
+    pathExists(genHelpersPath),
+    pathExists(genHelpersPath) ? '' : 'Not found',
+  );
+
+  // Check pre-commit hook references generate-docs
+  const hookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
+  if (pathExists(hookPath)) {
+    const hookContent = fs.readFileSync(hookPath, 'utf8');
+    const callsGenDocs = /generate-docs/i.test(hookContent);
+    check(
+      'Auto-doc: pre-commit hook runs generate-docs',
+      callsGenDocs,
+      callsGenDocs ? '' : 'Hook does not reference generate-docs',
+    );
+  } else {
+    check('Auto-doc: pre-commit hook runs generate-docs', false, 'Hook not found');
+  }
+
+  // Check CLAUDE.md has AUTO markers
+  const claudePath = path.join(fixtureDir, 'CLAUDE.md');
+  if (pathExists(claudePath)) {
+    const claudeContent = fs.readFileSync(claudePath, 'utf8');
+    const hasAutoTree = /<!--\s*AUTO:tree\s*-->/.test(claudeContent);
+    const hasAutoModules = /<!--\s*AUTO:modules\s*-->/.test(claudeContent);
+    check(
+      'Auto-doc: CLAUDE.md has AUTO:tree marker',
+      hasAutoTree,
+      hasAutoTree ? '' : 'Missing <!-- AUTO:tree --> marker',
+    );
+    check(
+      'Auto-doc: CLAUDE.md has AUTO:modules marker',
+      hasAutoModules,
+      hasAutoModules ? '' : 'Missing <!-- AUTO:modules --> marker',
+    );
+  } else {
+    check('Auto-doc: CLAUDE.md has AUTO markers', false, 'CLAUDE.md not found');
+  }
+}
+
+// ─── 9. Existing files preserved ───
 for (const filePath of expected.existing_files_preserved || []) {
   const fullPath = path.join(fixtureDir, filePath);
   const exists = pathExists(fullPath);
@@ -185,7 +236,7 @@ for (const filePath of expected.existing_files_preserved || []) {
   );
 }
 
-// ─── 9. Conversation content checks ───
+// ─── 10. Conversation content checks ───
 if (expected.conversation_must_mention) {
   const convPath = path.join(resultDir, 'conversation.txt');
   const conversation = pathExists(convPath)

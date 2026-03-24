@@ -19,6 +19,8 @@
           ".claude/settings.json",
           "scripts/check-secrets.js",
           "scripts/check-file-sizes.js",
+          "scripts/generate-docs.js",
+          "scripts/generate-docs-helpers.js",
           ".git/hooks/pre-commit",
           ".git/hooks/pre-push"
         ],
@@ -33,6 +35,7 @@
           ".env.example",
           ".gitignore"
         ],
+        "auto_doc_pipeline": true,
         "json_valid": [
           "package.json",
           ".claude/settings.json"
@@ -70,10 +73,13 @@
         ],
         "files_should_exist": [
           "scripts/check-file-sizes.js",
+          "scripts/generate-docs.js",
+          "scripts/generate-docs-helpers.js",
           ".claude/rules/tdd.md",
           ".claude/rules/code-quality.md",
           ".env.example"
         ],
+        "auto_doc_pipeline": true,
         "json_valid": [
           "package.json",
           ".claude/settings.json"
