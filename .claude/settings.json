@@ -3,7 +3,7 @@
     "SessionStart": [
       {
         "type": "command",
-        "command": "node skills/setup/scripts/lib/validate-docs.js --full 2>&1 || echo 'WARNING: Documentation drift detected. Run: node skills/setup/scripts/lib/generate-docs.js'"
+        "command": "echo 'Session start: checking repo state...' && git status --short && echo 'Hooks installed:' && ls -1 .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null || echo 'WARNING: Git hooks not installed. Run: bash scripts/install-hooks.sh'"
       }
     ]
   },

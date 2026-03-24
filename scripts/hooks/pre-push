@@ -1,21 +1,30 @@
 #!/usr/bin/env bash
 
 # Pre-push hook for harness-engineering repo
-# 1. Doc validation (drift detection)
+# 1. File size re-check (catches anything missed in pre-commit)
 # 2. Smart test caching (SHA-based skip)
+#
+# Note: validate-docs.js is designed for target projects (checks src/),
+# not for this plugin repo. Skip it here.
 
 set -e
 
 echo "Running pre-push checks..."
 
-# --- Doc validation ---
-if [ -f "skills/setup/scripts/lib/validate-docs.js" ]; then
-  echo "Checking for documentation drift..."
-  node skills/setup/scripts/lib/validate-docs.js --full || {
-    echo -e "\n  BLOCKED: Documentation drift detected."
-    echo -e "  Run 'node skills/setup/scripts/lib/generate-docs.js' to update.\n"
-    exit 1
-  }
+# --- File size re-check on all JS files ---
+echo "Checking file sizes..."
+VIOLATIONS=""
+for file in $(find skills/setup/scripts/lib tests/scripts -name '*.js' 2>/dev/null); do
+  LINES=$(wc -l < "$file")
+  if [ "$LINES" -gt 300 ]; then
+    VIOLATIONS="$VIOLATIONS\n    $file: $LINES lines (limit: 300)"
+  fi
+done
+
+if [ -n "$VIOLATIONS" ]; then
+  echo -e "\n  BLOCKED: File size limit exceeded (max 300 lines):$VIOLATIONS"
+  echo -e "\n  Refactor large files before pushing.\n"
+  exit 1
 fi
 
 # --- Smart test caching ---
@@ -27,13 +36,6 @@ fi
 
 if [ -n "$HEAD_SHA" ] && [ "$HEAD_SHA" = "$CACHED_SHA" ]; then
   echo "Tests already passed for $HEAD_SHA - skipping."
-else
-  echo "Running doc generation check..."
-  node skills/setup/scripts/lib/generate-docs.js --check || {
-    echo -e "\n  BLOCKED: Auto-generated sections are stale."
-    echo -e "  Run 'node skills/setup/scripts/lib/generate-docs.js' to update.\n"
-    exit 1
-  }
 fi
 
 echo "Pre-push checks passed."
