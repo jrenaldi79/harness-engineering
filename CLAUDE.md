@@ -37,6 +37,14 @@ node skills/setup/scripts/lib/validate-docs.js --full     # Check for documentat
 bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 ```
 
+### Releasing
+```bash
+bash scripts/release.sh 1.2.0             # Bump plugin.json, commit, tag
+bash scripts/release.sh 1.2.0 --dry-run   # Preview without changes
+bash scripts/release.sh 1.2.0 --push      # Release and push tag to origin
+```
+Update CHANGELOG.md with a `## [X.Y.Z]` section **before** running the release script.
+
 ---
 
 ## Architecture
@@ -84,6 +92,7 @@ scripts/
 │   └── pre-push
 ├── install-hooks.sh
 ├── README.md
+├── release.sh
 └── repo-generate-docs.js  # Repo-level CLAUDE.md auto-generator.
 tests/
 ├── evals/
@@ -102,6 +111,7 @@ tests/
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
     ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
+    ├── release.test.js  # Tests for scripts/release.sh — validates version bumping, changelog
     └── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
 <!-- /AUTO:tree -->
 
@@ -139,6 +149,7 @@ User runs /setup
 | `skills/setup/scripts/lib/generate-docs.js` | Auto-generate CLAUDE.md sections from source code. |
 | `skills/setup/scripts/lib/validate-docs.js` | CLAUDE.md drift detection script. |
 | `scripts/install-hooks.sh` | Install git hooks for harness-engineering repo. |
+| `scripts/release.sh` | Release script — bumps plugin.json version, validates changelog, commits, and tags. |
 | `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
 | `tests/evals/grader.js` | Readiness Skill Grader |
 | `tests/evals/run-evals.sh` | run-evals.sh |
