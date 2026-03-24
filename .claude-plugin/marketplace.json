@@ -1,13 +1,18 @@
 {
   "name": "harness-engineering",
-  "description": "Analyze and enforce best practices for AI coding agent projects. Assess codebase readiness across 8 pillars with /readiness, then scaffold enforcement with /setup.",
   "owner": { "name": "John Renaldi" },
-  "homepage": "https://github.com/jrenaldi79/harness-engineering",
+  "metadata": {
+    "description": "Analyze and enforce best practices for AI coding agent projects. Assess codebase readiness across 8 pillars with /readiness, then scaffold enforcement with /setup."
+  },
   "plugins": [
     {
       "name": "harness-engineering",
       "description": "Readiness analysis and enforcement scaffolding for AI coding agent projects.",
-      "source": "jrenaldi79/harness-engineering"
+      "source": {
+        "source": "github",
+        "repo": "jrenaldi79/harness-engineering"
+      },
+      "homepage": "https://github.com/jrenaldi79/harness-engineering"
     }
   ]
 }

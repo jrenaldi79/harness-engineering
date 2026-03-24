@@ -2,7 +2,8 @@
  * Tests for .claude-plugin/marketplace.json schema validity.
  *
  * Validates that the marketplace manifest conforms to the expected schema
- * so that `/plugin marketplace add` can install the plugin without errors.
+ * so that `claude plugin marketplace add` can register the marketplace
+ * and `claude plugin install` can install plugins from it.
  *
  * Can be run standalone: node tests/scripts/marketplace-schema.test.js
  * Or via Jest if a jest config is present.
@@ -12,14 +13,13 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const assert = require('node:assert');
 
 const MARKETPLACE_PATH = path.resolve(
   __dirname,
   '../../.claude-plugin/marketplace.json'
 );
 
-const SOURCE_RE = /^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/;
+const VALID_SOURCE_TYPES = ['github', 'url', 'git-subdir', 'npm'];
 
 function validate() {
   const raw = fs.readFileSync(MARKETPLACE_PATH, 'utf8');
@@ -27,18 +27,22 @@ function validate() {
   const errors = [];
 
   // Required top-level fields
-  for (const field of ['name', 'description', 'owner', 'plugins']) {
+  for (const field of ['name', 'owner', 'plugins']) {
     if (!(field in manifest)) {
       errors.push(`missing required field: ${field}`);
     }
   }
 
-  if (typeof manifest.name !== 'string' || !manifest.name) {
-    errors.push('name must be a non-empty string');
+  // Disallowed root-level keys
+  const allowedRootKeys = ['$schema', 'name', 'owner', 'plugins', 'metadata'];
+  for (const key of Object.keys(manifest)) {
+    if (!allowedRootKeys.includes(key)) {
+      errors.push(`unrecognized root-level key: "${key}" (did you mean to put it in metadata or in a plugin entry?)`);
+    }
   }
 
-  if (typeof manifest.description !== 'string' || !manifest.description) {
-    errors.push('description must be a non-empty string');
+  if (typeof manifest.name !== 'string' || !manifest.name) {
+    errors.push('name must be a non-empty string');
   }
 
   // owner must be an object with a name string
@@ -60,15 +64,24 @@ function validate() {
       const p = manifest.plugins[i];
       const prefix = `plugins[${i}]`;
 
-      for (const field of ['name', 'description', 'source']) {
-        if (typeof p[field] !== 'string' || !p[field]) {
-          errors.push(`${prefix}.${field} must be a non-empty string`);
-        }
+      if (typeof p.name !== 'string' || !p.name) {
+        errors.push(`${prefix}.name must be a non-empty string`);
       }
 
-      if (typeof p.source === 'string' && !SOURCE_RE.test(p.source)) {
+      // source must be an object with a valid source type
+      if (typeof p.source === 'string') {
         errors.push(
-          `${prefix}.source must match owner/repo format, got "${p.source}"`
+          `${prefix}.source must be an object (e.g. {"source": "github", "repo": "owner/repo"}), got string "${p.source}"`
+        );
+      } else if (
+        typeof p.source !== 'object' ||
+        p.source === null ||
+        Array.isArray(p.source)
+      ) {
+        errors.push(`${prefix}.source must be an object`);
+      } else if (!VALID_SOURCE_TYPES.includes(p.source.source)) {
+        errors.push(
+          `${prefix}.source.source must be one of: ${VALID_SOURCE_TYPES.join(', ')} (got "${p.source.source}")`
         );
       }
     }
@@ -79,7 +92,6 @@ function validate() {
 
 // Support both standalone execution and Jest
 if (typeof describe === 'function') {
-  // Jest environment
   describe('marketplace.json schema', () => {
     it('passes all schema validations', () => {
       const errors = validate();
@@ -89,7 +101,6 @@ if (typeof describe === 'function') {
     });
   });
 } else {
-  // Standalone execution
   const errors = validate();
   if (errors.length > 0) {
     console.error('marketplace.json schema errors:');

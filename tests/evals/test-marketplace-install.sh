@@ -3,9 +3,10 @@
 # Marketplace Plugin Installation + Smoke Test
 #
 # Tests the full user journey:
-#   1. Install the plugin via `/plugin marketplace add`
-#   2. Run the /readiness skill against a fixture project
-#   3. Verify a readiness report is produced
+#   1. Add the marketplace via `claude plugin marketplace add`
+#   2. Install the plugin via `claude plugin install`
+#   3. Run the /readiness skill against a fixture project
+#   4. Verify a readiness report is produced
 #
 # Usage:
 #   ./tests/evals/test-marketplace-install.sh              # Run the test
@@ -22,7 +23,7 @@ FIXTURE_DIR="$SCRIPT_DIR/fixtures/level-1-bare"
 RESULTS_DIR="$SCRIPT_DIR/results"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 REPO="jrenaldi79/harness-engineering"
-INSTALL_TIMEOUT=120
+PLUGIN_NAME="harness-engineering"
 SKILL_TIMEOUT=300
 
 # Colors
@@ -45,13 +46,9 @@ if ! command -v claude &>/dev/null; then
   exit 1
 fi
 
-if ! command -v jq &>/dev/null; then
-  echo -e "${RED}Error: 'jq' not found. Install it first.${NC}"
-  exit 1
-fi
-
 echo -e "${BLUE}━━━ Marketplace Install + Smoke Test ━━━${NC}"
 echo "  Repo:    $REPO"
+echo "  Plugin:  $PLUGIN_NAME"
 echo "  Fixture: level-1-bare"
 echo ""
 
@@ -66,14 +63,17 @@ cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 (cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
 if [ "$DRY_RUN" = true ]; then
-  echo -e "  ${BLUE}[DRY RUN] Step 1 — Install plugin:${NC}"
+  echo -e "  ${BLUE}[DRY RUN] Step 1 — Add marketplace:${NC}"
+  echo "    claude plugin marketplace add $REPO --scope local"
+  echo ""
+  echo -e "  ${BLUE}[DRY RUN] Step 2 — Install plugin:${NC}"
+  echo "    claude plugin install $PLUGIN_NAME --scope local"
+  echo ""
+  echo -e "  ${BLUE}[DRY RUN] Step 3 — Run /readiness skill:${NC}"
   echo "    cd $TMP_DIR"
-  echo "    claude -p \"/plugin marketplace add $REPO\" --output-format json"
+  echo "    claude -p \"Run a readiness analysis...\" --output-format json"
   echo ""
-  echo -e "  ${BLUE}[DRY RUN] Step 2 — Run /readiness skill:${NC}"
-  echo "    claude -p \"Run a readiness analysis on this project. Output the full readiness report.\" --output-format json"
-  echo ""
-  echo -e "  ${BLUE}[DRY RUN] Step 3 — Verify report:${NC}"
+  echo -e "  ${BLUE}[DRY RUN] Step 4 — Verify report:${NC}"
   echo "    Check .claude/readiness-report.md exists and contains expected sections"
   echo ""
   exit 0
@@ -85,43 +85,74 @@ FAIL_COUNT=0
 pass() { echo -e "  ${GREEN}✓ $1${NC}"; PASS_COUNT=$((PASS_COUNT + 1)); }
 fail() { echo -e "  ${RED}✗ $1${NC}"; FAIL_COUNT=$((FAIL_COUNT + 1)); }
 
-# ─── Step 1: Install the plugin via marketplace ───
-echo -e "${YELLOW}Step 1: Install plugin via marketplace${NC}"
+# ─── Step 1: Add the marketplace ───
+echo -e "${YELLOW}Step 1: Add marketplace${NC}"
+EXIT_CODE=0
+
+ADD_OUTPUT=$(
+  cd "$TMP_DIR" && \
+  claude plugin marketplace add "$REPO" --scope local \
+    2>"$RESULT_DIR/marketplace-add-stderr.log"
+) || EXIT_CODE=$?
+
+echo "$ADD_OUTPUT" > "$RESULT_DIR/marketplace-add-output.txt"
+
+if [ $EXIT_CODE -ne 0 ]; then
+  fail "marketplace add exited with code $EXIT_CODE"
+  cat "$RESULT_DIR/marketplace-add-stderr.log" 2>/dev/null | sed 's/^/    /'
+  echo ""
+  echo -e "${RED}━━━ Result: FAIL (cannot continue without marketplace) ━━━${NC}"
+  exit 1
+fi
+
+pass "Marketplace added successfully"
+
+# Verify marketplace is listed
+LIST_OUTPUT=$(cd "$TMP_DIR" && claude plugin marketplace list 2>/dev/null) || true
+echo "$LIST_OUTPUT" > "$RESULT_DIR/marketplace-list-output.txt"
+
+if echo "$LIST_OUTPUT" | grep -qi "$PLUGIN_NAME\|$REPO"; then
+  pass "Marketplace appears in listing"
+else
+  fail "Marketplace not found in listing"
+fi
+echo ""
+
+# ─── Step 2: Install the plugin ───
+echo -e "${YELLOW}Step 2: Install plugin${NC}"
 EXIT_CODE=0
 
 INSTALL_OUTPUT=$(
   cd "$TMP_DIR" && \
-  timeout "${INSTALL_TIMEOUT}s" claude \
-    -p "/plugin marketplace add $REPO" \
-    --output-format json \
+  claude plugin install "$PLUGIN_NAME" --scope local \
     2>"$RESULT_DIR/install-stderr.log"
 ) || EXIT_CODE=$?
 
-echo "$INSTALL_OUTPUT" > "$RESULT_DIR/install-output.json"
-INSTALL_RESULT=$(echo "$INSTALL_OUTPUT" | jq -r '.result // empty' 2>/dev/null || echo "$INSTALL_OUTPUT")
-echo "$INSTALL_RESULT" > "$RESULT_DIR/install-result.txt"
+echo "$INSTALL_OUTPUT" > "$RESULT_DIR/install-output.txt"
 
 if [ $EXIT_CODE -ne 0 ]; then
-  fail "Install command exited with code $EXIT_CODE"
+  fail "Plugin install exited with code $EXIT_CODE"
   cat "$RESULT_DIR/install-stderr.log" 2>/dev/null | sed 's/^/    /'
   echo ""
-  echo -e "${RED}━━━ Result: FAIL (cannot continue without install) ━━━${NC}"
-  exit 1
-fi
-
-if echo "$INSTALL_RESULT" | grep -qi "error\|invalid\|failed\|schema"; then
-  fail "Install output contains error indicators"
-  echo "$INSTALL_RESULT" | head -5 | sed 's/^/    /'
-  echo ""
-  echo -e "${RED}━━━ Result: FAIL (cannot continue without install) ━━━${NC}"
+  echo -e "${RED}━━━ Result: FAIL (cannot continue without plugin) ━━━${NC}"
   exit 1
 fi
 
 pass "Plugin installed successfully"
+
+# Verify plugin is listed
+PLUGIN_LIST=$(cd "$TMP_DIR" && claude plugin list 2>/dev/null) || true
+echo "$PLUGIN_LIST" > "$RESULT_DIR/plugin-list-output.txt"
+
+if echo "$PLUGIN_LIST" | grep -qi "$PLUGIN_NAME"; then
+  pass "Plugin appears in installed list"
+else
+  fail "Plugin not found in installed list"
+fi
 echo ""
 
-# ─── Step 2: Run the /readiness skill using the marketplace-installed plugin ───
-echo -e "${YELLOW}Step 2: Run /readiness skill via installed plugin${NC}"
+# ─── Step 3: Run /readiness skill via the installed plugin ───
+echo -e "${YELLOW}Step 3: Run /readiness skill via installed plugin${NC}"
 EXIT_CODE=0
 
 SKILL_OUTPUT=$(
@@ -146,8 +177,8 @@ else
 fi
 echo ""
 
-# ─── Step 3: Verify the readiness report ───
-echo -e "${YELLOW}Step 3: Verify readiness report${NC}"
+# ─── Step 4: Verify the readiness report ───
+echo -e "${YELLOW}Step 4: Verify readiness report${NC}"
 
 REPORT_PATH="$TMP_DIR/.claude/readiness-report.md"
 

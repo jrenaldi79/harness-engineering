@@ -62,16 +62,31 @@ if [ -f "$MARKETPLACE" ]; then
     SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - owner must be an object (got $OWNER_TYPE)"
   fi
 
-  # each plugin source must match owner/repo format
-  BAD_SOURCES=$(jq -r '.plugins[]?.source // empty' "$MARKETPLACE" | grep -vE '^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$' || true)
-  if [ -n "$BAD_SOURCES" ]; then
-    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - invalid plugin source(s): $BAD_SOURCES"
+  # reject unrecognized root-level keys
+  BAD_KEYS=$(jq -r 'keys[] | select(. != "$schema" and . != "name" and . != "owner" and . != "plugins" and . != "metadata")' "$MARKETPLACE" || true)
+  if [ -n "$BAD_KEYS" ]; then
+    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - unrecognized root-level keys: $BAD_KEYS"
+  fi
+
+  # each plugin source must be an object, not a string
+  STRING_SOURCES=$(jq -r '.plugins[]? | select(.source | type == "string") | .name' "$MARKETPLACE" || true)
+  if [ -n "$STRING_SOURCES" ]; then
+    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - plugin source must be an object, not a string (in: $STRING_SOURCES)"
   fi
 
   if [ -n "$SCHEMA_ERRORS" ]; then
     echo -e "${RED}Error: marketplace.json has schema errors:${SCHEMA_ERRORS}${NC}"
     exit 1
   fi
+
+  # Run claude plugin validate if available (authoritative check)
+  if command -v claude &>/dev/null; then
+    if ! claude plugin validate "$PLUGIN_DIR" 2>&1; then
+      echo -e "${RED}Error: claude plugin validate failed${NC}"
+      exit 1
+    fi
+  fi
+
   echo -e "${GREEN}  marketplace.json schema OK${NC}"
   echo ""
 fi
