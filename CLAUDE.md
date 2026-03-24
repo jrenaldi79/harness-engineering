@@ -19,8 +19,8 @@ This file provides guidance to Claude Code when working with code in this reposi
 ### Testing
 ```bash
 node --experimental-vm-modules node_modules/.bin/jest tests/scripts/   # Unit tests for setup scripts
-bash tests/evals/run-evals.sh                                          # E2E evals against fixture projects
-node tests/evals/grader.js                                             # Grade eval results
+bash tests/evals/run-evals.sh                                          # E2E readiness evals (default)
+bash tests/evals/run-evals.sh --config setup-eval-config.json          # E2E setup evals
 bash tests/evals/test-marketplace-install.sh                           # Test plugin install flow
 ```
 
@@ -58,7 +58,7 @@ harness-engineering/
 │       └── references/       # Stack patterns, enforcement docs, quality guide
 ├── tests/
 │   ├── scripts/              # Unit tests for setup scripts (Jest)
-│   └── evals/                # E2E evaluation suite with 3 fixture projects (level 1/3/5)
+│   └── evals/                # E2E evaluation suites (readiness: 3 fixtures, setup: 2 fixtures)
 ├── assets/                   # Pipeline diagram SVG, social images
 └── README.md                 # Reference guide and documentation
 ```
