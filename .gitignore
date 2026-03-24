@@ -1,6 +1,12 @@
 repomix-output.xml
 node_modules/
+package-lock.json
 .test-passed
 *.log
 .superpowers/
 docs/superpowers/
+.env
+.env.local
+coverage/
+dist/
+build/

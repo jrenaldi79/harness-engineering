@@ -1,0 +1,66 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "echo 'Session start: checking repo state...' && git status --short && echo 'Hooks installed:' && ls -1 .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null || echo 'WARNING: Git hooks not installed. Run: bash scripts/install-hooks.sh'"
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "node --experimental-vm-modules*",
+      "node skills/*",
+      "node tests/*",
+      "npx jest*",
+      "bash tests/*",
+      "git status",
+      "git diff*",
+      "git log*",
+      "git branch*",
+      "git add*",
+      "git commit*",
+      "git stash*",
+      "git checkout*",
+      "git switch*",
+      "git merge*",
+      "git rebase*",
+      "ls*",
+      "cat*",
+      "head*",
+      "tail*",
+      "wc*",
+      "find*",
+      "grep*",
+      "which*",
+      "echo*",
+      "mkdir*"
+    ],
+    "deny": [
+      "rm -rf /",
+      "rm -rf ~",
+      "rm -rf /*",
+      "rm -rf ~/*",
+      "rm -rf .",
+      "rm -rf ..",
+      "git push --force",
+      "git push -f",
+      "git push origin --force",
+      "git push origin -f",
+      "git reset --hard",
+      "git clean -fd",
+      "git clean -fdx",
+      "git checkout -- .",
+      "chmod -R 777*",
+      "curl * | sh",
+      "curl * | bash",
+      "wget * | sh",
+      "wget * | bash",
+      "npm publish",
+      "> /dev/sda*",
+      "dd if=*",
+      "mkfs*",
+      ":(){ :|:& };:"
+    ]
+  }
+}

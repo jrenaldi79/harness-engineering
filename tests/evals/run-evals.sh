@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 #
-# Readiness Skill Eval Runner
+# Skill Eval Runner
 #
 # Copies each fixture to a temp directory (with a git repo init),
 # runs `claude -p` with --plugin-dir pointing at the harness-engineering plugin,
 # captures output, and passes results to the grader.
 #
 # Usage:
-#   ./tests/evals/run-evals.sh                    # Run all test cases
-#   ./tests/evals/run-evals.sh level-1-bare       # Run a single test case
-#   ./tests/evals/run-evals.sh --dry-run          # Show what would run without executing
+#   ./tests/evals/run-evals.sh                                      # Run all readiness test cases (default)
+#   ./tests/evals/run-evals.sh --config setup-eval-config.json      # Run all setup test cases
+#   ./tests/evals/run-evals.sh level-1-bare                         # Run a single test case
+#   ./tests/evals/run-evals.sh --dry-run                            # Show what would run without executing
 #
 set -euo pipefail
 
@@ -29,26 +30,29 @@ NC='\033[0m'
 
 DRY_RUN=false
 FILTER=""
+CONFIG_OVERRIDE=""
 
 # Parse args
-for arg in "$@"; do
-  case $arg in
-    --dry-run) DRY_RUN=true ;;
-    *) FILTER="$arg" ;;
+while [ $# -gt 0 ]; do
+  case $1 in
+    --dry-run) DRY_RUN=true; shift ;;
+    --config) CONFIG_OVERRIDE="$2"; shift 2 ;;
+    *) FILTER="$1"; shift ;;
   esac
 done
 
-# Ensure dependencies
-if ! command -v claude &>/dev/null; then
-  echo -e "${RED}Error: 'claude' CLI not found. Install Claude Code first.${NC}"
-  echo "  npm install -g @anthropic-ai/claude-code"
-  exit 1
+# Allow --config to override the default eval-config.json
+if [ -n "$CONFIG_OVERRIDE" ]; then
+  if [[ "$CONFIG_OVERRIDE" = /* ]]; then
+    CONFIG="$CONFIG_OVERRIDE"
+  else
+    CONFIG="$SCRIPT_DIR/$CONFIG_OVERRIDE"
+  fi
 fi
 
-if ! command -v jq &>/dev/null; then
-  echo -e "${RED}Error: 'jq' not found. Install it first.${NC}"
-  exit 1
-fi
+# Ensure dependencies
+command -v claude &>/dev/null || { echo -e "${RED}Error: 'claude' CLI not found.${NC}"; exit 1; }
+command -v jq &>/dev/null || { echo -e "${RED}Error: 'jq' not found.${NC}"; exit 1; }
 
 # Validate marketplace.json schema before running evals
 MARKETPLACE="$PLUGIN_DIR/.claude-plugin/marketplace.json"
@@ -94,23 +98,27 @@ fi
 mkdir -p "$RESULTS_DIR"
 
 # Read test cases from config — ONLY extract names/fixtures/descriptions, never expected values
+SKILL=$(jq -r '.skill' "$CONFIG")
 PROMPT=$(jq -r '.prompt' "$CONFIG")
 TIMEOUT=$(jq -r '.timeout_seconds' "$CONFIG")
-TEST_CASES=$(jq -c '.test_cases[] | {name, fixture, description}' "$CONFIG")
+CUSTOM_GRADER=$(jq -r '.grader // empty' "$CONFIG")
+TEST_CASES=$(jq -c '.test_cases[] | {name, fixture, description, prompt}' "$CONFIG")
+
+# Resolve grader: use config-specified grader, or default to grader.js
+if [ -n "$CUSTOM_GRADER" ]; then
+  GRADER="$SCRIPT_DIR/$CUSTOM_GRADER"
+fi
 
 TOTAL=0
 PASSED=0
 FAILED=0
 ERRORS=0
 
+SKILL_LABEL=$(echo "$SKILL" | sed 's/.*/\u&/')
 echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-echo -e "${BLUE}║   Harness Readiness Skill Eval Suite     ║${NC}"
-echo -e "${BLUE}║   $(date '+%Y-%m-%d %H:%M:%S')                    ║${NC}"
+printf "${BLUE}║   Harness %-7s Skill Eval Suite     ║${NC}\n" "$SKILL_LABEL"
 echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
-echo ""
-echo "Plugin dir:  $PLUGIN_DIR"
-echo "Config:      $CONFIG"
-echo "Results dir: $RESULTS_DIR"
+echo "Plugin: $PLUGIN_DIR | Config: $(basename "$CONFIG")"
 echo ""
 
 run_test_case() {
@@ -139,22 +147,20 @@ run_test_case() {
   # Copy fixture into temp dir
   cp -r "$fixture_path/." "$tmp_dir/"
 
-  # Initialize git repo (required for readiness skill)
   (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
-
   mkdir -p "$result_dir"
+  local tc_prompt=$(echo "$tc" | jq -r '.prompt // empty')
+  local effective_prompt="${tc_prompt:-$PROMPT}"
 
   if [ "$DRY_RUN" = true ]; then
     echo -e "  ${BLUE}[DRY RUN] Would execute:${NC}"
     echo "    cd $tmp_dir"
-    echo "    claude --plugin-dir $PLUGIN_DIR -p \"...\" --allowedTools 'Bash,Read,Glob,Grep,Write,Agent' --permission-mode acceptEdits --output-format json"
+    echo "    claude --plugin-dir $PLUGIN_DIR -p \"...\" --allowedTools 'Bash,Read,Glob,Grep,Write,Agent,Edit' --permission-mode acceptEdits --output-format json"
     echo ""
     return 0
   fi
 
   echo -e "  ${BLUE}Running claude in $tmp_dir ...${NC}"
-
-  # Run Claude with the readiness skill
   local start_time=$(date +%s)
   local claude_output=""
   local exit_code=0
@@ -163,8 +169,8 @@ run_test_case() {
     cd "$tmp_dir" && \
     timeout "${TIMEOUT}s" claude \
       --plugin-dir "$PLUGIN_DIR" \
-      -p "You are analyzing the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $PROMPT" \
-      --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
+      -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $effective_prompt" \
+      --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
       --permission-mode acceptEdits \
       --output-format json \
       2>"$result_dir/stderr.log"
@@ -190,12 +196,22 @@ run_test_case() {
   # Extract the conversation result
   echo "$claude_output" | jq -r '.result // empty' > "$result_dir/conversation.txt" 2>/dev/null || true
 
-  # Check if readiness report was created
-  if [ -f "$tmp_dir/.claude/readiness-report.md" ]; then
-    cp "$tmp_dir/.claude/readiness-report.md" "$result_dir/readiness-report.md"
-    echo -e "  ${GREEN}✓ Report file created${NC}"
-  else
-    echo -e "  ${RED}✗ Report file NOT created${NC}"
+  # Capture skill-specific artifacts
+  if [ "$SKILL" = "readiness" ]; then
+    if [ -f "$tmp_dir/.claude/readiness-report.md" ]; then
+      cp "$tmp_dir/.claude/readiness-report.md" "$result_dir/readiness-report.md"
+      echo -e "  ${GREEN}✓ Report file created${NC}"
+    else
+      echo -e "  ${RED}✗ Report file NOT created${NC}"
+    fi
+  elif [ "$SKILL" = "setup" ]; then
+    for f in CLAUDE.md package.json .prettierrc .gitignore .env.example; do
+      [ -f "$tmp_dir/$f" ] && cp "$tmp_dir/$f" "$result_dir/" 2>/dev/null || true
+    done
+    for d in .claude/settings.json .claude/rules; do
+      [ -e "$tmp_dir/$d" ] && { mkdir -p "$(dirname "$result_dir/$d")"; cp -r "$tmp_dir/$d" "$result_dir/$d" 2>/dev/null || true; }
+    done
+    echo -e "  ${GREEN}✓ Setup artifacts captured${NC}"
   fi
 
   # Run grader
@@ -234,9 +250,9 @@ run_test_case() {
   trap - EXIT
 }
 
-# Run marketplace install test (if not filtered to a specific readiness test case)
+# Run marketplace install test (only for readiness evals, not filtered to a specific test case)
 INSTALL_TEST="$SCRIPT_DIR/test-marketplace-install.sh"
-if [ -x "$INSTALL_TEST" ] && [ -z "$FILTER" -o "$FILTER" = "marketplace-install" ]; then
+if [ "$SKILL" = "readiness" ] && [ -x "$INSTALL_TEST" ] && [ -z "$FILTER" -o "$FILTER" = "marketplace-install" ]; then
   TOTAL=$((TOTAL + 1))
   INSTALL_ARGS=""
   if [ "$DRY_RUN" = true ]; then
@@ -250,7 +266,7 @@ if [ -x "$INSTALL_TEST" ] && [ -z "$FILTER" -o "$FILTER" = "marketplace-install"
   echo ""
 fi
 
-# Run all readiness test cases
+# Run all test cases
 if [ "$FILTER" != "marketplace-install" ]; then
   while IFS= read -r tc; do
     run_test_case "$tc"
@@ -259,15 +275,9 @@ fi
 
 # Summary
 echo -e "${BLUE}━━━ Summary ━━━${NC}"
-echo -e "  Total:  $TOTAL"
-echo -e "  ${GREEN}Passed: $PASSED${NC}"
-echo -e "  ${RED}Failed: $FAILED${NC}"
-echo -e "  ${YELLOW}Errors: $ERRORS${NC}"
+echo -e "  Total: $TOTAL | ${GREEN}Passed: $PASSED${NC} | ${RED}Failed: $FAILED${NC} | ${YELLOW}Errors: $ERRORS${NC}"
+[ -n "$RESULTS_DIR" ] && echo "Results: $RESULTS_DIR/$TIMESTAMP/"
 echo ""
-
-if [ "$RESULTS_DIR" != "" ]; then
-  echo "Results saved to: $RESULTS_DIR/$TIMESTAMP/"
-fi
 
 # Write summary JSON
 if [ "$DRY_RUN" = false ] && [ $TOTAL -gt 0 ]; then

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Pre-commit hook for harness-engineering repo
+# 1. Secret detection (reuses check-secrets.js from setup scripts)
+# 2. File size enforcement (300-line limit on JS files)
+
+set -e
+
+echo "Running pre-commit checks..."
+
+# --- Secret scanning ---
+# check-secrets.js scans staged files and exits 1 if secrets found
+node skills/setup/scripts/lib/check-secrets.js
+
+# --- File size enforcement (adapted for this repo's layout) ---
+# This repo has JS in skills/setup/scripts/lib/ and tests/scripts/
+STAGED_JS=$(git diff --cached --name-only --diff-filter=ACM | grep '\.js$' || true)
+
+if [ -n "$STAGED_JS" ]; then
+  VIOLATIONS=""
+  for file in $STAGED_JS; do
+    # Skip fixtures (intentionally broken)
+    case "$file" in tests/evals/fixtures/*) continue ;; esac
+
+    LINES=$(wc -l < "$file")
+    if [ "$LINES" -gt 300 ]; then
+      VIOLATIONS="$VIOLATIONS\n    $file: $LINES lines (limit: 300)"
+    fi
+  done
+
+  if [ -n "$VIOLATIONS" ]; then
+    echo -e "\n  BLOCKED: File size limit exceeded (max 300 lines):$VIOLATIONS"
+    echo -e "\n  Refactor large files before committing.\n"
+    exit 1
+  fi
+fi
+
+# --- Auto-regenerate CLAUDE.md sections ---
+node scripts/repo-generate-docs.js
+
+echo "Pre-commit checks passed."
