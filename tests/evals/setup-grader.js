@@ -58,6 +58,25 @@ function isExecutable(p) {
   }
 }
 
+// ─── 0. Setup report ───
+const reportPath = path.join(fixtureDir, '.claude/setup-report.md');
+let reportFrontmatter = {};
+check('Setup report created', pathExists(reportPath));
+if (pathExists(reportPath)) {
+  const fmMatch = fs.readFileSync(reportPath, 'utf8').match(/^---\n([\s\S]*?)\n---/);
+  if (fmMatch) {
+    check('Report has YAML frontmatter', true);
+    for (const line of fmMatch[1].split('\n')) {
+      const kv = line.match(/^(\w[\w_-]*)\s*:\s*(.+)$/);
+      if (kv) reportFrontmatter[kv[1]] = kv[2].trim();
+    }
+    check('Report has stack', !!reportFrontmatter.stack, reportFrontmatter.stack || 'Missing');
+    check('Report status complete', reportFrontmatter.status === 'complete', reportFrontmatter.status || 'Missing');
+  } else {
+    check('Report has YAML frontmatter', false, 'No --- delimiters');
+  }
+}
+
 // ─── 1. Required files must exist ───
 for (const filePath of expected.files_must_exist || []) {
   const fullPath = path.join(fixtureDir, filePath);
@@ -169,52 +188,22 @@ if (expected.rules_have_globs_frontmatter) {
 
 // ─── 8. Auto-documentation pipeline ───
 if (expected.auto_doc_pipeline) {
-  // Check generate-docs scripts exist
-  const genDocsPath = path.join(fixtureDir, 'scripts/generate-docs.js');
-  const genHelpersPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
-  check(
-    'Auto-doc: generate-docs.js exists',
-    pathExists(genDocsPath),
-    pathExists(genDocsPath) ? '' : 'Not found',
-  );
-  check(
-    'Auto-doc: generate-docs-helpers.js exists',
-    pathExists(genHelpersPath),
-    pathExists(genHelpersPath) ? '' : 'Not found',
-  );
+  const gdPath = path.join(fixtureDir, 'scripts/generate-docs.js');
+  const ghPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
+  check('Auto-doc: generate-docs.js exists', pathExists(gdPath), pathExists(gdPath) ? '' : 'Not found');
+  check('Auto-doc: helpers exists', pathExists(ghPath), pathExists(ghPath) ? '' : 'Not found');
 
-  // Check pre-commit hook references generate-docs (check both locations)
-  const gitHookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
-  const huskyHookPath = path.join(fixtureDir, '.husky/pre-commit');
-  const preCommitPath = pathExists(gitHookPath) ? gitHookPath : pathExists(huskyHookPath) ? huskyHookPath : null;
-  if (preCommitPath) {
-    const hookContent = fs.readFileSync(preCommitPath, 'utf8');
-    const callsGenDocs = /generate-docs/i.test(hookContent);
-    check(
-      'Auto-doc: pre-commit hook runs generate-docs',
-      callsGenDocs,
-      callsGenDocs ? '' : 'Hook does not reference generate-docs',
-    );
-  } else {
-    check('Auto-doc: pre-commit hook runs generate-docs', false, 'No pre-commit hook found');
-  }
+  const gitHook = path.join(fixtureDir, '.git/hooks/pre-commit');
+  const huskyHook = path.join(fixtureDir, '.husky/pre-commit');
+  const hookFile = pathExists(gitHook) ? gitHook : pathExists(huskyHook) ? huskyHook : null;
+  const hookOk = hookFile && /generate-docs/i.test(fs.readFileSync(hookFile, 'utf8'));
+  check('Auto-doc: hook runs generate-docs', hookOk, hookOk ? '' : 'Not found or missing reference');
 
-  // Check CLAUDE.md has AUTO markers
-  const claudePath = path.join(fixtureDir, 'CLAUDE.md');
-  if (pathExists(claudePath)) {
-    const claudeContent = fs.readFileSync(claudePath, 'utf8');
-    const hasAutoTree = /<!--\s*AUTO:tree\s*-->/.test(claudeContent);
-    const hasAutoModules = /<!--\s*AUTO:modules\s*-->/.test(claudeContent);
-    check(
-      'Auto-doc: CLAUDE.md has AUTO:tree marker',
-      hasAutoTree,
-      hasAutoTree ? '' : 'Missing <!-- AUTO:tree --> marker',
-    );
-    check(
-      'Auto-doc: CLAUDE.md has AUTO:modules marker',
-      hasAutoModules,
-      hasAutoModules ? '' : 'Missing <!-- AUTO:modules --> marker',
-    );
+  const cPath = path.join(fixtureDir, 'CLAUDE.md');
+  if (pathExists(cPath)) {
+    const c = fs.readFileSync(cPath, 'utf8');
+    check('Auto-doc: AUTO:tree marker', /<!--\s*AUTO:tree\s*-->/.test(c));
+    check('Auto-doc: AUTO:modules marker', /<!--\s*AUTO:modules\s*-->/.test(c));
   } else {
     check('Auto-doc: CLAUDE.md has AUTO markers', false, 'CLAUDE.md not found');
   }

@@ -54,44 +54,14 @@ fi
 command -v claude &>/dev/null || { echo -e "${RED}Error: 'claude' CLI not found.${NC}"; exit 1; }
 command -v jq &>/dev/null || { echo -e "${RED}Error: 'jq' not found.${NC}"; exit 1; }
 
-# Validate marketplace.json schema before running evals
-MARKETPLACE="$PLUGIN_DIR/.claude-plugin/marketplace.json"
-if [ -f "$MARKETPLACE" ]; then
-  echo -e "${BLUE}Validating marketplace.json schema...${NC}"
-  SCHEMA_ERRORS=""
-
-  # owner must be an object, not a string
-  OWNER_TYPE=$(jq -r '.owner | type' "$MARKETPLACE")
-  if [ "$OWNER_TYPE" != "object" ]; then
-    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - owner must be an object (got $OWNER_TYPE)"
-  fi
-
-  # reject unrecognized root-level keys
-  BAD_KEYS=$(jq -r 'keys[] | select(. != "$schema" and . != "name" and . != "owner" and . != "plugins" and . != "metadata")' "$MARKETPLACE" || true)
-  if [ -n "$BAD_KEYS" ]; then
-    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - unrecognized root-level keys: $BAD_KEYS"
-  fi
-
-  # each plugin source must be an object, not a string
-  STRING_SOURCES=$(jq -r '.plugins[]? | select(.source | type == "string") | .name' "$MARKETPLACE" || true)
-  if [ -n "$STRING_SOURCES" ]; then
-    SCHEMA_ERRORS="${SCHEMA_ERRORS}\n  - plugin source must be an object, not a string (in: $STRING_SOURCES)"
-  fi
-
-  if [ -n "$SCHEMA_ERRORS" ]; then
-    echo -e "${RED}Error: marketplace.json has schema errors:${SCHEMA_ERRORS}${NC}"
+# Validate plugin manifest
+if command -v claude &>/dev/null && [ -f "$PLUGIN_DIR/.claude-plugin/marketplace.json" ]; then
+  echo -e "${BLUE}Validating plugin manifest...${NC}"
+  if ! claude plugin validate "$PLUGIN_DIR" 2>&1; then
+    echo -e "${RED}Error: claude plugin validate failed${NC}"
     exit 1
   fi
-
-  # Run claude plugin validate if available (authoritative check)
-  if command -v claude &>/dev/null; then
-    if ! claude plugin validate "$PLUGIN_DIR" 2>&1; then
-      echo -e "${RED}Error: claude plugin validate failed${NC}"
-      exit 1
-    fi
-  fi
-
-  echo -e "${GREEN}  marketplace.json schema OK${NC}"
+  echo -e "${GREEN}  manifest OK${NC}"
   echo ""
 fi
 
@@ -211,6 +181,11 @@ run_test_case() {
     for d in .claude scripts docs src tests .husky .git/hooks; do
       [ -d "$tmp_dir/$d" ] && { mkdir -p "$result_dir/$d"; cp -r "$tmp_dir/$d/." "$result_dir/$d/" 2>/dev/null || true; }
     done
+    if [ -f "$tmp_dir/.claude/setup-report.md" ]; then
+      echo -e "  ${GREEN}✓ Setup report created${NC}"
+    else
+      echo -e "  ${RED}✗ Setup report NOT created${NC}"
+    fi
     echo -e "  ${GREEN}✓ Setup artifacts captured${NC}"
   fi
 

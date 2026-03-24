@@ -184,19 +184,54 @@ If any check fails, fix the issue immediately (e.g., `chmod +x` a hook, regenera
 
 ---
 
-## Phase 7: Summary
+## Phase 7: Write Setup Report
 
-After all phases complete and verification passes, output a summary that includes:
+Write `.claude/setup-report.md` with YAML frontmatter summarizing everything that was done. This is a persistent state artifact that documents what the skill installed and what passed verification.
 
-1. **What was installed** — list every file created or modified
-2. **Verification results** — confirm all 6 checks passed
-3. **Key commands** for the stack:
-   - How to run tests
-   - How to run the linter
-   - How to make a commit (hooks fire automatically)
-4. **TDD reminder**: "Write tests first. Red (failing test) → Green (passing) → Refactor. Never write implementation before a test exists."
-5. **Suggested next steps**:
-   - Fill in the `[bracketed placeholders]` in CLAUDE.md
-   - Review and expand the Architecture section
-   - Add the first real feature with a test
+```markdown
+---
+generated: YYYY-MM-DD
+stack: node-typescript (or python, go, rust, cpp)
+framework: express (or fastapi, gin, none, etc.)
+project_name: myapp
+status: complete (or partial if any verification failed)
+files_created:
+  - package.json
+  - CLAUDE.md
+  - .claude/settings.json
+  - scripts/check-secrets.js
+  - (list every file created)
+files_modified:
+  - (list any existing files that were changed)
+verification:
+  hooks_executable: true
+  enforcement_scripts: true
+  claude_md_sections: true
+  agent_config_valid: true
+  auto_doc_pipeline: true
+  linter_clean: true (or skipped)
+---
+
+# Setup Report
+
+## What Was Installed
+(list every file, grouped by category)
+
+## Verification Results
+(pass/fail for each of the 6 checks from Phase 6)
+
+## Key Commands
+(stack-appropriate commands for test, lint, commit)
+
+## Next Steps
+- Fill in the `[bracketed placeholders]` in CLAUDE.md
+- Review and expand the Architecture section
+- Add the first real feature with a test
+```
+
+After writing the report, also output a human-readable summary to the conversation that includes:
+
+1. **Status** — complete or partial
+2. **Key commands** for the stack
+3. **TDD reminder**: "Write tests first. Red → Green → Refactor."
    - Make the first commit to initialize git history
