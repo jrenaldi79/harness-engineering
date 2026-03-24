@@ -60,6 +60,26 @@ describe('--name flag', () => {
 });
 
 // ---------------------------------------------------------------------------
+// --in-place: uses name for package.json but stays in current directory
+// ---------------------------------------------------------------------------
+describe('--in-place flag', () => {
+  it('scaffolds in current directory, not a subdirectory', () => {
+    runScript(['--name=myapp', '--framework=none', '--skip-install', '--in-place'], tmpDir);
+
+    expect(fs.existsSync(path.join(tmpDir, 'package.json'))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'src'))).toBe(true);
+    expect(fs.existsSync(path.join(tmpDir, 'myapp'))).toBe(false);
+  });
+
+  it('uses the --name value in package.json', () => {
+    runScript(['--name=myapp', '--framework=none', '--skip-install', '--in-place'], tmpDir);
+
+    const pkg = JSON.parse(fs.readFileSync(path.join(tmpDir, 'package.json'), 'utf8'));
+    expect(pkg.name).toBe('myapp');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // No --name: initializes in current directory
 // ---------------------------------------------------------------------------
 describe('no --name flag', () => {

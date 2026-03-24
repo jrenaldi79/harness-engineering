@@ -20,11 +20,12 @@ const childProcess = require('node:child_process');
 const VALID_FRAMEWORKS = ['vite', 'nextjs', 'express', 'fastify', 'none'];
 
 function parseArgs(argv) {
-  const flags = { name: null, framework: 'none', skipInstall: false };
+  const flags = { name: null, framework: 'none', skipInstall: false, inPlace: false };
   for (const arg of argv.slice(2)) {
     if (arg.startsWith('--name=')) flags.name = arg.slice('--name='.length);
     else if (arg.startsWith('--framework=')) flags.framework = arg.slice('--framework='.length);
     else if (arg === '--skip-install') flags.skipInstall = true;
+    else if (arg === '--in-place') flags.inPlace = true;
   }
   if (!VALID_FRAMEWORKS.includes(flags.framework)) {
     console.error('Unknown framework "' + flags.framework + '". Must be one of: ' + VALID_FRAMEWORKS.join(', '));
@@ -86,12 +87,12 @@ function main() {
 
   // Resolve working directory
   let projectDir = process.cwd();
-  if (flags.name) {
+  if (flags.name && !flags.inPlace) {
     projectDir = path.join(process.cwd(), flags.name);
     fs.mkdirSync(projectDir, { recursive: true });
   }
 
-  const projectName = path.basename(projectDir);
+  const projectName = flags.name || path.basename(projectDir);
 
   // Git init if needed
   if (!fs.existsSync(path.join(projectDir, '.git'))) {

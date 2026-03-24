@@ -69,8 +69,14 @@ Skip this phase entirely for existing projects.
 **Node/TypeScript path (fast path — script does the work):**
 
 ```bash
+# If the current directory is empty, scaffold in place:
+node $SCRIPTS_DIR/init-project.js --name=<name> --framework=<framework> --in-place
+
+# If the user wants a new subdirectory (rare — only when explicitly requested):
 node $SCRIPTS_DIR/init-project.js --name=<name> --framework=<framework>
 ```
+
+Default to `--in-place` unless the user explicitly asks to create a new directory.
 
 **All other stacks (adaptive path — Claude does the work):**
 

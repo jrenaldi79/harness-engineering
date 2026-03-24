@@ -139,7 +139,7 @@ User runs /setup
 | Module | Purpose |
 |--------|---------|
 | `skills/readiness/SKILL.md` | Harness Readiness Report |
-| `skills/setup/SKILL.md` | Setup Report |
+| `skills/setup/SKILL.md` | If the current directory is empty, scaffold in place: |
 | `skills/setup/scripts/generate-claude-md.js` | Generate tailored CLAUDE.md files for a project from templates. |
 | `skills/setup/scripts/init-project.js` | Project scaffolding script for Node/TypeScript projects. |
 | `skills/setup/scripts/install-enforcement.js` | Copies enforcement tooling into a target project. |
@@ -200,7 +200,6 @@ Before merging:
 - **Setup has two code paths**: Node/TS uses the "fast path" (scripts do the work). All other stacks use the "adaptive path" (Claude creates files). The eval uses `conversation_must_not_mention` to catch cross-contamination (e.g., Python setup mentioning npm).
 - **Squash merges leave branches dirty**: After squash-merging a PR, the branch still shows unmerged commits. Always create a fresh branch from main for follow-up work — don't reuse the old branch.
 - **CLAUDE.md auto-updates on commit**: The pre-commit hook runs `repo-generate-docs.js` to regenerate AUTO markers. Don't manually edit content between `<!-- AUTO:tree -->` and `<!-- AUTO:modules -->` markers — it will be overwritten.
-- **Eval prompts must say "in the current directory"**: `init-project.js --name=X` creates a subdirectory. Eval fixtures run in temp dirs, so the grader checks the temp dir root. If the prompt says "call it myapp", Claude creates `myapp/` and the grader finds nothing.
 
 ---
 
@@ -212,4 +211,3 @@ Before merging:
 | Enforcement script patterns | `skills/setup/references/enforcement-scripts.md` |
 | Node/TypeScript stack reference | `skills/setup/references/stack-node-typescript.md` |
 | Eval suite documentation | `tests/evals/README.md` |
-| Unit test documentation | `tests/scripts/README.md` |
