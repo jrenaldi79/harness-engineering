@@ -24,6 +24,8 @@ bash tests/evals/run-evals.sh --config setup-eval-config.json          # E2E set
 bash tests/evals/test-marketplace-install.sh                           # Test plugin install flow
 ```
 
+**Run evals as Bash shell commands** (not via Agent tools) so output streams live and you can monitor progress. Evals invoke Claude as a subprocess and can take 5-15 minutes per fixture.
+
 ### Validation
 ```bash
 node skills/setup/scripts/lib/generate-docs.js --check   # Verify auto-generated sections are current
