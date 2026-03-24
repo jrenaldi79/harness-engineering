@@ -2,7 +2,7 @@
 
 # Harness Engineering and Best Practices for Coding Agents
 
-**A field guide and Claude Code plugin for long-running AI coding agent harnesses**
+**A reference guide and Claude Code plugin for long-running AI coding agent harnesses**
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue?labelColor=1A1C29)](./LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?labelColor=1A1C29)](https://nodejs.org)
@@ -13,17 +13,17 @@
 
 </div>
 
-[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance — no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prose. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
+[Andrej Karpathy](https://x.com/karpathy/status/2035173492447224237) put it bluntly: "The agents do not listen to my instructions." They bloat abstractions, copy-paste code blocks, and ignore style guidance, no matter how carefully you write your AGENTS.md. If the person who coined "[context engineering](https://x.com/karpathy/status/1937902205765607626)" can't get agents to follow written rules, the answer isn't better prompting. It's mechanical enforcement: git hooks that block bad code before it lands, linters that catch what instructions can't, and rule files that load only when relevant so the agent's finite attention isn't wasted.
 
-Harness engineering is context engineering applied to coding agents. It's how you structure rule files, plan before building, enforce quality mechanically, and keep documentation in sync with code — so your agent stays aligned across long sessions instead of going off the rails.
+Harness engineering is context engineering applied to coding agents: structuring rule files, planning before building, enforcing quality with automation, and keeping documentation in sync with code so the agent stays aligned across long sessions.
 
-This repo is two things:
+This repo contains:
 
-1. **A field guide** to harness engineering — mapping 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
+1. **A reference guide** that maps 20+ best practices from [OpenAI](https://openai.com/index/harness-engineering/), [Augment Code](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer), [Anthropic](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/), and practitioners like [Andrej Karpathy](https://x.com/karpathy/status/1937902205765607626) (AI researcher, co-founder of OpenAI), [Boris Cherny](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny) (creator of Claude Code), and [Thariq Shihipar](https://x.com/trq212) (Claude Code team at Anthropic) to concrete implementation patterns.
 
 2. **A Claude Code plugin** that configures your developer environment for agent-assisted development. Install the plugin and get two skills that do the actual work:
-   - **`/readiness`** — Analyzes any existing codebase and produces a scored readiness report across 8 pillars and 5 maturity levels. Shows you exactly where you stand, what's missing, and what to fix first. Saves reports for delta tracking over time. Works with any language or stack.
-   - **`/setup`** — Configures your project end-to-end through Socratic questioning. It scaffolds `CLAUDE.md` files, installs enforcement scripts (secret scanning, file size limits, test colocation, auto-generated docs, drift detection), wires up git hooks that run those scripts on every commit and push, sets up linter/formatter configs, and creates `.claude/settings.json` with safe permission defaults. The scripts and hooks it installs are the mechanical enforcement layer — they catch what instructions and prose cannot. Supports any language or stack; Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
+   - **`/readiness`**: Analyzes any existing codebase and produces a scored readiness report across 8 pillars and 5 maturity levels. Shows you exactly where you stand, what's missing, and what to fix first. Saves reports for delta tracking over time. Works with any language or stack.
+   - **`/setup`**: Configures your project end-to-end through Socratic questioning. It scaffolds `CLAUDE.md` files, installs enforcement scripts (secret scanning, file size limits, test colocation, auto-generated docs, drift detection), wires up git hooks that run those scripts on every commit and push, sets up linter/formatter configs, and creates `.claude/settings.json` with safe permission defaults. The scripts and hooks it installs are the enforcement layer. They catch what instructions and prose cannot. Supports any language or stack; Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
 
 
 <div align="center">
@@ -63,7 +63,7 @@ In Claude Code, run:
 /plugin install harness-engineering@harness-engineering
 ```
 
-That's it. Once installed, you don't need to remember any commands — just ask naturally:
+That's it. Once installed, you don't need to remember any commands. Just ask naturally:
 
 > "How ready is my codebase for AI agents?"
 > "Analyze my project"
@@ -91,7 +91,7 @@ For new/empty projects, skip to step 3.
 
 Or just ask: *"Set up my project"*, *"Bootstrap this repo"*, *"Add quality enforcement"*
 
-The `/setup` skill walks you through Socratic questions to determine your stack (language, framework, testing approach, deployment target), then scaffolds and configures the project. It works with any language — Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
+The `/setup` skill walks you through Socratic questions to determine your stack (language, framework, testing approach, deployment target), then scaffolds and configures the project. It works with any language. Node/TypeScript is the recommended default for web projects, but the skill adapts to Python, Go, Rust, C/C++, and more.
 
 What happens during setup:
 
@@ -123,27 +123,27 @@ The pre-commit hook runs automatically. If everything passes, your harness is ac
 |---|---|
 | `/plugin install` not recognized | Make sure you're using [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the CLI), not the web chat. Plugin support requires Claude Code. |
 | Skills don't trigger after install | Restart your Claude Code session. Skills load on session start. |
-| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin marketplace add jrenaldi79/harness-engineering` then `/plugin install harness-engineering@harness-engineering`. |
+| `/readiness` can't find setup references | Both skills are part of the same plugin. Reinstall with `/plugin marketplace add jrenaldi79/harness-engineering` then `/plugin install harness-engineering@harness-engineering`. |
 
 ---
 
 ## Agentic Planning & Execution
 
-A well-maintained harness keeps your agent aligned. But **the biggest gains come from how you plan before writing code.** Long-running coding agents need structured planning, adversarial review, and test-driven development to produce reliable results. Don't skip this step.
+A well-maintained harness keeps your agent aligned. But the largest improvements come from planning before writing code. Long-running coding agents need structured planning, adversarial review, and test-driven development to produce reliable results.
 
 ### Why Planning Matters
 
-Agents that start coding without a plan produce more churn than progress. They make architectural decisions in isolation, create inconsistent patterns, and build features that don't fit together. The fix isn't more rules in CLAUDE.md. It's better planning upfront.
+Agents that start coding without a plan produce more churn than progress. They make architectural decisions in isolation, create inconsistent patterns, and build features that don't fit together. Better planning upfront fixes this.
 
-**Do not rely on built-in "plan mode"** in any AI coding tool. These are shallow outlines, not engineering plans. Instead, use agentic planning systems that produce structured specs, decompose work into atomic tasks, and include review gates.
+Do not rely on built-in "plan mode" in any AI coding tool. These are shallow outlines, not engineering plans. Instead, use agentic planning systems that produce structured specs, decompose work into atomic tasks, and include review gates.
 
-### TDD Is Non-Negotiable
+### TDD Is Required
 
 Write failing tests first, implement the minimum to pass, then refactor. Every task follows Red-Green-Refactor. The global CLAUDE.md template enforces this.
 
 ### Integrated Development Workflows
 
-These agentic development systems plug directly into your harness. They don't just plan — they enforce a structured workflow from ideation through implementation, code review, and quality gates:
+These agentic development systems plug directly into your harness. They don't just plan. They enforce a structured workflow from ideation through implementation, code review, and quality gates:
 
 #### For Large Projects: BMAD Method
 
@@ -160,7 +160,7 @@ npx bmad-method install
 | **Solutioning** | Architecture design, epic/story breakdown, readiness check | Architect |
 | **Implementation** | Sprint planning, development, code review, QA | Developer, QA |
 
-**The adversarial review is the part worth paying attention to.** BMAD reviewers are mandated to find issues. "Looks good" with zero findings triggers re-analysis. This catches architectural flaws before they become expensive. The reviewer operates with fresh context (no access to the original reasoning), which prevents confirmation bias.
+The adversarial review matters most here. BMAD reviewers are mandated to find issues. "Looks good" with zero findings triggers re-analysis. This catches architectural flaws before they become expensive. The reviewer operates with fresh context (no access to the original reasoning), which prevents confirmation bias.
 
 Use `/bmad-help` to see what step comes next. Start fresh chats for each workflow to avoid context window limits.
 
@@ -173,7 +173,7 @@ Use `/bmad-help` to see what step comes next. Start fresh chats for each workflo
 /plugin install superpowers@superpowers-marketplace
 ```
 
-**Use `/superpowers:brainstorming` instead of built-in plan mode.** It runs a Socratic design session: asking clarifying questions, exploring 2-3 approaches with tradeoffs, and producing a validated design document before any code is written.
+Use `/superpowers:brainstorming` instead of built-in plan mode. It runs a Socratic design session: asking clarifying questions, exploring 2-3 approaches with tradeoffs, and producing a validated design document before any code is written.
 
 Key skills:
 
@@ -186,9 +186,9 @@ Key skills:
 | `test-driven-development` | Enforces strict Red-Green-Refactor per task |
 | `systematic-debugging` | 4-phase root-cause investigation before any fix |
 
-**The parallel development workflow is the most useful part.** The `writing-plans` skill decomposes a design into atomic tasks (2-5 minutes each) with explicit file paths, dependencies, and execution order. It groups independent tasks into chunks that can run concurrently, while sequencing tasks that depend on each other's output. The `subagent-driven-development` skill then dispatches a fresh subagent per task. Each gets clean context with only the spec it needs, implements with TDD, and goes through two-stage review (spec compliance, then code quality) before the next task begins. The main agent acts as controller, providing context and answering subagent questions without polluting its own context window.
+The parallel workflow is the strongest feature. The `writing-plans` skill decomposes a design into atomic tasks (2-5 minutes each) with explicit file paths, dependencies, and execution order. It groups independent tasks into chunks that can run concurrently, while sequencing tasks that depend on each other's output. The `subagent-driven-development` skill then dispatches a fresh subagent per task. Each gets clean context with only the spec it needs, implements with TDD, and goes through two-stage review (spec compliance, then code quality) before the next task begins. The main agent acts as controller, providing context and answering subagent questions without polluting its own context window.
 
-**Prefer this over agent swarms.** Superpowers scopes work into dependency-aware atomic units assigned to individual subagents, each with clean context. Agent teams (swarms) share state and coordinate via messaging, which creates overhead and context pollution. Sequential subagent dispatch with a controller is more reliable: no crosstalk, no merge conflicts, no duplicate work. Each subagent's output is verified before it feeds into the next task.
+Prefer this over agent swarms. Superpowers scopes work into dependency-aware atomic units assigned to individual subagents, each with clean context. Agent teams (swarms) share state and coordinate via messaging, which creates overhead and context pollution. Sequential subagent dispatch with a controller is more reliable: no crosstalk, no merge conflicts, no duplicate work. Each subagent's output is verified before it feeds into the next task.
 
 #### For Multi-LLM Adversarial Review: Claude Sidecar
 
@@ -205,7 +205,7 @@ This works well for architectural decisions: send the same plan to 2-3 different
 
 #### For Comprehensive Agent Configuration: Everything Claude Code
 
-[Everything Claude Code](https://github.com/affaan-m/everything-claude-code) is a batteries-included agent harness with 17 specialized agents, 81+ skills, and 43+ slash commands. It includes its own multi-model planning system (`/multi-plan` routes to specialist models, `/multi-execute` coordinates parallel implementation).
+[Everything Claude Code](https://github.com/affaan-m/everything-claude-code) is a comprehensive agent harness with 17 specialized agents, 81+ skills, and 43+ slash commands. It includes its own multi-model planning system (`/multi-plan` routes to specialist models, `/multi-execute` coordinates parallel implementation).
 
 ```
 /plugin marketplace add affaan-m/everything-claude-code
@@ -218,12 +218,12 @@ Its `/orchestrate` command chains planner, TDD guide, code reviewer, security re
 
 | Scenario | Tool | Why |
 |---|---|---|
-| **Large project, complex architecture** | BMAD | Full lifecycle from analysis through implementation with adversarial review at every gate |
+| **Large project, complex architecture** | BMAD | Full lifecycle with adversarial review at each gate |
 | **Feature work, day-to-day development** | Superpowers | Brainstorm → plan → TDD → subagent execution → code review in one enforced workflow |
-| **Stress-testing a design decision** | Claude Sidecar | Multi-LLM debate catches blind spots no single model finds |
-| **Full agent harness with everything built in** | Everything Claude Code | One harness that tries to do everything — 17 agents, orchestration, continuous learning |
+| **Stress-testing a design decision** | Claude Sidecar | Independent review from multiple models |
+| **Full agent harness with everything built in** | Everything Claude Code | Comprehensive: 17 agents, orchestration, continuous learning |
 
-These workflows sit on top of this bootstrap kit's mechanical enforcement layer. Together they form a complete system: the workflows steer how you develop, the harness enforces quality at every commit.
+These workflows sit on top of this kit's enforcement layer. The workflows steer development. The harness enforces quality at every commit.
 
 ---
 
@@ -235,13 +235,13 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 - **Augment Code**: [Your Agent's Context Is a Junk Drawer](https://www.augmentcode.com/blog/your-agents-context-is-a-junk-drawer) (Feb 2026): Research-backed analysis of why more context makes agents worse. By Sylvain Giuliani.
 - **Boris Cherny**: Creator of Claude Code at Anthropic. Tips shared via [Threads](https://www.threads.com/@boris_cherny/post/DUMZr4VElyb/) and [interviews](https://newsletter.pragmaticengineer.com/p/building-claude-code-with-boris-cherny).
 - **Thariq Shihipar** ([@trq212](https://x.com/trq212)): Claude Code team at Anthropic. Published lessons on [prompt caching](https://x.com/trq212/status/2024574133011673516), [agent design](https://x.com/trq212/status/2027463795355095314), and [spec-driven development](https://x.com/trq212/status/2005315275026260309).
-- **Andrej Karpathy**: AI researcher, former head of AI at Tesla, co-founder of OpenAI. Coined "context engineering" as the [successor to prompt engineering](https://x.com/karpathy/status/1937902205765607626). Later [acknowledged](https://x.com/karpathy/status/2035173492447224237) that agents "do not listen to my instructions" in AGENTS.md — they bloat abstractions, copy-paste code, and ignore style guidance. The case for mechanical enforcement over advisory prose.
+- **Andrej Karpathy**: AI researcher, former head of AI at Tesla, co-founder of OpenAI. Coined "context engineering" as the [successor to prompt engineering](https://x.com/karpathy/status/1937902205765607626). Later [acknowledged](https://x.com/karpathy/status/2035173492447224237) that agents "do not listen to my instructions" in AGENTS.md. They bloat abstractions, copy-paste code, and ignore style guidance. The case for automated enforcement over advisory prose.
 - **Birgitta Böckeler**: Principal technologist at Thoughtworks. [Context engineering for coding agents](https://martinfowler.com/articles/exploring-gen-ai/context-engineering-coding-agents.html) on Martin Fowler's site.
 - **Simon Willison**: Creator of Datasette, Django co-creator. [Agentic engineering patterns](https://simonwillison.net/guides/agentic-engineering-patterns/) and practical CLAUDE.md guidance.
 - **Jesse Vincent**: Creator of [Superpowers](https://github.com/obra/superpowers) plugin for Claude Code. Discovered that [compliance beats comprehension](https://blog.fsck.com/2026/03/09/superpowers-5/) in skill design.
 - **DHH**: Creator of Ruby on Rails, co-founder of Basecamp/37signals. [Convention over configuration](https://x.com/dhh/status/2018574874675929544) as the foundation for agent-friendly codebases.
-- **Akshay Kothari**: COO of Notion. Shared his [Claude Code development setup](https://www.linkedin.com/posts/akothari_my-claude-code-setup-after-extensive-experimentation-activity-7336065911014084610-HEdh/) emphasizing CLAUDE.md as single source of truth, pre-commit hooks, lint-staged, and file size enforcement. Validated our mechanical enforcement approach.
-- **Factory.ai**: [Using Linters to Direct Agents](https://factory.ai/news/using-linters-to-direct-agents) (Sep 2025) by Alvin Sng. "Agents write the code; linters write the law." Formalized seven lint rule categories. Also published [Agent Readiness](https://factory.ai/news/agent-readiness) — a framework for measuring how well a codebase supports autonomous development across eight pillars and five maturity levels, with automated remediation via agent-powered PRs. Inspired our `/readiness` skill.
+- **Akshay Kothari**: COO of Notion. Shared his [Claude Code development setup](https://www.linkedin.com/posts/akothari_my-claude-code-setup-after-extensive-experimentation-activity-7336065911014084610-HEdh/) emphasizing CLAUDE.md as single source of truth, pre-commit hooks, lint-staged, and file size enforcement. Validated our enforcement approach.
+- **Factory.ai**: [Using Linters to Direct Agents](https://factory.ai/news/using-linters-to-direct-agents) (Sep 2025) by Alvin Sng. "Agents write the code; linters write the law." Formalized seven lint rule categories. Also published [Agent Readiness](https://factory.ai/news/agent-readiness), a framework for measuring how well a codebase supports autonomous development across eight pillars and five maturity levels, with automated remediation via agent-powered PRs. Inspired our `/readiness` skill.
 
 | Best Practice | Sources | What They Found | This Kit's Implementation |
 |---|---|---|---|
@@ -251,9 +251,9 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 | **Finite attention budget** | Augment, Karpathy, Anthropic | Karpathy: "Context engineering is the delicate art of filling the context window with just the right information." Augment: Instruction-following degrades as constraint density increases. Anthropic: "All components compete for the same finite resource." | 200-300 line CLAUDE.md target. Templates use `<!-- TIP -->` comments to guide what to include vs. omit. |
 | **Failure-backed rules only** | Augment, Willison, DHH | Augment: "Would the agent make a mistake without this? If no, delete it." Willison: Only universally applicable instructions. DHH: Conventions create 20 years of training data, so don't re-explain what agents already know. | Templates include only actionable rules: commands, gotchas, constraints. No generic best practices or restated conventions. |
 | **Repository as system of record** | OpenAI, Augment, Thariq | OpenAI: "What Codex can't see doesn't exist." Augment: Don't restate what's in code. Thariq: "The file system is an elegant way of representing state that your agent could read into context." | Templates encode architecture, commands, and gotchas in CLAUDE.md and `docs/`. AUTO markers write generated content to files. |
-| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent, Factory.ai, Karpathy | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments." Vincent: "Hard gates test compliance." Factory.ai: "Agents write the code; linters write the law." Karpathy: "The agents do not listen to my instructions" — they bloat abstractions and ignore style guidance in AGENTS.md. | Three-layer enforcement: git hooks block violations mechanically, `.claude/rules/` provides path-scoped advisory context, CLAUDE.md sets global principles. Priority: mechanical > rules > prose. |
+| **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent, Factory.ai, Karpathy | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments." Vincent: "Hard gates test compliance." Factory.ai: "Agents write the code; linters write the law." Karpathy: Agents bloat abstractions and ignore style guidance in AGENTS.md. | Three-layer enforcement: git hooks block violations mechanically, `.claude/rules/` provides path-scoped advisory context, CLAUDE.md sets global principles. Priority: automated checks > rules > prose. |
 | **Grep-ability** | Factory.ai | Named exports over defaults, absolute imports, consistent error types. When every symbol has exactly one name across the codebase, agents can search/replace with confidence during multi-file refactors. Default exports let consumers pick any name, breaking grep-based navigation. | `rules/typescript.md` advises naming conventions. ESLint template includes `import/no-default-export`. |
-| **Mechanical enforcement** | OpenAI, Boris, Thariq, Akshay Kothari | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification. Akshay: Notion's Claude Code setup uses pre-commit hooks, lint-staged, file size limits, and secret scanning — same stack this kit provides. | Pre-commit hooks run 6 checks automatically: lint, secret scan, file size, test colocation, doc generation, drift warning. |
+| **Automated enforcement** | OpenAI, Boris, Thariq, Akshay Kothari | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification. Akshay: Notion's Claude Code setup uses pre-commit hooks, lint-staged, file size limits, and secret scanning, the same stack this kit provides. | Pre-commit hooks run 6 checks automatically: lint, secret scan, file size, test colocation, doc generation, drift warning. |
 | **Auto-generated docs** | OpenAI | A "doc-gardening" agent scans for stale documentation and opens fix-up PRs. | `generate-docs.js` auto-regenerates CLAUDE.md sections from source code on every commit via AUTO markers. |
 | **Drift detection / self-improvement** | OpenAI, Augment, Boris | OpenAI: Documentation "rots instantly." Boris: "Update your CLAUDE.md so you don't make that mistake again." Claude writes rules for itself, compounding institutional knowledge. | `validate-docs.js` warns when source files change without CLAUDE.md updates. Global template includes self-improvement loop guidance. |
 | **Enforce invariants, not implementations** | OpenAI, Augment, DHH | OpenAI: "Set boundaries, allow autonomy locally." DHH: "Convention over configuration." Agents predict conventional code extremely well. Augment: Don't restate conventions your linter already enforces. | File size limits (300 lines), complexity red flags, and configurable `CONFIG` objects. Rules are strict; how you meet them is flexible. |
@@ -287,7 +287,7 @@ Before running `/setup`, use `/readiness` to understand where your codebase stan
 | **Style & Validation** | Linter, formatter, lint-on-commit, no default exports | Repo |
 | **Testing** | Test runner, colocation, coverage, TDD enforcement | App |
 | **Git Hooks & Enforcement** | Pre-commit, pre-push, secret scanning, file size limits, smart caching | Repo |
-| **Documentation** | CLAUDE.md quality — Commands, Architecture, Gotchas, AUTO sections, drift, content quality | App |
+| **Documentation** | CLAUDE.md quality: Commands, Architecture, Gotchas, AUTO sections, drift, content quality | App |
 | **Agent Configuration** | Settings, allow/deny lists, path-scoped rules, enforcement hierarchy | Repo |
 | **Code Quality** | File size limits, secret scanning, consistent style | App |
 | **Dev Environment** | .env.example, build commands, dependency health | Repo |
@@ -305,20 +305,20 @@ Before running `/setup`, use `/readiness` to understand where your codebase stan
 
 ### How It Works
 
-The readiness skill is **agent-guided, not script-based**. The SKILL.md provides a structured evaluation framework — the agent does the actual analysis using its intelligence. This makes it stack-agnostic (works with any language), adaptive (understands nuance like "tests exist but are stubs"), and low-maintenance.
+The readiness skill is **agent-guided, not script-based**. The SKILL.md provides a structured evaluation framework. The agent does the actual analysis using its intelligence. This makes it stack-agnostic (works with any language), adaptive (understands nuance like "tests exist but are stubs"), and low-maintenance.
 
-It uses the `/setup` skill's templates, scripts, and references as a **reference library** — reading them to understand what good enforcement looks like, then comparing against what's actually in your project. This means it produces **surgical recommendations** ("Add a Commands section to your existing CLAUDE.md") rather than blunt ones ("Run /setup to overwrite everything").
+It uses the `/setup` skill's templates, scripts, and references as a reference library, reading them to understand what good enforcement looks like, then comparing against what's actually in your project. This means it produces specific recommendations ("Add a Commands section to your existing CLAUDE.md") rather than blunt ones ("Run /setup to overwrite everything").
 
 The skill runs **3 parallel subagents** to keep the main context clean:
-1. **Style, Testing & Code Quality** — reads enforcement script references
-2. **Hooks, Config, Environment & Workflow** — reads hook and settings templates
-3. **Documentation** — reads CLAUDE.md templates and quality guide
+1. **Style, Testing & Code Quality**: reads enforcement script references
+2. **Hooks, Config, Environment & Workflow**: reads hook and settings templates
+3. **Documentation**: reads CLAUDE.md templates and quality guide
 
 ### Report Output
 
 Reports are saved to `.claude/readiness-report.md` with YAML frontmatter for machine-parseable delta tracking. Run `/readiness` again later to see what improved or regressed.
 
-The skill also provides **conversational insights** — prose analysis of what's working, what's costing you time, and nuanced observations the checklist can't capture.
+The skill also provides **conversational insights**: prose analysis of what's working, what's costing you time, and nuanced observations the checklist can't capture.
 
 ### Monorepo Support
 
@@ -326,7 +326,7 @@ For monorepos (workspaces, Nx, Turborepo, Cargo workspace, Go workspace), repo-s
 
 ### Remediation
 
-After the report, the skill offers to apply surgical fixes — editing existing files, adding missing sections, creating new files only where nothing exists. If no agentic workflow system is detected, it recommends [Superpowers](https://github.com/obra/superpowers) and can help install it.
+After the report, the skill offers to apply targeted fixes: editing existing files, adding missing sections, creating new files only where nothing exists. If no agentic workflow system is detected, it recommends [Superpowers](https://github.com/obra/superpowers) and can help install it.
 
 ---
 
@@ -337,9 +337,9 @@ harness-engineering/
 ├── .claude-plugin/
 │   └── plugin.json               # Plugin manifest
 ├── skills/readiness/
-│   └── SKILL.md                  # Codebase analysis — runs on /readiness
+│   └── SKILL.md                  # Codebase analysis, runs on /readiness
 ├── skills/setup/
-│   ├── SKILL.md                  # Main orchestrator — runs on /setup
+│   ├── SKILL.md                  # Main orchestrator, runs on /setup
 │   ├── scripts/
 │   │   ├── init-project.js       # Node/TS project scaffolding
 │   │   ├── install-enforcement.js # Copies enforcement tooling into target project
@@ -396,7 +396,7 @@ Claude Code reads `CLAUDE.md` files at two levels, plus `.claude/rules/` for pat
 
 **Project CLAUDE.md** (specific to one codebase): Architecture diagrams, essential commands, directory structure, module index, critical gotchas, docs map.
 
-**`.claude/rules/`** (path-scoped, loaded on demand): TDD enforcement (when touching `src/`), file size limits and complexity checks (when touching code files), test patterns (when touching `tests/`), naming and import conventions (when touching `.ts`/`.js` files). Rules use `globs:` YAML frontmatter so they only load when Claude works on matching files — keeping the context window lean.
+**`.claude/rules/`** (path-scoped, loaded on demand): TDD enforcement (when touching `src/`), file size limits and complexity checks (when touching code files), test patterns (when touching `tests/`), naming and import conventions (when touching `.ts`/`.js` files). Rules use `globs:` YAML frontmatter so they only load when Claude works on matching files, keeping the context window lean.
 
 This three-layer system means CLAUDE.md stays under 200-300 lines (global context every session), while detailed path-specific guidance loads automatically only when relevant.
 
@@ -481,7 +481,7 @@ To add a new auto-generated section:
 
 ### Git Hook Enforcement
 
-Hooks are the mechanical enforcement layer. They run automatically and block commits or pushes that violate quality standards, so enforcement doesn't depend on developer discipline.
+Hooks are the enforcement layer. They run automatically and block commits or pushes that violate quality standards, so enforcement doesn't depend on developer discipline.
 
 #### Pre-Commit (runs on every commit, <2s)
 
@@ -563,7 +563,7 @@ See the scripts in `skills/setup/scripts/lib/` for full details on each enforcem
 
 **HTML comment instructions.** The `<!-- TIP: ... -->` comments in templates are invisible in rendered markdown but visible when editing. Templates serve as both documentation and fill-in-the-blank forms.
 
-**200-300 line target.** CLAUDE.md should be small enough that agents process the full content without losing signal in noise. Detailed docs go in `docs/` and are loaded on demand.
+**200-300 line target.** CLAUDE.md should be small enough that agents process the full content without diluting the important parts. Detailed docs go in `docs/` and are loaded on demand.
 
 **Auto-generation over manual sync.** The `generate-docs.js` script eliminates the most common source of harness drift: developers changing code without updating docs. The pre-commit hook regenerates automatically.
 
