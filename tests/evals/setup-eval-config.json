@@ -105,6 +105,54 @@
           "pre-commit"
         ]
       }
+    },
+    {
+      "name": "setup-python",
+      "fixture": "fixtures/setup-python",
+      "description": "Empty directory — tests the adaptive path for Python/FastAPI. Claude creates pyproject.toml, enforcement scripts, hooks, and documentation without using the Node fast-path scripts.",
+      "prompt": "Run /setup on this project. Here are my answers to your Socratic questions: I am building a REST API. Use Python with FastAPI as the framework. Call the project myapi. Please proceed with the full setup without asking me further questions — use those answers directly.",
+      "expected": {
+        "files_must_exist": [
+          "CLAUDE.md",
+          ".claude/settings.json",
+          ".git/hooks/pre-commit",
+          ".git/hooks/pre-push"
+        ],
+        "files_should_exist": [
+          "pyproject.toml",
+          "src",
+          "tests",
+          "docs",
+          ".claude/rules/tdd.md",
+          ".claude/rules/code-quality.md",
+          ".gitignore"
+        ],
+        "json_valid": [
+          ".claude/settings.json"
+        ],
+        "hooks_executable": [
+          ".git/hooks/pre-commit",
+          ".git/hooks/pre-push"
+        ],
+        "claude_md_sections": [
+          "Commands",
+          "Architecture"
+        ],
+        "settings_has_allow_deny": true,
+        "rules_have_globs_frontmatter": true,
+        "auto_doc_pipeline": false,
+        "docs_index_generated": false,
+        "conversation_must_mention": [
+          "enforcement",
+          "pre-commit",
+          "pytest"
+        ],
+        "conversation_must_not_mention": [
+          "npm",
+          "jest",
+          "package.json"
+        ]
+      }
     }
   ]
 }

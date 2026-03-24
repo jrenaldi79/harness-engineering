@@ -90,7 +90,7 @@ tests/
 │   ├── README.md
 │   ├── run-evals.sh
 │   ├── setup-eval-config.json
-│   ├── setup-grader.js  # Setup Skill Grader
+│   ├── setup-grader.js  # Setup Skill Grader — validates /setup output against setup-eval-config.json.
 │   └── test-marketplace-install.sh
 └── scripts/
     ├── detect-source-dirs.test.js  # Tests for detectSourceDirs and buildModuleIndex adaptive scanning.
@@ -140,7 +140,7 @@ User runs /setup
 | `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
 | `tests/evals/grader.js` | Readiness Skill Grader |
 | `tests/evals/run-evals.sh` | run-evals.sh |
-| `tests/evals/setup-grader.js` | Setup Skill Grader |
+| `tests/evals/setup-grader.js` | Setup Skill Grader — validates /setup output against setup-eval-config.json. |
 | `tests/evals/test-marketplace-install.sh` | test-marketplace-install.sh |
 <!-- /AUTO:modules -->
 
