@@ -158,7 +158,7 @@ EXIT_CODE=0
 SKILL_OUTPUT=$(
   cd "$TMP_DIR" && \
   timeout "${SKILL_TIMEOUT}s" claude \
-    -p "You are analyzing the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. Run a readiness analysis on this project. Output the full readiness report." \
+    -p "/readiness" \
     --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
     --permission-mode acceptEdits \
     --output-format json \
