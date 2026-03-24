@@ -1,16 +1,6 @@
 #!/usr/bin/env node
 /**
- * Setup Skill Grader
- *
- * Validates the /setup skill output against expected criteria
- * defined in setup-eval-config.json. Checks file creation,
- * JSON validity, hook executability, CLAUDE.md sections,
- * settings structure, and rule frontmatter.
- *
- * Usage:
- *   node setup-grader.js --config setup-eval-config.json \
- *     --test-case setup-bare --result-dir ./results/... \
- *     --fixture-dir /tmp/...
+ * Setup Skill Grader — validates /setup output against setup-eval-config.json.
  */
 
 const fs = require('fs');
@@ -258,21 +248,28 @@ for (const filePath of expected.existing_files_preserved || []) {
 }
 
 // ─── 11. Conversation content checks ───
-if (expected.conversation_must_mention) {
-  const convPath = path.join(resultDir, 'conversation.txt');
-  const conversation = pathExists(convPath)
-    ? fs.readFileSync(convPath, 'utf8')
-    : '';
-  const fullText = conversation.toLowerCase();
+const convPath = path.join(resultDir, 'conversation.txt');
+const conversation = pathExists(convPath)
+  ? fs.readFileSync(convPath, 'utf8')
+  : '';
+const convText = conversation.toLowerCase();
 
-  for (const term of expected.conversation_must_mention) {
-    const found = fullText.includes(term.toLowerCase());
-    check(
-      `Conversation mentions "${term}"`,
-      found,
-      found ? '' : `Term "${term}" not found in output`,
-    );
-  }
+for (const term of expected.conversation_must_mention || []) {
+  const found = convText.includes(term.toLowerCase());
+  check(
+    `Conversation mentions "${term}"`,
+    found,
+    found ? '' : `Term "${term}" not found in output`,
+  );
+}
+
+for (const term of expected.conversation_must_not_mention || []) {
+  const found = convText.includes(term.toLowerCase());
+  check(
+    `Conversation does NOT mention "${term}"`,
+    !found,
+    found ? `Found forbidden term "${term}"` : '',
+  );
 }
 
 // ─── Output ───
