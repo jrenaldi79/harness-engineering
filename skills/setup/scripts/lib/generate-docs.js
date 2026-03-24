@@ -89,46 +89,76 @@ function validateCrossLinks(markdown, rootDir) {
 // ---------------------------------------------------------------------------
 
 /**
- * Generate a markdown index of plan files.
- * Scans docs/plans/ and docs/archive/plans/.
+ * Generate a markdown index of all docs/ content.
+ * Scans docs/ recursively, groups by subdirectory, extracts headings.
  * @param {string} rootDir - Project root directory
- * @returns {string} Markdown listing of plan files
+ * @returns {string} Markdown index content
  */
-function buildPlansIndex(rootDir) {
-  const activePath = path.join(rootDir, 'docs', 'plans');
-  const archivePath = path.join(rootDir, 'docs', 'archive', 'plans');
-  const active = listMdFiles(activePath);
-  const archived = listMdFiles(archivePath);
+function buildDocsIndex(rootDir) {
+  const docsDir = path.join(rootDir, 'docs');
+  const rootFiles = [];
+  const subdirs = {};
+  collectDocsRecursive(docsDir, '', rootFiles, subdirs);
 
-  if (active.length === 0 && archived.length === 0) {
-    return 'No plan files found.';
+  if (rootFiles.length === 0 && Object.keys(subdirs).length === 0) {
+    return 'No documentation files found.';
   }
 
   const sections = [];
-  if (active.length > 0) {
-    sections.push('## Active Plans\n');
-    for (const f of active) {
-      sections.push(`- [${f}](docs/plans/${f})`);
+  if (rootFiles.length > 0) {
+    for (const f of rootFiles) {
+      sections.push(formatDocEntry(f.name, f.heading, `docs/${f.name}`));
     }
   }
-  if (archived.length > 0) {
-    if (sections.length > 0) {
-      sections.push('');
-    }
-    sections.push('## Archive Plans\n');
-    for (const f of archived) {
-      sections.push(`- [${f}](docs/archive/plans/${f})`);
+  for (const [dir, files] of Object.entries(subdirs).sort()) {
+    if (sections.length > 0) sections.push('');
+    sections.push(`## ${dir}\n`);
+    for (const f of files) {
+      sections.push(formatDocEntry(f.name, f.heading, `docs/${dir}/${f.name}`));
     }
   }
   return sections.join('\n');
 }
 
-/** @param {string} dirPath @returns {string[]} Sorted .md filenames */
-function listMdFiles(dirPath) {
+function formatDocEntry(name, heading, linkPath) {
+  return heading ? `- [${name}](${linkPath}) — ${heading}` : `- [${name}](${linkPath})`;
+}
+
+function collectDocsRecursive(dirPath, relPrefix, rootFiles, subdirs) {
+  let entries;
   try {
-    return fs.readdirSync(dirPath).filter(f => f.endsWith('.md')).sort();
+    entries = fs.readdirSync(dirPath, { withFileTypes: true });
   } catch {
-    return [];
+    return;
+  }
+  const dirs = entries.filter(e => e.isDirectory()).sort((a, b) => a.name.localeCompare(b.name));
+  const files = entries
+    .filter(e => e.isFile() && e.name.endsWith('.md') && e.name !== 'index.md')
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  for (const file of files) {
+    const heading = extractFirstHeading(path.join(dirPath, file.name));
+    const entry = { name: file.name, heading };
+    if (relPrefix) {
+      if (!subdirs[relPrefix]) subdirs[relPrefix] = [];
+      subdirs[relPrefix].push(entry);
+    } else {
+      rootFiles.push(entry);
+    }
+  }
+  for (const dir of dirs) {
+    const nextPrefix = relPrefix ? `${relPrefix}/${dir.name}` : dir.name;
+    collectDocsRecursive(path.join(dirPath, dir.name), nextPrefix, rootFiles, subdirs);
+  }
+}
+
+function extractFirstHeading(filePath) {
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const match = content.match(/^#\s+(.+)/m);
+    return match ? match[1].trim() : '';
+  } catch {
+    return '';
   }
 }
 
@@ -174,7 +204,7 @@ function main() {
 
   const tree = buildDirectoryTree(rootDir, TREE_DIRS);
   const modules = buildModuleIndex(rootDir);
-  const plans = buildPlansIndex(rootDir);
+  const docsIndex = buildDocsIndex(rootDir);
   const generated = { tree, modules };
 
   if (checkMode) {
@@ -182,7 +212,7 @@ function main() {
     return;
   }
 
-  runWriteMode(docPath, rootDir, generated, plans);
+  runWriteMode(docPath, rootDir, generated, docsIndex);
 }
 
 /** Check mode: validate markers and cross-links, exit 1 if stale. */
@@ -211,8 +241,8 @@ function runCheckMode(docPath, rootDir, generated) {
   console.log('All markers are current.');
 }
 
-/** Write mode: regenerate markers, write plans index, auto-stage. */
-function runWriteMode(docPath, rootDir, generated, plans) {
+/** Write mode: regenerate markers, write docs index, auto-stage. */
+function runWriteMode(docPath, rootDir, generated, docsIndex) {
   let doc;
   try {
     doc = fs.readFileSync(docPath, 'utf-8');
@@ -225,15 +255,15 @@ function runWriteMode(docPath, rootDir, generated, plans) {
   doc = replaceMarkers(doc, 'modules', generated.modules);
   fs.writeFileSync(docPath, doc);
 
-  const plansIndexPath = path.join(rootDir, 'docs', 'plans', 'index.md');
-  if (fs.existsSync(path.dirname(plansIndexPath))) {
-    fs.writeFileSync(plansIndexPath, `# Plans Index\n\n${plans}\n`);
+  const docsIndexPath = path.join(rootDir, 'docs', 'index.md');
+  if (fs.existsSync(path.dirname(docsIndexPath))) {
+    fs.writeFileSync(docsIndexPath, `# Documentation Index\n\n${docsIndex}\n`);
   }
 
   try {
     execFileSync('git', ['add', docPath], { stdio: 'ignore' });
-    if (fs.existsSync(plansIndexPath)) {
-      execFileSync('git', ['add', plansIndexPath], { stdio: 'ignore' });
+    if (fs.existsSync(docsIndexPath)) {
+      execFileSync('git', ['add', docsIndexPath], { stdio: 'ignore' });
     }
   } catch {
     // Not in a git repo - that's fine
@@ -249,6 +279,6 @@ if (require.main === module) {
 module.exports = {
   replaceMarkers,
   validateCrossLinks,
-  buildPlansIndex,
+  buildDocsIndex,
   checkMarkersAreCurrent,
 };

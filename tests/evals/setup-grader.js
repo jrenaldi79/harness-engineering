@@ -225,7 +225,28 @@ if (expected.auto_doc_pipeline) {
   }
 }
 
-// ─── 9. Existing files preserved ───
+// ─── 9. Docs index auto-generation ───
+if (expected.docs_index_generated) {
+  const docsDir = path.join(fixtureDir, 'docs');
+  const docsExists = pathExists(docsDir);
+  check(
+    'Docs index: docs/ directory exists',
+    docsExists,
+    docsExists ? '' : 'docs/ not created by setup',
+  );
+
+  if (docsExists) {
+    const indexPath = path.join(docsDir, 'index.md');
+    const indexExists = pathExists(indexPath);
+    check(
+      'Docs index: docs/index.md exists',
+      indexExists,
+      indexExists ? '' : 'docs/index.md not generated',
+    );
+  }
+}
+
+// ─── 10. Existing files preserved ───
 for (const filePath of expected.existing_files_preserved || []) {
   const fullPath = path.join(fixtureDir, filePath);
   const exists = pathExists(fullPath);
@@ -236,7 +257,7 @@ for (const filePath of expected.existing_files_preserved || []) {
   );
 }
 
-// ─── 10. Conversation content checks ───
+// ─── 11. Conversation content checks ───
 if (expected.conversation_must_mention) {
   const convPath = path.join(resultDir, 'conversation.txt');
   const conversation = pathExists(convPath)
