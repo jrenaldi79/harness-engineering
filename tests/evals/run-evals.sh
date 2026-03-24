@@ -205,11 +205,11 @@ run_test_case() {
       echo -e "  ${RED}✗ Report file NOT created${NC}"
     fi
   elif [ "$SKILL" = "setup" ]; then
-    for f in CLAUDE.md package.json .prettierrc .gitignore .env.example; do
+    for f in CLAUDE.md package.json pyproject.toml .prettierrc .gitignore .env.example; do
       [ -f "$tmp_dir/$f" ] && cp "$tmp_dir/$f" "$result_dir/" 2>/dev/null || true
     done
-    for d in .claude/settings.json .claude/rules; do
-      [ -e "$tmp_dir/$d" ] && { mkdir -p "$(dirname "$result_dir/$d")"; cp -r "$tmp_dir/$d" "$result_dir/$d" 2>/dev/null || true; }
+    for d in .claude scripts docs src tests .husky .git/hooks; do
+      [ -d "$tmp_dir/$d" ] && { mkdir -p "$result_dir/$d"; cp -r "$tmp_dir/$d/." "$result_dir/$d/" 2>/dev/null || true; }
     done
     echo -e "  ${GREEN}✓ Setup artifacts captured${NC}"
   fi

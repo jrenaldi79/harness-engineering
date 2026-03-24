@@ -87,15 +87,18 @@ for (const filePath of expected.json_valid || []) {
   }
 }
 
-// ─── 4. Hook executability ───
+// ─── 4. Hook executability (checks .git/hooks/ and .husky/) ───
 for (const filePath of expected.hooks_executable || []) {
-  const fullPath = path.join(fixtureDir, filePath);
-  const exists = pathExists(fullPath);
-  const executable = isExecutable(fullPath);
+  const hookName = path.basename(filePath);
+  const gitHook = path.join(fixtureDir, '.git', 'hooks', hookName);
+  const huskyHook = path.join(fixtureDir, '.husky', hookName);
+  const foundGit = pathExists(gitHook) && isExecutable(gitHook);
+  const foundHusky = pathExists(huskyHook);
+  const found = foundGit || foundHusky;
   check(
-    `Hook executable: ${filePath}`,
-    exists && executable,
-    !exists ? 'Not found' : !executable ? 'Not executable' : '',
+    `Hook exists: ${hookName}`,
+    found,
+    found ? (foundHusky ? '.husky/' : '.git/hooks/') : 'Not in .git/hooks/ or .husky/',
   );
 }
 
@@ -180,10 +183,12 @@ if (expected.auto_doc_pipeline) {
     pathExists(genHelpersPath) ? '' : 'Not found',
   );
 
-  // Check pre-commit hook references generate-docs
-  const hookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
-  if (pathExists(hookPath)) {
-    const hookContent = fs.readFileSync(hookPath, 'utf8');
+  // Check pre-commit hook references generate-docs (check both locations)
+  const gitHookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
+  const huskyHookPath = path.join(fixtureDir, '.husky/pre-commit');
+  const preCommitPath = pathExists(gitHookPath) ? gitHookPath : pathExists(huskyHookPath) ? huskyHookPath : null;
+  if (preCommitPath) {
+    const hookContent = fs.readFileSync(preCommitPath, 'utf8');
     const callsGenDocs = /generate-docs/i.test(hookContent);
     check(
       'Auto-doc: pre-commit hook runs generate-docs',
@@ -191,7 +196,7 @@ if (expected.auto_doc_pipeline) {
       callsGenDocs ? '' : 'Hook does not reference generate-docs',
     );
   } else {
-    check('Auto-doc: pre-commit hook runs generate-docs', false, 'Hook not found');
+    check('Auto-doc: pre-commit hook runs generate-docs', false, 'No pre-commit hook found');
   }
 
   // Check CLAUDE.md has AUTO markers
@@ -247,29 +252,25 @@ for (const filePath of expected.existing_files_preserved || []) {
   );
 }
 
-// ─── 11. Conversation content checks ───
-const convPath = path.join(resultDir, 'conversation.txt');
-const conversation = pathExists(convPath)
-  ? fs.readFileSync(convPath, 'utf8')
-  : '';
-const convText = conversation.toLowerCase();
-
-for (const term of expected.conversation_must_mention || []) {
-  const found = convText.includes(term.toLowerCase());
-  check(
-    `Conversation mentions "${term}"`,
-    found,
-    found ? '' : `Term "${term}" not found in output`,
-  );
-}
-
-for (const term of expected.conversation_must_not_mention || []) {
-  const found = convText.includes(term.toLowerCase());
-  check(
-    `Conversation does NOT mention "${term}"`,
-    !found,
-    found ? `Found forbidden term "${term}"` : '',
-  );
+// ─── 11. CLAUDE.md content checks (more reliable than conversation) ───
+if (pathExists(claudeMdPath)) {
+  const claudeContent = fs.readFileSync(claudeMdPath, 'utf8').toLowerCase();
+  for (const term of expected.claude_md_must_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(
+      `CLAUDE.md mentions "${term}"`,
+      found,
+      found ? '' : `Term "${term}" not found in CLAUDE.md`,
+    );
+  }
+  for (const term of expected.claude_md_must_not_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(
+      `CLAUDE.md does NOT mention "${term}"`,
+      !found,
+      found ? `Found forbidden term "${term}" in CLAUDE.md` : '',
+    );
+  }
 }
 
 // ─── Output ───
