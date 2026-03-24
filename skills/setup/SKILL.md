@@ -151,17 +151,51 @@ If no global CLAUDE.md exists in the project's parent directory, read `$TEMPLATE
 
 ---
 
-## Phase 6: Summary
+## Phase 6: Verify Setup
 
-After all phases complete, output a summary that includes:
+Run a smoke test to confirm everything was installed correctly. Report each check as pass/fail and fix any failures before moving to the summary.
+
+**1. Git hooks are executable:**
+```bash
+test -x .git/hooks/pre-commit && echo "PASS: pre-commit hook executable" || echo "FAIL: pre-commit hook not executable"
+test -x .git/hooks/pre-push && echo "PASS: pre-push hook executable" || echo "FAIL: pre-push hook not executable"
+```
+
+**2. Enforcement scripts run without errors:**
+Run each enforcement script in check/dry-run mode against the project. They should all exit 0 on a freshly scaffolded project.
+- Secret scanner (should find no secrets in clean scaffolding)
+- File size checker (no files should exceed 300 lines)
+
+**3. CLAUDE.md exists and has required sections:**
+Verify the file exists and contains at minimum: a Commands section, an Architecture section, and a Gotchas section.
+
+**4. Agent config is valid:**
+- `.claude/settings.json` exists and parses as valid JSON
+- `.claude/settings.json` contains both `permissions.allow` and `permissions.deny` arrays
+- At least one `.claude/rules/*.md` file exists with `globs:` in its YAML frontmatter
+
+**5. Auto-documentation pipeline works:**
+If `generate-docs.js` (or equivalent) was installed, run it and verify it completes without errors. This confirms that future commits will auto-update CLAUDE.md.
+
+**6. Linter runs clean:**
+Run the stack's linter on the scaffolded code. A freshly generated project should have zero lint errors.
+
+If any check fails, fix the issue immediately (e.g., `chmod +x` a hook, regenerate a missing file). Then re-run the failing check to confirm the fix. Only proceed to the summary once all checks pass.
+
+---
+
+## Phase 7: Summary
+
+After all phases complete and verification passes, output a summary that includes:
 
 1. **What was installed** — list every file created or modified
-2. **Key commands** for the stack:
+2. **Verification results** — confirm all 6 checks passed
+3. **Key commands** for the stack:
    - How to run tests
    - How to run the linter
    - How to make a commit (hooks fire automatically)
-3. **TDD reminder**: "Write tests first. Red (failing test) → Green (passing) → Refactor. Never write implementation before a test exists."
-4. **Suggested next steps**:
+4. **TDD reminder**: "Write tests first. Red (failing test) → Green (passing) → Refactor. Never write implementation before a test exists."
+5. **Suggested next steps**:
    - Fill in the `[bracketed placeholders]` in CLAUDE.md
    - Review and expand the Architecture section
    - Add the first real feature with a test
