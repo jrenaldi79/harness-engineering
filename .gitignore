@@ -1,5 +1,6 @@
 repomix-output.xml
 node_modules/
+package-lock.json
 .test-passed
 *.log
 .superpowers/
