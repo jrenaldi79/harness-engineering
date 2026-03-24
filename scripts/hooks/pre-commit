@@ -35,4 +35,7 @@ if [ -n "$STAGED_JS" ]; then
   fi
 fi
 
+# --- Auto-regenerate CLAUDE.md sections ---
+node scripts/repo-generate-docs.js
+
 echo "Pre-commit checks passed."

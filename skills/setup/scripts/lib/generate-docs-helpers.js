@@ -8,7 +8,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-const SKIP_DIRS = new Set(['node_modules', '.git', 'coverage', 'dist', 'build', 'fixtures']);
+const SKIP_DIRS = new Set(['node_modules', '.git', 'coverage', 'dist', 'build', 'fixtures', 'results']);
 
 // ---------------------------------------------------------------------------
 // JSDoc & Export Extraction
@@ -27,14 +27,8 @@ function extractJSDocDescription(filePath) {
     return '';
   }
 
-  // Single-line: /** desc */
-  const singleLine = content.match(/^\/\*\*\s+(.+?)\s*\*\//m);
-  if (singleLine) {
-    return singleLine[1].replace(/\s*\*\/$/, '').trim();
-  }
-
-  // Multi-line: first non-empty line after /**
-  const multiLine = content.match(/^\/\*\*\s*\n([\s\S]*?)\*\//m);
+  // Multi-line first (file-level JSDoc is usually multi-line): /** \n * desc \n */
+  const multiLine = content.match(/\/\*\*\s*\n([\s\S]*?)\*\//);
   if (multiLine) {
     const lines = multiLine[1].split('\n');
     for (const line of lines) {
@@ -43,6 +37,13 @@ function extractJSDocDescription(filePath) {
         return cleaned;
       }
     }
+  }
+
+  // Single-line fallback: /** desc */
+  const singleLine = content.match(/\/\*\*\s+(.+?)\s*\*\//);
+  if (singleLine) {
+    const text = singleLine[1].replace(/\s*\*\/$/, '').trim();
+    if (!text.startsWith('@')) return text;
   }
   return '';
 }

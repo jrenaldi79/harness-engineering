@@ -40,37 +40,66 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 ## Architecture
 
 <!-- AUTO:tree -->
-```
-harness-engineering/
-├── .claude/                 # Agent configuration (settings.json, rules/)
-├── .claude-plugin/          # Plugin manifest (plugin.json, marketplace.json)
-├── scripts/
-│   └── hooks/               # Git hooks for this repo (pre-commit, pre-push)
-├── skills/
-│   ├── readiness/
-│   │   └── SKILL.md         # Readiness analysis skill (8 pillars, 5 levels)
-│   └── setup/
-│       ├── SKILL.md          # Setup orchestrator skill (6 phases)
-│       ├── scripts/          # Node.js enforcement scripts installed into target projects
-│       │   ├── lib/          # Individual checks (secrets, file sizes, test colocation, docs)
-│       │   └── hooks/        # Git hook templates for target projects
-│       ├── templates/        # Config templates (.prettierrc, eslint, CLAUDE.md, rules/)
-│       └── references/       # Stack patterns, enforcement docs, quality guide
-├── tests/
-│   ├── scripts/              # Unit tests for setup scripts (Jest)
-│   └── evals/                # E2E evaluation suites
-│       ├── eval-config.json         # Readiness eval test cases
-│       ├── grader.js                # Readiness report grader
-│       ├── setup-eval-config.json   # Setup eval test cases
-│       ├── setup-grader.js          # Setup output grader
-│       ├── run-evals.sh             # Shared runner (--config to select suite)
-│       └── fixtures/                # Test project templates
-│           ├── level-{1,3,5}-*/     # Readiness fixtures (3 maturity levels)
-│           ├── setup-bare/          # Empty dir for greenfield setup
-│           └── setup-existing-node/ # Existing Express project for enhancement
-├── assets/                   # Pipeline diagram SVG, social images
-└── README.md                 # Reference guide and documentation
-```
+skills/
+├── readiness/
+│   └── SKILL.md
+└── setup/
+    ├── references/
+    │   ├── claude-md-guide.md
+    │   ├── enforcement-scripts.md
+    │   └── stack-node-typescript.md
+    ├── scripts/
+    │   ├── hooks/
+    │   │   ├── pre-commit
+    │   │   └── pre-push
+    │   ├── lib/
+    │   │   ├── check-file-sizes.js  # File size enforcement script for pre-commit hook.
+    │   │   ├── check-secrets.js  # Secret detection script for pre-commit hook.
+    │   │   ├── check-test-colocation.js  # Test colocation enforcement script for pre-commit hook.
+    │   │   ├── generate-docs-helpers.js  # Helper functions for generate-docs.js.
+    │   │   ├── generate-docs.js  # Auto-generate CLAUDE.md sections from source code.
+    │   │   └── validate-docs.js  # CLAUDE.md drift detection script.
+    │   ├── generate-claude-md.js  # Generate tailored CLAUDE.md files for a project from templates.
+    │   ├── init-project.js  # Project scaffolding script for Node/TypeScript projects.
+    │   └── install-enforcement.js  # Copies enforcement tooling into a target project.
+    ├── templates/
+    │   ├── rules/
+    │   │   ├── code-quality.md
+    │   │   ├── react.md
+    │   │   ├── tdd.md
+    │   │   ├── testing.md
+    │   │   └── typescript.md
+    │   ├── eslint-base.js
+    │   ├── gitignore-template
+    │   ├── global-claude.md
+    │   ├── lint-staged.config.js
+    │   ├── project-claude.md
+    │   └── settings.json
+    └── SKILL.md
+scripts/
+├── hooks/
+│   ├── pre-commit
+│   └── pre-push
+├── install-hooks.sh
+├── README.md
+└── repo-generate-docs.js  # Repo-level CLAUDE.md auto-generator.
+tests/
+├── evals/
+│   ├── eval-config.json
+│   ├── grader.js  # Readiness Skill Grader
+│   ├── README.md
+│   ├── run-evals.sh
+│   ├── setup-eval-config.json
+│   ├── setup-grader.js  # Setup Skill Grader
+│   └── test-marketplace-install.sh
+└── scripts/
+    ├── generate-claude-md.test.js  # Tests for skills/setup/scripts/generate-claude-md.js
+    ├── generate-docs-helpers.test.js  # Tests for generate-docs-helpers.js: directory trees, module indexes,
+    ├── generate-docs.test.js  # Tests for generate-docs.js marker operations: replaceMarkers,
+    ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
+    ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
+    ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
+    └── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
 <!-- /AUTO:tree -->
 
 ### Data Flow
@@ -95,21 +124,23 @@ User runs /setup
 <!-- AUTO:modules -->
 | Module | Purpose |
 |--------|---------|
-| `skills/readiness/SKILL.md` | Full evaluation framework, 8 pillars, 37 criteria, 3 subagent dispatch |
-| `skills/setup/SKILL.md` | 6-phase setup orchestrator with Socratic discovery |
-| `skills/setup/scripts/lib/generate-docs.js` | Auto-regenerates CLAUDE.md sections between AUTO markers |
-| `skills/setup/scripts/lib/generate-docs-helpers.js` | Tree building, module indexing, JSDoc extraction |
-| `skills/setup/scripts/lib/validate-docs.js` | Detects drift between source code and CLAUDE.md content |
-| `skills/setup/scripts/lib/check-secrets.js` | Pattern-matches API keys, tokens, private keys in staged files |
-| `skills/setup/scripts/lib/check-file-sizes.js` | Rejects files over 300 lines |
-| `skills/setup/scripts/lib/check-test-colocation.js` | Verifies source files have colocated test files |
-| `skills/setup/scripts/init-project.js` | Node/TS project scaffolding (package.json, tsconfig, directories) |
-| `skills/setup/scripts/install-enforcement.js` | Copies enforcement scripts, hooks, configs into target project |
-| `skills/setup/scripts/generate-claude-md.js` | Generates tailored CLAUDE.md from templates |
-| `scripts/install-hooks.sh` | Installs this repo's git hooks from `scripts/hooks/` |
-| `tests/evals/run-evals.sh` | Shared eval runner with `--config` flag for readiness/setup suites |
-| `tests/evals/grader.js` | Readiness report grader (YAML frontmatter, pillars, recommendations) |
-| `tests/evals/setup-grader.js` | Setup output grader (file creation, JSON validity, hooks, config) |
+| `skills/readiness/SKILL.md` | Harness Readiness Report |
+| `skills/setup/SKILL.md` | setup skill definition |
+| `skills/setup/scripts/generate-claude-md.js` | Generate tailored CLAUDE.md files for a project from templates. |
+| `skills/setup/scripts/init-project.js` | Project scaffolding script for Node/TypeScript projects. |
+| `skills/setup/scripts/install-enforcement.js` | Copies enforcement tooling into a target project. |
+| `skills/setup/scripts/lib/check-file-sizes.js` | File size enforcement script for pre-commit hook. |
+| `skills/setup/scripts/lib/check-secrets.js` | Secret detection script for pre-commit hook. |
+| `skills/setup/scripts/lib/check-test-colocation.js` | Test colocation enforcement script for pre-commit hook. |
+| `skills/setup/scripts/lib/generate-docs-helpers.js` | Helper functions for generate-docs.js. |
+| `skills/setup/scripts/lib/generate-docs.js` | Auto-generate CLAUDE.md sections from source code. |
+| `skills/setup/scripts/lib/validate-docs.js` | CLAUDE.md drift detection script. |
+| `scripts/install-hooks.sh` | Install git hooks for harness-engineering repo. |
+| `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
+| `tests/evals/grader.js` | Readiness Skill Grader |
+| `tests/evals/run-evals.sh` | run-evals.sh |
+| `tests/evals/setup-grader.js` | Setup Skill Grader |
+| `tests/evals/test-marketplace-install.sh` | test-marketplace-install.sh |
 <!-- /AUTO:modules -->
 
 ---
