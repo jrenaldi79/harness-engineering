@@ -93,6 +93,7 @@ tests/
 │   ├── setup-grader.js  # Setup Skill Grader
 │   └── test-marketplace-install.sh
 └── scripts/
+    ├── detect-source-dirs.test.js  # Tests for detectSourceDirs and buildModuleIndex adaptive scanning.
     ├── generate-claude-md.test.js  # Tests for skills/setup/scripts/generate-claude-md.js
     ├── generate-docs-helpers.test.js  # Tests for generate-docs-helpers.js: directory trees, module indexes,
     ├── generate-docs.test.js  # Tests for generate-docs.js marker operations: replaceMarkers,

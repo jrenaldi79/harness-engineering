@@ -18,10 +18,9 @@ const { execFileSync } = require('node:child_process');
 
 const {
   buildDirectoryTree,
+  detectSourceDirs,
   buildModuleIndex,
 } = require('./generate-docs-helpers');
-
-const TREE_DIRS = ['src/', 'scripts/', 'tests/'];
 
 // ---------------------------------------------------------------------------
 // Marker Replacement
@@ -202,7 +201,8 @@ function main() {
   const docPath = path.join(rootDir, 'CLAUDE.md');
   const checkMode = process.argv.includes('--check');
 
-  const tree = buildDirectoryTree(rootDir, TREE_DIRS);
+  const treeDirs = detectSourceDirs(rootDir);
+  const tree = buildDirectoryTree(rootDir, treeDirs);
   const modules = buildModuleIndex(rootDir);
   const docsIndex = buildDocsIndex(rootDir);
   const generated = { tree, modules };
