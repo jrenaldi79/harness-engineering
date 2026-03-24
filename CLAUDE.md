@@ -111,6 +111,7 @@ tests/
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
     ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
+    ├── README.md
     ├── release.test.js  # Tests for scripts/release.sh — validates version bumping, changelog
     └── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
 <!-- /AUTO:tree -->
@@ -210,3 +211,4 @@ Before merging:
 | Enforcement script patterns | `skills/setup/references/enforcement-scripts.md` |
 | Node/TypeScript stack reference | `skills/setup/references/stack-node-typescript.md` |
 | Eval suite documentation | `tests/evals/README.md` |
+| Unit test documentation | `tests/scripts/README.md` |
