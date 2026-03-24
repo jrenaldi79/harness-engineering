@@ -219,10 +219,28 @@ run_test_case() {
   trap - EXIT
 }
 
-# Run all test cases
-while IFS= read -r tc; do
-  run_test_case "$tc"
-done <<< "$TEST_CASES"
+# Run marketplace install test (if not filtered to a specific readiness test case)
+INSTALL_TEST="$SCRIPT_DIR/test-marketplace-install.sh"
+if [ -x "$INSTALL_TEST" ] && [ -z "$FILTER" -o "$FILTER" = "marketplace-install" ]; then
+  TOTAL=$((TOTAL + 1))
+  INSTALL_ARGS=""
+  if [ "$DRY_RUN" = true ]; then
+    INSTALL_ARGS="--dry-run"
+  fi
+  if bash "$INSTALL_TEST" $INSTALL_ARGS; then
+    PASSED=$((PASSED + 1))
+  else
+    FAILED=$((FAILED + 1))
+  fi
+  echo ""
+fi
+
+# Run all readiness test cases
+if [ "$FILTER" != "marketplace-install" ]; then
+  while IFS= read -r tc; do
+    run_test_case "$tc"
+  done <<< "$TEST_CASES"
+fi
 
 # Summary
 echo -e "${BLUE}━━━ Summary ━━━${NC}"
