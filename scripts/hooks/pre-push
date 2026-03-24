@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Pre-push hook for harness-engineering repo
+# 1. Doc validation (drift detection)
+# 2. Smart test caching (SHA-based skip)
+
+set -e
+
+echo "Running pre-push checks..."
+
+# --- Doc validation ---
+if [ -f "skills/setup/scripts/lib/validate-docs.js" ]; then
+  echo "Checking for documentation drift..."
+  node skills/setup/scripts/lib/validate-docs.js --full || {
+    echo -e "\n  BLOCKED: Documentation drift detected."
+    echo -e "  Run 'node skills/setup/scripts/lib/generate-docs.js' to update.\n"
+    exit 1
+  }
+fi
+
+# --- Smart test caching ---
+HEAD_SHA=$(git rev-parse HEAD 2>/dev/null)
+CACHED_SHA=""
+if [ -f .test-passed ]; then
+  CACHED_SHA=$(cat .test-passed 2>/dev/null | tr -d '[:space:]')
+fi
+
+if [ -n "$HEAD_SHA" ] && [ "$HEAD_SHA" = "$CACHED_SHA" ]; then
+  echo "Tests already passed for $HEAD_SHA - skipping."
+else
+  echo "Running doc generation check..."
+  node skills/setup/scripts/lib/generate-docs.js --check || {
+    echo -e "\n  BLOCKED: Auto-generated sections are stale."
+    echo -e "  Run 'node skills/setup/scripts/lib/generate-docs.js' to update.\n"
+    exit 1
+  }
+fi
+
+echo "Pre-push checks passed."

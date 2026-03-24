@@ -1,4 +1,12 @@
 {
+  "hooks": {
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "node skills/setup/scripts/lib/validate-docs.js --full 2>&1 || echo 'WARNING: Documentation drift detected. Run: node skills/setup/scripts/lib/generate-docs.js'"
+      }
+    ]
+  },
   "permissions": {
     "allow": [
       "node --experimental-vm-modules*",

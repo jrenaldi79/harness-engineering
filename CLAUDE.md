@@ -30,14 +30,22 @@ node skills/setup/scripts/lib/generate-docs.js --check   # Verify auto-generated
 node skills/setup/scripts/lib/validate-docs.js --full     # Check for documentation drift
 ```
 
+### Setup
+```bash
+bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
+```
+
 ---
 
 ## Architecture
 
+<!-- AUTO:tree -->
 ```
 harness-engineering/
 ├── .claude/                 # Agent configuration (settings.json, rules/)
 ├── .claude-plugin/          # Plugin manifest (plugin.json, marketplace.json)
+├── scripts/
+│   └── hooks/               # Git hooks for this repo (pre-commit, pre-push)
 ├── skills/
 │   ├── readiness/
 │   │   └── SKILL.md         # Readiness analysis skill (8 pillars, 5 levels)
@@ -45,7 +53,7 @@ harness-engineering/
 │       ├── SKILL.md          # Setup orchestrator skill (6 phases)
 │       ├── scripts/          # Node.js enforcement scripts installed into target projects
 │       │   ├── lib/          # Individual checks (secrets, file sizes, test colocation, docs)
-│       │   └── hooks/        # Git hook scripts (pre-commit, pre-push)
+│       │   └── hooks/        # Git hook templates for target projects
 │       ├── templates/        # Config templates (.prettierrc, eslint, CLAUDE.md, rules/)
 │       └── references/       # Stack patterns, enforcement docs, quality guide
 ├── tests/
@@ -54,6 +62,7 @@ harness-engineering/
 ├── assets/                   # Pipeline diagram SVG, social images
 └── README.md                 # Reference guide and documentation
 ```
+<!-- /AUTO:tree -->
 
 ### Data Flow
 
@@ -74,19 +83,22 @@ User runs /setup
 
 ## Key Modules
 
+<!-- AUTO:modules -->
 | Module | Purpose |
 |--------|---------|
 | `skills/readiness/SKILL.md` | Full evaluation framework, 8 pillars, 37 criteria, 3 subagent dispatch |
 | `skills/setup/SKILL.md` | 6-phase setup orchestrator with Socratic discovery |
-| `scripts/lib/generate-docs.js` | Auto-regenerates CLAUDE.md sections between AUTO markers |
-| `scripts/lib/generate-docs-helpers.js` | Tree building, module indexing, JSDoc extraction |
-| `scripts/lib/validate-docs.js` | Detects drift between source code and CLAUDE.md content |
-| `scripts/lib/check-secrets.js` | Pattern-matches API keys, tokens, private keys in staged files |
-| `scripts/lib/check-file-sizes.js` | Rejects files over 300 lines |
-| `scripts/lib/check-test-colocation.js` | Verifies source files have colocated test files |
-| `scripts/init-project.js` | Node/TS project scaffolding (package.json, tsconfig, directories) |
-| `scripts/install-enforcement.js` | Copies enforcement scripts, hooks, configs into target project |
-| `scripts/generate-claude-md.js` | Generates tailored CLAUDE.md from templates |
+| `skills/setup/scripts/lib/generate-docs.js` | Auto-regenerates CLAUDE.md sections between AUTO markers |
+| `skills/setup/scripts/lib/generate-docs-helpers.js` | Tree building, module indexing, JSDoc extraction |
+| `skills/setup/scripts/lib/validate-docs.js` | Detects drift between source code and CLAUDE.md content |
+| `skills/setup/scripts/lib/check-secrets.js` | Pattern-matches API keys, tokens, private keys in staged files |
+| `skills/setup/scripts/lib/check-file-sizes.js` | Rejects files over 300 lines |
+| `skills/setup/scripts/lib/check-test-colocation.js` | Verifies source files have colocated test files |
+| `skills/setup/scripts/init-project.js` | Node/TS project scaffolding (package.json, tsconfig, directories) |
+| `skills/setup/scripts/install-enforcement.js` | Copies enforcement scripts, hooks, configs into target project |
+| `skills/setup/scripts/generate-claude-md.js` | Generates tailored CLAUDE.md from templates |
+| `scripts/install-hooks.sh` | Installs this repo's git hooks from `scripts/hooks/` |
+<!-- /AUTO:modules -->
 
 ---
 
@@ -123,6 +135,7 @@ Before merging:
 - **Eval fixtures are intentionally broken**: `tests/evals/fixtures/level-1-bare/` contains a hardcoded secret on purpose for detection testing. Do not "fix" it.
 - **No package.json at root**: This is a Claude Code plugin, not an npm package. Tests run via direct node/jest/bash invocation.
 - **`globs:` not `paths:`**: Rule files use `globs:` in YAML frontmatter for path scoping. The official docs say `paths:` but `globs:` works more reliably (see Claude Code issue #17204).
+- **Two sets of hooks**: `scripts/hooks/` are this repo's own git hooks (install with `bash scripts/install-hooks.sh`). `skills/setup/scripts/hooks/` are templates shipped to user projects by `/setup`. Don't confuse them.
 
 ---
 
