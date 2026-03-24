@@ -262,7 +262,8 @@ After the report, the skill offers to apply surgical fixes — editing existing 
 In Claude Code, run:
 
 ```
-/plugin install jrenaldi79/harness-engineering
+/plugin marketplace add jrenaldi79/harness-engineering
+/plugin install harness-engineering@harness-engineering
 ```
 
 That's it. Once installed, you don't need to remember any commands — just ask naturally:
@@ -325,7 +326,7 @@ The pre-commit hook runs automatically. If everything passes, your harness is ac
 |---|---|
 | `/plugin install` not recognized | Make sure you're using [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (the CLI), not the web chat. Plugin support requires Claude Code. |
 | Skills don't trigger after install | Restart your Claude Code session. Skills load on session start. |
-| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin install jrenaldi79/harness-engineering`. |
+| `/readiness` can't find setup references | Both skills are part of the same plugin — reinstall with `/plugin marketplace add jrenaldi79/harness-engineering` then `/plugin install harness-engineering@harness-engineering`. |
 
 ---
 
