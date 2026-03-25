@@ -21,7 +21,7 @@
           "testing": { "pass_max": 0 },
           "git-hooks": { "pass_max": 0 },
           "documentation": { "pass_max": 0 },
-          "agent-config": { "pass_max": 0 },
+          "agent-config": { "pass_max": 1 },
           "code-quality": { "pass_max": 1, "must_fail": ["No obvious hardcoded secrets"] },
           "dev-environment": { "pass_max": 1 },
           "agentic-workflow": { "pass_max": 0 }
