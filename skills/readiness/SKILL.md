@@ -75,8 +75,8 @@ Launch **3 subagents in parallel**, each covering related pillars:
 ### Subagent 2: Hooks, Config, Environment & Workflow
 
 **Reference files to read first:**
-- `$SETUP_SCRIPTS/hooks/pre-commit` — what a good pre-commit hook runs
-- `$SETUP_SCRIPTS/hooks/pre-push` — what a good pre-push hook runs
+- `$SETUP_SCRIPTS/hooks/pre-commit` — what a good pre-commit hook runs (project hooks may live in `.git/hooks/` or `.husky/`)
+- `$SETUP_SCRIPTS/hooks/pre-push` — what a good pre-push hook runs (project hooks may live in `.git/hooks/` or `.husky/`)
 - `$SETUP_TEMPLATES/settings.json` — what a good settings file looks like
 - `$SETUP_TEMPLATES/rules/*.md` — what path-scoped rules look like
 
@@ -141,11 +141,11 @@ For monorepos: **repo-scoped** criteria are evaluated once across the whole repo
 
 ### Pillar 3: Git Hooks & Enforcement (repo-scoped)
 
-- [ ] Pre-commit hook exists and runs checks (linting, formatting, secret scanning)
-- [ ] Pre-push hook exists and runs tests
-- [ ] Secret scanning configured — a script or tool that blocks commits containing API keys, tokens, or private keys (reference the patterns in `check-secrets.js`)
-- [ ] File size limits enforced mechanically — commits blocked if source files exceed a line limit (reference `check-file-sizes.js`)
-- [ ] **Smart test caching** — pre-push uses SHA-based caching to skip test runs when HEAD hasn't changed (`.test-passed` file or equivalent)
+- [ ] Pre-commit hook exists and runs checks (check `.git/hooks/pre-commit` OR `.husky/pre-commit` — either location counts) covering linting, formatting, secret scanning
+- [ ] Pre-push hook exists and runs tests (check `.git/hooks/pre-push` OR `.husky/pre-push` — either location counts)
+- [ ] Secret scanning configured — a script or tool that blocks commits containing API keys, tokens, or private keys, wired into the pre-commit hook at `.git/hooks/pre-commit` or `.husky/pre-commit` (reference the patterns in `check-secrets.js`)
+- [ ] File size limits enforced mechanically — commits blocked if source files exceed a line limit, wired into the pre-commit hook at `.git/hooks/pre-commit` or `.husky/pre-commit` (reference `check-file-sizes.js`)
+- [ ] **Smart test caching** — pre-push hook (at `.git/hooks/pre-push` or `.husky/pre-push`) uses SHA-based caching to skip test runs when HEAD hasn't changed (`.test-passed` file or equivalent)
 
 ### Pillar 4: Documentation (app-scoped)
 

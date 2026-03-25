@@ -1,14 +1,14 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 
 export const usersRouter = Router();
 
 const users: Array<{ id: number; name: string }> = [];
 
-usersRouter.get('/', (_req, res) => {
+usersRouter.get('/', (_req: Request, res: Response) => {
   res.json(users);
 });
 
-usersRouter.post('/', (req, res) => {
+usersRouter.post('/', (req: Request, res: Response) => {
   const { name } = req.body;
   if (!name) {
     res.status(400).json({ error: 'Name is required' });
