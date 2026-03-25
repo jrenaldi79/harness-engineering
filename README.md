@@ -56,12 +56,18 @@ This repo contains:
 
 ### 1. Install the plugin
 
-In Claude Code, run:
+In Claude Code, run these as **slash commands** (type them exactly as shown, starting with `/`):
 
 ```
 /plugin marketplace add jrenaldi79/harness-engineering
 /plugin install harness-engineering@harness-engineering
 ```
+
+> **Troubleshooting:** If installation fails with `Permission denied (publickey)`, your git is trying to clone via SSH without keys configured. Fix with:
+> ```bash
+> git config --global url."https://github.com/".insteadOf git@github.com:
+> ```
+> These are slash commands, not chat messages — type them directly in the Claude Code input, don't ask Claude to run them for you.
 
 That's it. Once installed, you don't need to remember any commands. Just ask naturally:
 
