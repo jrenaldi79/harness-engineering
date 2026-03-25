@@ -4,6 +4,28 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-03-25
+
+### Added
+
+- 86 unit tests for enforcement scripts: check-file-sizes, check-secrets, check-test-colocation, validate-docs, and incremental doc indexing
+- 23 E2E tests for post-setup lifecycle: enforcement round-trips against real git repos, doc indexing subprocess, git commit hook integration, doc drift detection
+- Python/FastAPI adaptive path eval scenario (`setup-python`)
+- Setup-then-readiness loop eval — verifies `/setup` output scores Level 3+ on `/readiness`
+- Multi-step eval support in `run-evals.sh` (steps array in test case config)
+- Hook-commit validation in setup grader: simulates real `git commit` after setup
+- Deny list validation in setup grader: verifies `rm -rf`, `push --force`, `reset --hard` are blocked
+- CLAUDE.md content checks in setup grader: `claude_md_must_mention` / `claude_md_must_not_mention`
+
+### Fixed
+
+- **Glob matching bug**: `**/` now matches zero or more directories. Previously `src/**/*.js` silently skipped files directly in `src/` — only matched files in subdirectories. Affected check-file-sizes, check-secrets, and check-test-colocation.
+- **Pre-commit hook missing `set -e`**: enforcement script failures (e.g. secret detection exit 1) were silently ignored and commits went through anyway
+- **Readiness report path**: moved from `.claude/readiness-report.md` to project root `readiness-report.md` — `.claude/` is write-protected in non-interactive modes
+- **Eval permissions**: seed `.claude/settings.json` with tool permissions before git init, disable GPG signing for eval commits
+- **Eval hook detection**: grader now checks both `.git/hooks/` and `.husky/` for hook existence and executability
+- **Eval timeouts**: readiness 300→600s, setup 600→900s, setup-then-readiness 1200s
+
 ## [1.1.0] - 2026-03-24
 
 ### Added
