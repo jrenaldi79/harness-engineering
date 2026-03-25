@@ -1,11 +1,8 @@
 #!/usr/bin/env node
-/**
- * Setup Skill Grader — validates /setup output against setup-eval-config.json.
- */
+/** Setup Skill Grader — validates /setup output against setup-eval-config.json. */
 
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
 
 const args = {};
 for (let i = 2; i < process.argv.length; i += 2) {
@@ -41,42 +38,8 @@ function check(name, pass, detail) {
   checks.push({ name, pass: Boolean(pass), detail: detail || '' });
 }
 
-function pathExists(p) {
-  try {
-    fs.statSync(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isExecutable(p) {
-  try {
-    const stat = fs.statSync(p);
-    return (stat.mode & 0o111) !== 0;
-  } catch {
-    return false;
-  }
-}
-
-// ─── 0. Setup report ───
-const reportPath = path.join(fixtureDir, '.claude/setup-report.md');
-let reportFrontmatter = {};
-check('Setup report created', pathExists(reportPath));
-if (pathExists(reportPath)) {
-  const fmMatch = fs.readFileSync(reportPath, 'utf8').match(/^---\n([\s\S]*?)\n---/);
-  if (fmMatch) {
-    check('Report has YAML frontmatter', true);
-    for (const line of fmMatch[1].split('\n')) {
-      const kv = line.match(/^(\w[\w_-]*)\s*:\s*(.+)$/);
-      if (kv) reportFrontmatter[kv[1]] = kv[2].trim();
-    }
-    check('Report has stack', !!reportFrontmatter.stack, reportFrontmatter.stack || 'Missing');
-    check('Report status complete', reportFrontmatter.status === 'complete', reportFrontmatter.status || 'Missing');
-  } else {
-    check('Report has YAML frontmatter', false, 'No --- delimiters');
-  }
-}
+function pathExists(p) { try { fs.statSync(p); return true; } catch { return false; } }
+function isExecutable(p) { try { return (fs.statSync(p).mode & 0o111) !== 0; } catch { return false; } }
 
 // ─── 1. Required files must exist ───
 for (const filePath of expected.files_must_exist || []) {
@@ -108,15 +71,15 @@ for (const filePath of expected.json_valid || []) {
 }
 
 // ─── 4. Hook executability (checks .git/hooks/ and .husky/) ───
-for (const filePath of expected.hooks_executable || []) {
-  const hookName = path.basename(filePath);
-  const gitHook = path.join(fixtureDir, '.git', 'hooks', hookName);
-  const huskyHook = path.join(fixtureDir, '.husky', hookName);
+for (const hookName of expected.hooks_executable || []) {
+  const name = path.basename(hookName);
+  const gitHook = path.join(fixtureDir, '.git/hooks', name);
+  const huskyHook = path.join(fixtureDir, '.husky', name);
   const foundGit = pathExists(gitHook) && isExecutable(gitHook);
   const foundHusky = pathExists(huskyHook);
   const found = foundGit || foundHusky;
   check(
-    `Hook exists: ${hookName}`,
+    `Hook exists: ${name}`,
     found,
     found ? (foundHusky ? '.husky/' : '.git/hooks/') : 'Not in .git/hooks/ or .husky/',
   );
@@ -138,18 +101,42 @@ if (pathExists(claudeMdPath)) {
   check('CLAUDE.md exists for section checks', false, 'CLAUDE.md not found');
 }
 
+// ─── 5b. CLAUDE.md content checks ───
+if (pathExists(claudeMdPath)) {
+  const claudeContent = fs.readFileSync(claudeMdPath, 'utf8').toLowerCase();
+  for (const term of expected.claude_md_must_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(`CLAUDE.md mentions "${term}"`, found, found ? '' : `Not found`);
+  }
+  for (const term of expected.claude_md_must_not_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(`CLAUDE.md omits "${term}"`, !found, found ? `Found forbidden term` : '');
+  }
+}
+
 // ─── 6. Settings allow/deny structure ───
 if (expected.settings_has_allow_deny) {
-  const sp = path.join(fixtureDir, '.claude/settings.json');
-  if (!pathExists(sp)) {
-    check('Settings has allow/deny', false, 'Not found');
+  const settingsPath = path.join(fixtureDir, '.claude/settings.json');
+  if (!pathExists(settingsPath)) {
+    check('Settings has allow/deny lists', false, 'settings.json not found');
   } else {
     try {
-      const perms = JSON.parse(fs.readFileSync(sp, 'utf8')).permissions || {};
-      check('Settings has allow list', Array.isArray(perms.allow) && perms.allow.length > 0);
-      check('Settings has deny list', Array.isArray(perms.deny) && perms.deny.length > 0);
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const perms = settings.permissions || {};
+      const hasAllow = Array.isArray(perms.allow) && perms.allow.length > 0;
+      const hasDeny = Array.isArray(perms.deny) && perms.deny.length > 0;
+      check(
+        'Settings has allow list',
+        hasAllow,
+        hasAllow ? `${perms.allow.length} entries` : 'Missing or empty',
+      );
+      check(
+        'Settings has deny list',
+        hasDeny,
+        hasDeny ? `${perms.deny.length} entries` : 'Missing or empty',
+      );
     } catch (err) {
-      check('Settings has allow/deny', false, err.message);
+      check('Settings has allow/deny lists', false, err.message);
     }
   }
 }
@@ -176,77 +163,84 @@ if (expected.rules_have_globs_frontmatter) {
   }
 }
 
+// ─── 7b. Settings deny list content validation ───
+if (expected.settings_deny_must_contain) {
+  const settingsPath = path.join(fixtureDir, '.claude/settings.json');
+  if (!pathExists(settingsPath)) {
+    check('Settings deny list content', false, 'settings.json not found');
+  } else {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const perms = settings.permissions || {};
+      const denyList = Array.isArray(perms.deny) ? perms.deny.join(' ') : '';
+      for (const term of expected.settings_deny_must_contain) {
+        const found = denyList.toLowerCase().includes(term.toLowerCase());
+        check(
+          `Deny list contains "${term}"`,
+          found,
+          found ? '' : `Term "${term}" not found in deny list`,
+        );
+      }
+    } catch (err) {
+      check('Settings deny list content', false, err.message);
+    }
+  }
+}
+
 // ─── 8. Auto-documentation pipeline ───
 if (expected.auto_doc_pipeline) {
-  const gdPath = path.join(fixtureDir, 'scripts/generate-docs.js');
-  const ghPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
-  check('Auto-doc: generate-docs.js exists', pathExists(gdPath), pathExists(gdPath) ? '' : 'Not found');
-  check('Auto-doc: helpers exists', pathExists(ghPath), pathExists(ghPath) ? '' : 'Not found');
+  // Check generate-docs scripts exist
+  const genDocsPath = path.join(fixtureDir, 'scripts/generate-docs.js');
+  const genHelpersPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
+  check(
+    'Auto-doc: generate-docs.js exists',
+    pathExists(genDocsPath),
+    pathExists(genDocsPath) ? '' : 'Not found',
+  );
+  check(
+    'Auto-doc: generate-docs-helpers.js exists',
+    pathExists(genHelpersPath),
+    pathExists(genHelpersPath) ? '' : 'Not found',
+  );
 
-  const gitHook = path.join(fixtureDir, '.git/hooks/pre-commit');
-  const huskyHook = path.join(fixtureDir, '.husky/pre-commit');
-  const hookFile = pathExists(gitHook) ? gitHook : pathExists(huskyHook) ? huskyHook : null;
-  const hookOk = hookFile && /generate-docs/i.test(fs.readFileSync(hookFile, 'utf8'));
-  check('Auto-doc: hook runs generate-docs', hookOk, hookOk ? '' : 'Not found or missing reference');
+  // Check pre-commit hook references generate-docs (check both locations)
+  const gitHookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
+  const huskyHookPath = path.join(fixtureDir, '.husky/pre-commit');
+  const hookPath = pathExists(gitHookPath) ? gitHookPath : pathExists(huskyHookPath) ? huskyHookPath : null;
+  if (hookPath) {
+    const hookContent = fs.readFileSync(hookPath, 'utf8');
+    const callsGenDocs = /generate-docs/i.test(hookContent);
+    check(
+      'Auto-doc: pre-commit hook runs generate-docs',
+      callsGenDocs,
+      callsGenDocs ? '' : 'Hook does not reference generate-docs',
+    );
+  } else {
+    check('Auto-doc: pre-commit hook runs generate-docs', false, 'Hook not found');
+  }
 
-  const cPath = path.join(fixtureDir, 'CLAUDE.md');
-  if (pathExists(cPath)) {
-    const c = fs.readFileSync(cPath, 'utf8');
-    check('Auto-doc: AUTO:tree marker', /<!--\s*AUTO:tree\s*-->/.test(c));
-    check('Auto-doc: AUTO:modules marker', /<!--\s*AUTO:modules\s*-->/.test(c));
+  // Check CLAUDE.md has AUTO markers
+  const claudePath = path.join(fixtureDir, 'CLAUDE.md');
+  if (pathExists(claudePath)) {
+    const claudeContent = fs.readFileSync(claudePath, 'utf8');
+    const hasAutoTree = /<!--\s*AUTO:tree\s*-->/.test(claudeContent);
+    const hasAutoModules = /<!--\s*AUTO:modules\s*-->/.test(claudeContent);
+    check(
+      'Auto-doc: CLAUDE.md has AUTO:tree marker',
+      hasAutoTree,
+      hasAutoTree ? '' : 'Missing <!-- AUTO:tree --> marker',
+    );
+    check(
+      'Auto-doc: CLAUDE.md has AUTO:modules marker',
+      hasAutoModules,
+      hasAutoModules ? '' : 'Missing <!-- AUTO:modules --> marker',
+    );
   } else {
     check('Auto-doc: CLAUDE.md has AUTO markers', false, 'CLAUDE.md not found');
   }
 }
 
-// ─── 8b. Auto-doc: run generate-docs --check to verify markers match reality ───
-if (expected.auto_doc_pipeline) {
-  const scriptPath = path.join(fixtureDir, 'scripts/generate-docs.js');
-  if (pathExists(scriptPath)) {
-    try {
-      execFileSync(process.execPath, [scriptPath, '--check'], {
-        cwd: fixtureDir, stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000,
-      });
-      check('Auto-doc: --check passes (markers match filesystem)', true);
-    } catch (err) {
-      const msg = (err.stderr || err.message || '').toString().slice(0, 120);
-      check('Auto-doc: --check passes (markers match filesystem)', false, msg);
-    }
-  }
-}
-
-// ─── 8c. Setup report structure checks ───
-if (pathExists(reportPath)) {
-  const reportContent = fs.readFileSync(reportPath, 'utf8');
-  const sections = ['What Was Installed', 'Verification Results', 'Key Commands'];
-  for (const s of sections) {
-    const found = reportContent.toLowerCase().includes(s.toLowerCase());
-    check(`Report has "${s}" section`, found, found ? '' : 'Not found');
-  }
-}
-
-// ─── 9. Docs index auto-generation ───
-if (expected.docs_index_generated) {
-  const docsDir = path.join(fixtureDir, 'docs');
-  const docsExists = pathExists(docsDir);
-  check(
-    'Docs index: docs/ directory exists',
-    docsExists,
-    docsExists ? '' : 'docs/ not created by setup',
-  );
-
-  if (docsExists) {
-    const indexPath = path.join(docsDir, 'index.md');
-    const indexExists = pathExists(indexPath);
-    check(
-      'Docs index: docs/index.md exists',
-      indexExists,
-      indexExists ? '' : 'docs/index.md not generated',
-    );
-  }
-}
-
-// ─── 10. Existing files preserved ───
+// ─── 9. Existing files preserved ───
 for (const filePath of expected.existing_files_preserved || []) {
   const fullPath = path.join(fixtureDir, filePath);
   const exists = pathExists(fullPath);
@@ -257,24 +251,29 @@ for (const filePath of expected.existing_files_preserved || []) {
   );
 }
 
-// ─── 11. CLAUDE.md content checks (more reliable than conversation) ───
-if (pathExists(claudeMdPath)) {
-  const claudeContent = fs.readFileSync(claudeMdPath, 'utf8').toLowerCase();
-  for (const term of expected.claude_md_must_mention || []) {
-    const found = claudeContent.includes(term.toLowerCase());
+// ─── 10. Conversation content checks ───
+if (expected.conversation_must_mention) {
+  const convPath = path.join(resultDir, 'conversation.txt');
+  const conversation = pathExists(convPath)
+    ? fs.readFileSync(convPath, 'utf8')
+    : '';
+  const fullText = conversation.toLowerCase();
+
+  for (const term of expected.conversation_must_mention) {
+    const found = fullText.includes(term.toLowerCase());
     check(
-      `CLAUDE.md mentions "${term}"`,
+      `Conversation mentions "${term}"`,
       found,
-      found ? '' : `Term "${term}" not found in CLAUDE.md`,
+      found ? '' : `Term "${term}" not found in output`,
     );
   }
-  for (const term of expected.claude_md_must_not_mention || []) {
-    const found = claudeContent.includes(term.toLowerCase());
-    check(
-      `CLAUDE.md does NOT mention "${term}"`,
-      !found,
-      found ? `Found forbidden term "${term}" in CLAUDE.md` : '',
-    );
+}
+
+// ─── 11. Hook-driven commit validation ───
+if (expected.hook_commit_validation) {
+  const { validateHookCommits } = require('./hook-commit-validator');
+  for (const hc of validateHookCommits(fixtureDir)) {
+    check(hc.name, hc.pass, hc.detail);
   }
 }
 

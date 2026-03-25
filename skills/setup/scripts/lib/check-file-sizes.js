@@ -62,8 +62,10 @@ function checkFiles(files, limit) {
 function matchesPattern(filePath, patterns) {
   for (const pattern of patterns) {
     const regexStr = pattern
+      .replace(/\*\*\//g, '<<GLOBSTAR_SEP>>')
       .replace(/\*\*/g, '<<GLOBSTAR>>')
       .replace(/\*/g, '[^/]*')
+      .replace(/<<GLOBSTAR_SEP>>/g, '(.*/)?')
       .replace(/<<GLOBSTAR>>/g, '.*');
     if (new RegExp(`^${regexStr}$`).test(filePath)) {
       return true;

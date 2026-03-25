@@ -27,8 +27,6 @@ each skill against fixture repos and validates the output.
 ./tests/evals/run-evals.sh --config setup-eval-config.json --dry-run
 ```
 
-**Run evals as Bash shell commands** so output streams live and you can monitor progress. Evals can take 5-15 minutes per fixture.
-
 ## How It Works
 
 1. **Fixtures** (`fixtures/`) — Self-contained project directories representing test scenarios
@@ -48,11 +46,10 @@ The runner accepts `--config <file>` to select which eval suite to run. Each con
 
 ## Setup Fixtures
 
-| Fixture | Stack | What It Tests |
-|---|---|---|
-| `setup-bare` | Node/TS Express (new) | Full greenfield setup via fast path (scripts). |
-| `setup-existing-node` | Node/TS Express (existing) | Enhancement without destroying existing files. |
-| `setup-python` | Python FastAPI (new) | Adaptive path (Claude creates files, not scripts). Checks for Node leakage. |
+| Fixture | What It Tests |
+|---|---|
+| `setup-bare` | Empty directory — full greenfield Node/TS Express setup path (scaffolding, enforcement, hooks, docs). |
+| `setup-existing-node` | Existing Express project — enhancement path that adds enforcement without destroying existing files. |
 
 ## Eval Configs
 
@@ -68,14 +65,12 @@ The runner accepts `--config <file>` to select which eval suite to run. Each con
 - **files_must_exist** — Files the skill must create (hard fail if missing)
 - **files_should_exist** — Recommended files (soft check)
 - **json_valid** — Files that must parse as valid JSON
-- **hooks_executable** — Git hooks (checks both `.git/hooks/` and `.husky/`)
+- **hooks_executable** — Git hooks that must have execute permissions
 - **claude_md_sections** — Sections that must appear in generated CLAUDE.md
-- **claude_md_must_mention / claude_md_must_not_mention** — Content checks on generated CLAUDE.md
 - **settings_has_allow_deny** — Verify .claude/settings.json has allow/deny permission lists
 - **rules_have_globs_frontmatter** — Verify .claude/rules/*.md files have `globs:` in frontmatter
-- **auto_doc_pipeline** — Verify generate-docs scripts, pre-commit hook wiring, and AUTO markers
-- **docs_index_generated** — Verify docs/ directory and docs/index.md exist
 - **existing_files_preserved** — Files from the original fixture that must not be deleted
+- **conversation_must_mention** — Terms the skill output must include
 
 ## Adding a New Fixture
 
@@ -88,12 +83,11 @@ The runner accepts `--config <file>` to select which eval suite to run. Each con
 Each run creates a timestamped directory under `results/` containing:
 
 - `claude-output.json` — Raw Claude CLI JSON output
-- `conversation.txt` — Extracted conversation text (final message only)
+- `conversation.txt` — Extracted conversation text
 - `grade.json` — Grader output with pass/fail per check
 - `stderr.log` — Any stderr from the Claude run
 - `duration.txt` — How long the run took
 - `summary.json` — Aggregate pass/fail/error counts
 
 For readiness evals: `readiness-report.md` (the generated report)
-
-For setup evals: Full project artifacts captured for debugging — `scripts/`, `docs/`, `src/`, `tests/`, `.claude/`, `.husky/`, `.git/hooks/`, `CLAUDE.md`, `package.json`, etc.
+For setup evals: `CLAUDE.md`, `package.json`, `.claude/settings.json`, `.claude/rules/` (captured artifacts)

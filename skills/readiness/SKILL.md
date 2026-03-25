@@ -47,7 +47,7 @@ Check the working directory for:
 
 If monorepo: identify each app/package as a separate scoring unit.
 
-**Previous report:** Check for `.claude/readiness-report.md`. If present, read the YAML frontmatter to enable delta comparison at the end.
+**Previous report:** Check for `readiness-report.md`. If present, read the YAML frontmatter to enable delta comparison at the end.
 
 ---
 
@@ -222,7 +222,7 @@ After all 3 subagents return, merge their results into a unified scorecard in th
 
 ## Phase 5: Output — Two Parts
 
-### Part A: Structured Report (saved to `.claude/readiness-report.md`)
+### Part A: Structured Report (saved to `readiness-report.md`)
 
 Write the report with YAML frontmatter for machine-parseable delta tracking on future runs.
 

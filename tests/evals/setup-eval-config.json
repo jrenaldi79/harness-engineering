@@ -46,13 +46,14 @@
           "Commands",
           "Architecture"
         ],
-        "claude_md_must_mention": [
-          "enforcement",
-          "pre-commit"
-        ],
         "settings_has_allow_deny": true,
+        "settings_deny_must_contain": [
+          "rm -rf",
+          "push --force",
+          "reset --hard"
+        ],
         "rules_have_globs_frontmatter": true,
-        "docs_index_generated": true
+        "hook_commit_validation": true
       }
     },
     {
@@ -89,12 +90,17 @@
           "Architecture"
         ],
         "settings_has_allow_deny": true,
+        "settings_deny_must_contain": [
+          "rm -rf",
+          "push --force",
+          "reset --hard"
+        ],
         "rules_have_globs_frontmatter": true,
         "existing_files_preserved": [
           "src/index.ts",
           "src/utils.ts"
         ],
-        "docs_index_generated": true
+        "hook_commit_validation": true
       }
     },
     {
@@ -111,7 +117,6 @@
           "pyproject.toml",
           "src",
           "tests",
-          "docs",
           ".claude/rules/tdd.md",
           ".claude/rules/code-quality.md",
           ".gitignore"
@@ -137,7 +142,7 @@
         "settings_has_allow_deny": true,
         "rules_have_globs_frontmatter": true,
         "auto_doc_pipeline": false,
-        "docs_index_generated": false
+        "hook_commit_validation": false
       }
     }
   ]

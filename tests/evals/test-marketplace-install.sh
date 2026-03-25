@@ -60,7 +60,16 @@ TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
 
 cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
-(cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
+
+# Seed .claude/settings.json BEFORE git init so it's part of the initial commit
+mkdir -p "$TMP_DIR/.claude"
+if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
+  cat > "$TMP_DIR/.claude/settings.json" <<'SEED'
+{"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(git push --force*)","Bash(git reset --hard*)"]}}
+SEED
+fi
+(cd "$TMP_DIR" && git init -q && git config commit.gpgsign false && git add -A && git commit -q -m "Initial commit") || true
+EVAL_SETTINGS="$TMP_DIR/.claude/settings.json"
 
 if [ "$DRY_RUN" = true ]; then
   echo -e "  ${BLUE}[DRY RUN] Step 1 — Add marketplace:${NC}"
@@ -74,7 +83,7 @@ if [ "$DRY_RUN" = true ]; then
   echo "    claude -p \"Run a readiness analysis...\" --output-format json"
   echo ""
   echo -e "  ${BLUE}[DRY RUN] Step 4 — Verify report:${NC}"
-  echo "    Check .claude/readiness-report.md exists and contains expected sections"
+  echo "    Check readiness-report.md exists and contains expected sections"
   echo ""
   exit 0
 fi
@@ -180,10 +189,10 @@ echo ""
 # ─── Step 4: Verify the readiness report ───
 echo -e "${YELLOW}Step 4: Verify readiness report${NC}"
 
-REPORT_PATH="$TMP_DIR/.claude/readiness-report.md"
+REPORT_PATH="$TMP_DIR/readiness-report.md"
 
 if [ -f "$REPORT_PATH" ]; then
-  pass "Report file created at .claude/readiness-report.md"
+  pass "Report file created at readiness-report.md"
   cp "$REPORT_PATH" "$RESULT_DIR/readiness-report.md"
 
   REPORT_CONTENT=$(cat "$REPORT_PATH")

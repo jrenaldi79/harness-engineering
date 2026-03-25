@@ -18,13 +18,11 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Testing
 ```bash
-npx jest --config '{}' tests/scripts/                                  # Unit tests for setup scripts
+node --experimental-vm-modules node_modules/.bin/jest tests/scripts/   # Unit tests for setup scripts
 bash tests/evals/run-evals.sh                                          # E2E readiness evals (default)
 bash tests/evals/run-evals.sh --config setup-eval-config.json          # E2E setup evals
 bash tests/evals/test-marketplace-install.sh                           # Test plugin install flow
 ```
-
-**Run evals as Bash shell commands** (not via Agent tools) so output streams live and you can monitor progress. Evals invoke Claude as a subprocess and can take 5-15 minutes per fixture.
 
 ### Validation
 ```bash
@@ -36,14 +34,6 @@ node skills/setup/scripts/lib/validate-docs.js --full     # Check for documentat
 ```bash
 bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 ```
-
-### Releasing
-```bash
-bash scripts/release.sh 1.2.0             # Bump plugin.json, commit, tag
-bash scripts/release.sh 1.2.0 --dry-run   # Preview without changes
-bash scripts/release.sh 1.2.0 --push      # Release and push tag to origin
-```
-Update CHANGELOG.md with a `## [X.Y.Z]` section **before** running the release script.
 
 ---
 
@@ -98,22 +88,34 @@ tests/
 ├── evals/
 │   ├── eval-config.json
 │   ├── grader.js  # Readiness Skill Grader
+│   ├── hook-commit-validator.js  # Hook-driven commit validation for setup eval grader.
 │   ├── README.md
 │   ├── run-evals.sh
 │   ├── setup-eval-config.json
 │   ├── setup-grader.js  # Setup Skill Grader — validates /setup output against setup-eval-config.json.
+│   ├── setup-readiness-eval-config.json
+│   ├── setup-readiness-grader.js  # Setup-then-Readiness Grader — validates that /setup produces a project
 │   └── test-marketplace-install.sh
 └── scripts/
+    ├── check-file-sizes.test.js  # Tests for skills/setup/scripts/lib/check-file-sizes.js
+    ├── check-secrets.test.js  # Tests for skills/setup/scripts/lib/check-secrets.js
+    ├── check-test-colocation.test.js  # Tests for skills/setup/scripts/lib/check-test-colocation.js
     ├── detect-source-dirs.test.js  # Tests for detectSourceDirs and buildModuleIndex adaptive scanning.
+    ├── doc-drift-detection.test.js  # Tests for doc drift detection — verifies validate-docs.js catches
+    ├── doc-indexing-roundtrip.test.js  # Tests for post-install doc indexing round-trip — verifies that
+    ├── enforcement-roundtrip.test.js  # Tests for post-install enforcement script round-trip — verifies that scripts
     ├── generate-claude-md.test.js  # Tests for skills/setup/scripts/generate-claude-md.js
     ├── generate-docs-helpers.test.js  # Tests for generate-docs-helpers.js: directory trees, module indexes,
     ├── generate-docs.test.js  # Tests for generate-docs.js marker operations: replaceMarkers,
+    ├── hook-integration.test.js  # Tests for git commit hook integration — verifies that git commit triggers
+    ├── incremental-doc-indexing.test.js  # Tests for incremental doc indexing — verifies that adding a new source file
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
     ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
     ├── README.md
     ├── release.test.js  # Tests for scripts/release.sh — validates version bumping, changelog
-    └── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
+    ├── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
+    └── validate-docs.test.js  # Tests for skills/setup/scripts/lib/validate-docs.js
 <!-- /AUTO:tree -->
 
 ### Data Flow
@@ -122,7 +124,7 @@ tests/
 User installs plugin
   -> /readiness reads templates/references as benchmark
   -> 3 parallel subagents evaluate project against 8 pillars
-  -> Scored report saved to .claude/readiness-report.md
+  -> Scored report saved to readiness-report.md
 
 User runs /setup
   -> Socratic questions determine stack and goals
@@ -139,7 +141,7 @@ User runs /setup
 | Module | Purpose |
 |--------|---------|
 | `skills/readiness/SKILL.md` | Harness Readiness Report |
-| `skills/setup/SKILL.md` | If the current directory is empty, scaffold in place: |
+| `skills/setup/SKILL.md` | setup skill definition |
 | `skills/setup/scripts/generate-claude-md.js` | Generate tailored CLAUDE.md files for a project from templates. |
 | `skills/setup/scripts/init-project.js` | Project scaffolding script for Node/TypeScript projects. |
 | `skills/setup/scripts/install-enforcement.js` | Copies enforcement tooling into a target project. |
@@ -153,8 +155,10 @@ User runs /setup
 | `scripts/release.sh` | Release script — bumps plugin.json version, validates changelog, commits, and tags. |
 | `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
 | `tests/evals/grader.js` | Readiness Skill Grader |
-| `tests/evals/run-evals.sh` | run-evals.sh |
+| `tests/evals/hook-commit-validator.js` | Hook-driven commit validation for setup eval grader. |
+| `tests/evals/run-evals.sh` | Skill Eval Runner — runs claude -p against fixtures, grades output. |
 | `tests/evals/setup-grader.js` | Setup Skill Grader — validates /setup output against setup-eval-config.json. |
+| `tests/evals/setup-readiness-grader.js` | Setup-then-Readiness Grader — validates that /setup produces a project |
 | `tests/evals/test-marketplace-install.sh` | test-marketplace-install.sh |
 <!-- /AUTO:modules -->
 
@@ -179,12 +183,10 @@ User runs /setup
 Before merging:
 - [ ] No files over 300 lines (run `find . -name "*.js" -not -path "*/node_modules/*" -exec wc -l {} + | awk '$1 > 300'`)
 - [ ] No hardcoded secrets (run `node skills/setup/scripts/lib/check-secrets.js`)
-- [ ] Tests pass: `npx jest --config '{}' tests/scripts/`
+- [ ] Tests pass: `node --experimental-vm-modules node_modules/.bin/jest tests/scripts/`
 - [ ] Doc validation passes: `node skills/setup/scripts/lib/validate-docs.js --full`
-- [ ] CLAUDE.md auto-updated by commit hook — verify result looks correct
+- [ ] CLAUDE.md updated if files were added, removed, or renamed
 - [ ] Critical Gotchas section updated if non-obvious behavior was discovered
-- [ ] If SKILL.md changed, eval config and grader updated in the same PR
-- [ ] Eval dry-run passes after eval infrastructure changes: `bash tests/evals/run-evals.sh --config setup-eval-config.json --dry-run`
 
 ---
 
@@ -196,10 +198,6 @@ Before merging:
 - **No package.json at root**: This is a Claude Code plugin, not an npm package. Tests run via direct node/jest/bash invocation.
 - **`globs:` not `paths:`**: Rule files use `globs:` in YAML frontmatter for path scoping. The official docs say `paths:` but `globs:` works more reliably (see Claude Code issue #17204).
 - **Two sets of hooks**: `scripts/hooks/` are this repo's own git hooks (install with `bash scripts/install-hooks.sh`). `skills/setup/scripts/hooks/` are templates shipped to user projects by `/setup`. Don't confuse them.
-- **Two sets of generate-docs**: `scripts/repo-generate-docs.js` is this repo's auto-doc (scans `skills/`, `scripts/`, `tests/`). `skills/setup/scripts/lib/generate-docs.js` is the template installed into user projects (auto-detects source dirs). Fixing one does not fix the other.
-- **Setup has two code paths**: Node/TS uses the "fast path" (scripts do the work). All other stacks use the "adaptive path" (Claude creates files). The eval uses `conversation_must_not_mention` to catch cross-contamination (e.g., Python setup mentioning npm).
-- **Squash merges leave branches dirty**: After squash-merging a PR, the branch still shows unmerged commits. Always create a fresh branch from main for follow-up work — don't reuse the old branch.
-- **CLAUDE.md auto-updates on commit**: The pre-commit hook runs `repo-generate-docs.js` to regenerate AUTO markers. Don't manually edit content between `<!-- AUTO:tree -->` and `<!-- AUTO:modules -->` markers — it will be overwritten.
 
 ---
 

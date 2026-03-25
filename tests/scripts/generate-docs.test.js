@@ -1,6 +1,6 @@
 /**
  * Tests for generate-docs.js marker operations: replaceMarkers,
- * validateCrossLinks, buildDocsIndex, and checkMarkersAreCurrent.
+ * validateCrossLinks, buildPlansIndex, and checkMarkersAreCurrent.
  */
 
 const fs = require('node:fs');
@@ -10,7 +10,7 @@ const os = require('node:os');
 const {
   replaceMarkers,
   validateCrossLinks,
-  buildDocsIndex,
+  buildPlansIndex,
   checkMarkersAreCurrent,
 } = require('../../skills/setup/scripts/lib/generate-docs');
 
@@ -150,87 +150,46 @@ describe('validateCrossLinks', () => {
 });
 
 // ---------------------------------------------------------------------------
-// buildDocsIndex
+// buildPlansIndex
 // ---------------------------------------------------------------------------
-describe('buildDocsIndex', () => {
-  it('indexes files at docs/ root', () => {
-    const docsDir = path.join(tmpDir, 'docs');
-    fs.mkdirSync(docsDir, { recursive: true });
-    fs.writeFileSync(path.join(docsDir, 'getting-started.md'), '# Getting Started');
-    fs.writeFileSync(path.join(docsDir, 'api-reference.md'), '# API Reference');
-
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('getting-started.md');
-    expect(index).toContain('api-reference.md');
-  });
-
-  it('indexes files in subdirectories with section headings', () => {
+describe('buildPlansIndex', () => {
+  it('lists plan files from docs/plans/', () => {
     const plansDir = path.join(tmpDir, 'docs', 'plans');
-    const decisionsDir = path.join(tmpDir, 'docs', 'decisions');
     fs.mkdirSync(plansDir, { recursive: true });
-    fs.mkdirSync(decisionsDir, { recursive: true });
-    fs.writeFileSync(path.join(plansDir, 'roadmap.md'), '# Roadmap');
-    fs.writeFileSync(path.join(decisionsDir, '001-auth.md'), '# Auth Decision');
+    fs.writeFileSync(path.join(plansDir, '2026-03-06-cool-design.md'), '# Cool Design');
+    fs.writeFileSync(path.join(plansDir, '2026-03-06-cool-plan.md'), '# Cool Plan');
 
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('plans');
-    expect(index).toContain('decisions');
-    expect(index).toContain('roadmap.md');
-    expect(index).toContain('001-auth.md');
+    const index = buildPlansIndex(tmpDir);
+    expect(index).toContain('2026-03-06-cool-design.md');
+    expect(index).toContain('2026-03-06-cool-plan.md');
   });
 
-  it('indexes nested subdirectories', () => {
+  it('lists plan files from docs/archive/plans/', () => {
     const archiveDir = path.join(tmpDir, 'docs', 'archive', 'plans');
     fs.mkdirSync(archiveDir, { recursive: true });
-    fs.writeFileSync(path.join(archiveDir, 'old-plan.md'), '# Old');
+    fs.writeFileSync(path.join(archiveDir, '2026-01-01-old-plan.md'), '# Old');
 
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('old-plan.md');
-    expect(index).toContain('archive/plans');
+    const index = buildPlansIndex(tmpDir);
+    expect(index).toContain('2026-01-01-old-plan.md');
   });
 
-  it('extracts first heading as description', () => {
-    const docsDir = path.join(tmpDir, 'docs');
-    fs.mkdirSync(docsDir, { recursive: true });
-    fs.writeFileSync(path.join(docsDir, 'setup.md'), '# Setting Up Your Environment\n\nDetails...');
+  it('separates active and archived plans', () => {
+    const plansDir = path.join(tmpDir, 'docs', 'plans');
+    const archiveDir = path.join(tmpDir, 'docs', 'archive', 'plans');
+    fs.mkdirSync(plansDir, { recursive: true });
+    fs.mkdirSync(archiveDir, { recursive: true });
+    fs.writeFileSync(path.join(plansDir, 'active.md'), '');
+    fs.writeFileSync(path.join(archiveDir, 'archived.md'), '');
 
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('Setting Up Your Environment');
+    const index = buildPlansIndex(tmpDir);
+    expect(index).toContain('Active');
+    expect(index).toContain('Archive');
   });
 
-  it('returns empty message when docs/ does not exist', () => {
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toMatch(/no doc/i);
-  });
-
-  it('returns empty message when docs/ is empty', () => {
-    fs.mkdirSync(path.join(tmpDir, 'docs'), { recursive: true });
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toMatch(/no doc/i);
-  });
-
-  it('skips non-markdown files', () => {
-    const docsDir = path.join(tmpDir, 'docs');
-    fs.mkdirSync(docsDir, { recursive: true });
-    fs.writeFileSync(path.join(docsDir, 'notes.md'), '# Notes');
-    fs.writeFileSync(path.join(docsDir, 'diagram.png'), 'binary');
-    fs.writeFileSync(path.join(docsDir, 'data.json'), '{}');
-
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('notes.md');
-    expect(index).not.toContain('diagram.png');
-    expect(index).not.toContain('data.json');
-  });
-
-  it('skips index.md itself', () => {
-    const docsDir = path.join(tmpDir, 'docs');
-    fs.mkdirSync(docsDir, { recursive: true });
-    fs.writeFileSync(path.join(docsDir, 'index.md'), '# Index');
-    fs.writeFileSync(path.join(docsDir, 'guide.md'), '# Guide');
-
-    const index = buildDocsIndex(tmpDir);
-    expect(index).toContain('guide.md');
-    expect(index).not.toMatch(/\[index\.md\]/);
+  it('returns empty message when no plans exist', () => {
+    // No docs/plans/ directory at all
+    const index = buildPlansIndex(tmpDir);
+    expect(index).toMatch(/no plan/i);
   });
 });
 

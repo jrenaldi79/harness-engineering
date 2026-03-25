@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
-#
-# Skill Eval Runner
-#
-# Copies each fixture to a temp directory (with a git repo init),
-# runs `claude -p` with --plugin-dir pointing at the harness-engineering plugin,
-# captures output, and passes results to the grader.
-#
-# Usage:
-#   ./tests/evals/run-evals.sh                                      # Run all readiness test cases (default)
-#   ./tests/evals/run-evals.sh --config setup-eval-config.json      # Run all setup test cases
-#   ./tests/evals/run-evals.sh level-1-bare                         # Run a single test case
-#   ./tests/evals/run-evals.sh --dry-run                            # Show what would run without executing
-#
+# Skill Eval Runner — runs claude -p against fixtures, grades output.
+# Usage: ./run-evals.sh [--config X.json] [--dry-run] [test-case-name]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -54,14 +43,14 @@ fi
 command -v claude &>/dev/null || { echo -e "${RED}Error: 'claude' CLI not found.${NC}"; exit 1; }
 command -v jq &>/dev/null || { echo -e "${RED}Error: 'jq' not found.${NC}"; exit 1; }
 
-# Validate plugin manifest
-if command -v claude &>/dev/null && [ -f "$PLUGIN_DIR/.claude-plugin/marketplace.json" ]; then
-  echo -e "${BLUE}Validating plugin manifest...${NC}"
+# Validate marketplace.json via claude plugin validate
+MARKETPLACE="$PLUGIN_DIR/.claude-plugin/marketplace.json"
+if [ -f "$MARKETPLACE" ]; then
+  echo -e "${BLUE}Validating marketplace.json schema...${NC}"
   if ! claude plugin validate "$PLUGIN_DIR" 2>&1; then
-    echo -e "${RED}Error: claude plugin validate failed${NC}"
-    exit 1
+    echo -e "${RED}Error: claude plugin validate failed${NC}"; exit 1
   fi
-  echo -e "${GREEN}  manifest OK${NC}"
+  echo -e "${GREEN}  marketplace.json schema OK${NC}"
   echo ""
 fi
 
@@ -72,7 +61,7 @@ SKILL=$(jq -r '.skill' "$CONFIG")
 PROMPT=$(jq -r '.prompt' "$CONFIG")
 TIMEOUT=$(jq -r '.timeout_seconds' "$CONFIG")
 CUSTOM_GRADER=$(jq -r '.grader // empty' "$CONFIG")
-TEST_CASES=$(jq -c '.test_cases[] | {name, fixture, description, prompt}' "$CONFIG")
+TEST_CASES=$(jq -c '.test_cases[] | {name, fixture, description, prompt, steps}' "$CONFIG")
 
 # Resolve grader: use config-specified grader, or default to grader.js
 if [ -n "$CUSTOM_GRADER" ]; then
@@ -90,6 +79,48 @@ printf "${BLUE}║   Harness %-7s Skill Eval Suite     ║${NC}\n" "$SKILL_LABEL
 echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
 echo "Plugin: $PLUGIN_DIR | Config: $(basename "$CONFIG")"
 echo ""
+
+# Run a single Claude invocation. Returns 0 on success, 1 on error (sets ERRORS).
+run_claude_step() {
+  local tmp_dir="$1"
+  local prompt="$2"
+  local result_dir="$3"
+  local eval_settings="$4"
+  local suffix="$5"  # e.g. "step-1" or "" for single-step
+
+  local out_file="$result_dir/claude-output${suffix:+-$suffix}.json"
+  local err_file="$result_dir/stderr${suffix:+-$suffix}.log"
+
+  local start_time=$(date +%s)
+  local claude_output=""
+  local exit_code=0
+
+  claude_output=$(
+    cd "$tmp_dir" && \
+    timeout "${TIMEOUT}s" claude \
+      --plugin-dir "$PLUGIN_DIR" \
+      -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $prompt" \
+      --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
+      --permission-mode acceptEdits \
+      --output-format json \
+      2>"$err_file"
+  ) || exit_code=$?
+
+  local end_time=$(date +%s)
+  local duration=$((end_time - start_time))
+  echo "$claude_output" > "$out_file"
+
+  if [ $exit_code -ne 0 ]; then
+    echo -e "  ${RED}ERROR: Claude exited with code $exit_code after ${duration}s${NC}"
+    cat "$err_file" 2>/dev/null
+    ERRORS=$((ERRORS + 1))
+    echo '{"status":"error","exit_code":'$exit_code',"duration":'$duration'}' > "$result_dir/result.json"
+    return 1
+  fi
+
+  echo -e "  Completed in ${duration}s"
+  return 0
+}
 
 run_test_case() {
   local tc="$1"
@@ -117,76 +148,66 @@ run_test_case() {
   # Copy fixture into temp dir
   cp -r "$fixture_path/." "$tmp_dir/"
 
-  (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
-  mkdir -p "$result_dir"
+  # Seed .claude/settings.json BEFORE git init so it's part of the initial commit.
+  mkdir -p "$tmp_dir/.claude" "$result_dir"
+  if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
+    cat > "$tmp_dir/.claude/settings.json" <<'SEED'
+{"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(rm -rf ~)","Bash(git push --force*)","Bash(git push -f*)","Bash(git reset --hard*)","Bash(git clean -fd*)","Bash(npm publish*)"]}}
+SEED
+  fi
+  (cd "$tmp_dir" && git init -q && git config commit.gpgsign false && git add -A && git commit -q -m "Initial commit") || true
+  local eval_settings="$tmp_dir/.claude/settings.json"
+  # Build list of steps: either from "steps" array or single prompt
+  local steps_json=$(echo "$tc" | jq -c '.steps // empty')
   local tc_prompt=$(echo "$tc" | jq -r '.prompt // empty')
-  local effective_prompt="${tc_prompt:-$PROMPT}"
 
   if [ "$DRY_RUN" = true ]; then
     echo -e "  ${BLUE}[DRY RUN] Would execute:${NC}"
     echo "    cd $tmp_dir"
-    echo "    claude --plugin-dir $PLUGIN_DIR -p \"...\" --allowedTools 'Bash,Read,Glob,Grep,Write,Agent,Edit' --permission-mode acceptEdits --output-format json"
+    echo "    claude --plugin-dir $PLUGIN_DIR -p \"...\" --permission-mode acceptEdits --output-format json"
     echo ""
     return 0
   fi
 
-  echo -e "  ${BLUE}Running claude in $tmp_dir ...${NC}"
-  local start_time=$(date +%s)
-  local claude_output=""
-  local exit_code=0
+  # --- Run step(s) ---
+  local total_duration=0
 
-  claude_output=$(
-    cd "$tmp_dir" && \
-    timeout "${TIMEOUT}s" claude \
-      --plugin-dir "$PLUGIN_DIR" \
-      -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $effective_prompt" \
-      --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
-      --permission-mode acceptEdits \
-      --output-format json \
-      2>"$result_dir/stderr.log"
-  ) || exit_code=$?
-
-  local end_time=$(date +%s)
-  local duration=$((end_time - start_time))
-
-  # Save raw output
-  echo "$claude_output" > "$result_dir/claude-output.json"
-  echo "$duration" > "$result_dir/duration.txt"
-
-  if [ $exit_code -ne 0 ]; then
-    echo -e "  ${RED}ERRROR: Claude exited with code $exit_code after ${duration}s${NC}"
-    cat "$result_dir/stderr.log" 2>/dev/null
-    ERRORS=$((ERRORS + 1))
-    echo '{"status":"error","exit_code":'$exit_code',"duration":'$duration'}' > "$result_dir/result.json"
-    return 0
+  if [ -n "$steps_json" ] && [ "$steps_json" != "null" ]; then
+    # Multi-step test case
+    local step_count=$(echo "$steps_json" | jq 'length')
+    local step_idx=0
+    while [ $step_idx -lt $step_count ]; do
+      local step=$(echo "$steps_json" | jq -c ".[$step_idx]")
+      step_idx=$((step_idx + 1))
+      local step_prompt=$(echo "$step" | jq -r '.prompt')
+      local step_label=$(echo "$step" | jq -r '.label // "Step '"$step_idx"'"')
+      echo -e "  ${BLUE}[$step_label] Running claude in $tmp_dir ...${NC}"
+      if ! run_claude_step "$tmp_dir" "$step_prompt" "$result_dir" "$eval_settings" "step-${step_idx}"; then
+        return 0
+      fi
+    done
+  else
+    # Single-step test case
+    local effective_prompt="${tc_prompt:-$PROMPT}"
+    echo -e "  ${BLUE}Running claude in $tmp_dir ...${NC}"
+    if ! run_claude_step "$tmp_dir" "$effective_prompt" "$result_dir" "$eval_settings" ""; then
+      return 0
+    fi
   fi
 
-  echo -e "  Completed in ${duration}s"
-
-  # Extract the conversation result
-  echo "$claude_output" | jq -r '.result // empty' > "$result_dir/conversation.txt" 2>/dev/null || true
-
-  # Capture skill-specific artifacts
-  if [ "$SKILL" = "readiness" ]; then
-    if [ -f "$tmp_dir/.claude/readiness-report.md" ]; then
-      cp "$tmp_dir/.claude/readiness-report.md" "$result_dir/readiness-report.md"
-      echo -e "  ${GREEN}✓ Report file created${NC}"
-    else
-      echo -e "  ${RED}✗ Report file NOT created${NC}"
-    fi
-  elif [ "$SKILL" = "setup" ]; then
-    for f in CLAUDE.md package.json pyproject.toml .prettierrc .gitignore .env.example; do
-      [ -f "$tmp_dir/$f" ] && cp "$tmp_dir/$f" "$result_dir/" 2>/dev/null || true
-    done
-    for d in .claude scripts docs src tests .husky .git/hooks; do
-      [ -d "$tmp_dir/$d" ] && { mkdir -p "$result_dir/$d"; cp -r "$tmp_dir/$d/." "$result_dir/$d/" 2>/dev/null || true; }
-    done
-    if [ -f "$tmp_dir/.claude/setup-report.md" ]; then
-      echo -e "  ${GREEN}✓ Setup report created${NC}"
-    else
-      echo -e "  ${RED}✗ Setup report NOT created${NC}"
-    fi
-    echo -e "  ${GREEN}✓ Setup artifacts captured${NC}"
+  # Capture artifacts (check for both setup and readiness outputs)
+  if [ -f "$tmp_dir/readiness-report.md" ]; then
+    cp "$tmp_dir/readiness-report.md" "$result_dir/readiness-report.md"
+    echo -e "  ${GREEN}✓ Report file created${NC}"
+  fi
+  for f in CLAUDE.md package.json .prettierrc .gitignore .env.example; do
+    [ -f "$tmp_dir/$f" ] && cp "$tmp_dir/$f" "$result_dir/" 2>/dev/null || true
+  done
+  for d in .claude/settings.json .claude/rules; do
+    [ -e "$tmp_dir/$d" ] && { mkdir -p "$(dirname "$result_dir/$d")"; cp -r "$tmp_dir/$d" "$result_dir/$d" 2>/dev/null || true; }
+  done
+  if [ -f "$tmp_dir/.claude/setup-report.md" ]; then
+    cp "$tmp_dir/.claude/setup-report.md" "$result_dir/" 2>/dev/null || true
   fi
 
   # Run grader
