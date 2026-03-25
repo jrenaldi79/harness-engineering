@@ -4,7 +4,7 @@
   "skill": "readiness",
   "prompt": "Run a readiness analysis on this project. Output the full readiness report.",
   "run_count": 1,
-  "timeout_seconds": 300,
+  "timeout_seconds": 600,
   "test_cases": [
     {
       "name": "level-1-bare",

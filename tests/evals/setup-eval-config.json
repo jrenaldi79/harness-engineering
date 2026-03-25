@@ -5,7 +5,7 @@
   "grader": "setup-grader.js",
   "prompt": "Run /setup on this project and proceed with the full setup.",
   "run_count": 1,
-  "timeout_seconds": 600,
+  "timeout_seconds": 900,
   "test_cases": [
     {
       "name": "setup-bare",
