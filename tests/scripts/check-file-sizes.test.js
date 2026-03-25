@@ -92,9 +92,9 @@ describe('checkFiles', () => {
 // matchesPattern
 // ---------------------------------------------------------------------------
 describe('matchesPattern', () => {
-  // Note: the simple glob-to-regex implementation treats **/ as .*/
-  // which requires at least one directory separator. So src/**/*.js
-  // matches src/sub/foo.js but NOT src/foo.js directly.
+  it('matches files directly in src/ with ** glob', () => {
+    expect(matchesPattern('src/foo.js', ['src/**/*.js'])).toBe(true);
+  });
 
   it('matches nested paths with **', () => {
     expect(matchesPattern('src/deep/nested/file.js', ['src/**/*.js'])).toBe(true);
@@ -102,11 +102,6 @@ describe('matchesPattern', () => {
 
   it('matches one-level deep subdirectory', () => {
     expect(matchesPattern('src/sub/foo.js', ['src/**/*.js'])).toBe(true);
-  });
-
-  it('does not match files directly in src/ (glob limitation)', () => {
-    // This is a known limitation of the simple glob-to-regex conversion
-    expect(matchesPattern('src/foo.js', ['src/**/*.js'])).toBe(false);
   });
 
   it('does not match files outside pattern', () => {

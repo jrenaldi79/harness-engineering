@@ -31,27 +31,36 @@ afterEach(() => {
 // matchesPattern
 // ---------------------------------------------------------------------------
 describe('matchesPattern', () => {
-  // Note: the simple glob-to-regex implementation requires a directory separator
-  // for **/ patterns. So src/**/*.ts matches src/sub/service.ts but not src/service.ts.
+  it('matches files directly in src/', () => {
+    expect(matchesPattern('src/service.ts', ['src/**/*.ts'])).toBe(true);
+  });
 
   it('matches nested src paths', () => {
     expect(matchesPattern('src/users/service.ts', ['src/**/*.ts'])).toBe(true);
-  });
-
-  it('does not match direct src/ children (glob limitation)', () => {
-    expect(matchesPattern('src/service.ts', ['src/**/*.ts'])).toBe(false);
   });
 
   it('matches single * glob for direct children', () => {
     expect(matchesPattern('src/service.ts', ['src/*.ts'])).toBe(true);
   });
 
+  it('matches test file exclude patterns directly in src/', () => {
+    expect(matchesPattern('src/service.test.ts', ['src/**/*.test.*'])).toBe(true);
+  });
+
   it('matches nested exclude patterns for test files', () => {
     expect(matchesPattern('src/sub/service.test.ts', ['src/**/*.test.*'])).toBe(true);
   });
 
-  it('matches nested exclude patterns for spec files', () => {
-    expect(matchesPattern('src/sub/service.spec.js', ['src/**/*.spec.*'])).toBe(true);
+  it('matches exclude patterns for spec files', () => {
+    expect(matchesPattern('src/service.spec.js', ['src/**/*.spec.*'])).toBe(true);
+  });
+
+  it('matches exclude patterns for .d.ts files', () => {
+    expect(matchesPattern('src/types.d.ts', ['src/**/*.d.ts'])).toBe(true);
+  });
+
+  it('matches index files directly in src/', () => {
+    expect(matchesPattern('src/index.ts', ['src/**/index.ts'])).toBe(true);
   });
 
   it('matches nested index files', () => {

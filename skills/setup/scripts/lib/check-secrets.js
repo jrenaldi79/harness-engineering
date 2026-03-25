@@ -39,8 +39,10 @@ const CONFIG = {
 function matchesAllowlist(filePath, allowlistPaths) {
   for (const pattern of allowlistPaths) {
     const regexStr = pattern
+      .replace(/\*\*\//g, '<<GLOBSTAR_SEP>>')
       .replace(/\*\*/g, '<<GLOBSTAR>>')
       .replace(/\*/g, '[^/]*')
+      .replace(/<<GLOBSTAR_SEP>>/g, '(.*/)?')
       .replace(/<<GLOBSTAR>>/g, '.*');
     if (new RegExp(`^${regexStr}$`).test(filePath)) {
       return true;

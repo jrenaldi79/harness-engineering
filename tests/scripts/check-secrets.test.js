@@ -28,8 +28,11 @@ describe('matchesAllowlist', () => {
   });
 
   it('allows nested markdown files', () => {
-    // Note: **/*.md requires a directory prefix due to glob-to-regex translation
     expect(matchesAllowlist('docs/guide.md', defaultAllowlist)).toBe(true);
+  });
+
+  it('allows root-level markdown files', () => {
+    expect(matchesAllowlist('README.md', defaultAllowlist)).toBe(true);
   });
 
   it('allows docs directory files', () => {
@@ -44,9 +47,8 @@ describe('matchesAllowlist', () => {
     expect(matchesAllowlist('.env', defaultAllowlist)).toBe(false);
   });
 
-  it('root-level markdown not matched by **/*.md (glob limitation)', () => {
-    // The **/ in the glob requires at least one directory separator
-    expect(matchesAllowlist('README.md', defaultAllowlist)).toBe(false);
+  it('allows spec files directly in src/', () => {
+    expect(matchesAllowlist('src/auth.spec.js', defaultAllowlist)).toBe(true);
   });
 });
 
@@ -143,6 +145,7 @@ describe('scanForSecrets — allowlist', () => {
     const content = 'const key = "sk-ant-abc123def456";\n';
     expect(scanForSecrets(content, 'tests/fixtures/keys.js')).toHaveLength(0);
     expect(scanForSecrets(content, 'src/auth.test.js')).toHaveLength(0);
+    expect(scanForSecrets(content, 'README.md')).toHaveLength(0);
     expect(scanForSecrets(content, 'docs/secrets.txt')).toHaveLength(0);
   });
 
