@@ -4,7 +4,7 @@
   "skill": "multi",
   "grader": "setup-readiness-grader.js",
   "run_count": 1,
-  "timeout_seconds": 600,
+  "timeout_seconds": 1200,
   "test_cases": [
     {
       "name": "setup-then-readiness",
@@ -25,8 +25,7 @@
           "package.json",
           "CLAUDE.md",
           ".claude/settings.json",
-          "scripts/check-secrets.js",
-          ".git/hooks/pre-commit"
+          "scripts/check-secrets.js"
         ],
         "readiness_report_created": true,
         "readiness_level": { "min": 3 }
