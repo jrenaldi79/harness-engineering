@@ -95,6 +95,9 @@ run_claude_step() {
   local claude_output=""
   local exit_code=0
 
+  # Debug: verify settings file exists before running claude
+  echo -e "  ${BLUE}Settings: $(cat "$eval_settings" 2>/dev/null | head -c 60)${NC}"
+
   claude_output=$(
     cd "$tmp_dir" && \
     timeout "${TIMEOUT}s" claude \
