@@ -120,7 +120,7 @@ tests/
 User installs plugin
   -> /readiness reads templates/references as benchmark
   -> 3 parallel subagents evaluate project against 8 pillars
-  -> Scored report saved to .claude/readiness-report.md
+  -> Scored report saved to readiness-report.md
 
 User runs /setup
   -> Socratic questions determine stack and goals
