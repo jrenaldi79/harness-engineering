@@ -71,21 +71,20 @@ function validateHookCommits(fixtureDir) {
     fs.writeFileSync(path.join(badDir, 'secret.js'), 'const k = "sk-ant-evaltest123456";\n');
     fs.writeFileSync(path.join(badDir, 'secret.test.js'), 'test("ok", () => {});\n');
     execFileSync('git', ['add', '-A'], { cwd: fixtureDir, stdio: 'ignore' });
+    const preStaged = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: fixtureDir, encoding: 'utf8' }).trim();
 
     let blocked = false;
-    let blockErr = '';
+    let commitOut = '';
     try {
-      execFileSync('git', ['commit', '-m', 'bad-secret'], { cwd: fixtureDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+      const r = execFileSync('git', ['commit', '-m', 'bad-secret'], { cwd: fixtureDir, encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'] });
+      commitOut = (r || '').slice(0, 300);
     } catch (e) {
       blocked = true;
-      blockErr = (e.stderr || e.stdout || '').slice(0, 200);
+      commitOut = ((e.stderr || '') + (e.stdout || '')).slice(0, 300);
     }
-    // Debug: capture hook state for diagnosis
-    const hookExists = pathExists(gitHook);
-    const hookContent = hookExists ? fs.readFileSync(gitHook, 'utf8').slice(0, 100) : 'NO HOOK';
-    const staged = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: fixtureDir, encoding: 'utf8' }).trim();
-    const debugInfo = blocked ? blockErr : `hook=${hookExists} staged=[${staged}] hook_start=${hookContent}`;
-    check('Hook blocks secret commit', blocked, blocked ? '' : `Not blocked: ${debugInfo}`);
+    const hookBody = pathExists(gitHook) ? fs.readFileSync(gitHook, 'utf8').slice(0, 80) : 'NONE';
+    check('Hook blocks secret commit', blocked, blocked ? '' :
+      `pre_staged=[${preStaged.replace(/\n/g,',')}] commit_out=[${commitOut.slice(0,150)}] hook=[${hookBody}]`);
 
     // Step 2: Good commit — clean file
     fs.unlinkSync(path.join(badDir, 'secret.js'));
