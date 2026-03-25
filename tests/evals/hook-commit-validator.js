@@ -80,7 +80,12 @@ function validateHookCommits(fixtureDir) {
       blocked = true;
       blockErr = (e.stderr || e.stdout || '').slice(0, 200);
     }
-    check('Hook blocks secret commit', blocked, blocked ? blockErr : 'Commit with secret was not blocked');
+    // Debug: capture hook state for diagnosis
+    const hookExists = pathExists(gitHook);
+    const hookContent = hookExists ? fs.readFileSync(gitHook, 'utf8').slice(0, 100) : 'NO HOOK';
+    const staged = execFileSync('git', ['diff', '--cached', '--name-only'], { cwd: fixtureDir, encoding: 'utf8' }).trim();
+    const debugInfo = blocked ? blockErr : `hook=${hookExists} staged=[${staged}] hook_start=${hookContent}`;
+    check('Hook blocks secret commit', blocked, blocked ? '' : `Not blocked: ${debugInfo}`);
 
     // Step 2: Good commit — clean file
     fs.unlinkSync(path.join(badDir, 'secret.js'));
