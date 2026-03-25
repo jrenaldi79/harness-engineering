@@ -49,6 +49,11 @@
           "Architecture"
         ],
         "settings_has_allow_deny": true,
+        "settings_deny_must_contain": [
+          "rm -rf",
+          "push --force",
+          "reset --hard"
+        ],
         "rules_have_globs_frontmatter": true,
         "conversation_must_mention": [
           "enforcement",
@@ -93,6 +98,11 @@
           "Architecture"
         ],
         "settings_has_allow_deny": true,
+        "settings_deny_must_contain": [
+          "rm -rf",
+          "push --force",
+          "reset --hard"
+        ],
         "rules_have_globs_frontmatter": true,
         "existing_files_preserved": [
           "src/index.ts",

@@ -174,6 +174,30 @@ if (expected.rules_have_globs_frontmatter) {
   }
 }
 
+// ─── 7b. Settings deny list content validation ───
+if (expected.settings_deny_must_contain) {
+  const settingsPath = path.join(fixtureDir, '.claude/settings.json');
+  if (!pathExists(settingsPath)) {
+    check('Settings deny list content', false, 'settings.json not found');
+  } else {
+    try {
+      const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+      const perms = settings.permissions || {};
+      const denyList = Array.isArray(perms.deny) ? perms.deny.join(' ') : '';
+      for (const term of expected.settings_deny_must_contain) {
+        const found = denyList.toLowerCase().includes(term.toLowerCase());
+        check(
+          `Deny list contains "${term}"`,
+          found,
+          found ? '' : `Term "${term}" not found in deny list`,
+        );
+      }
+    } catch (err) {
+      check('Settings deny list content', false, err.message);
+    }
+  }
+}
+
 // ─── 8. Auto-documentation pipeline ───
 if (expected.auto_doc_pipeline) {
   // Check generate-docs scripts exist

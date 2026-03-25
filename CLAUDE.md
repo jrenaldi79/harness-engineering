@@ -93,13 +93,18 @@ tests/
 │   ├── setup-grader.js  # Setup Skill Grader
 │   └── test-marketplace-install.sh
 └── scripts/
+    ├── check-file-sizes.test.js  # Tests for skills/setup/scripts/lib/check-file-sizes.js
+    ├── check-secrets.test.js  # Tests for skills/setup/scripts/lib/check-secrets.js
+    ├── check-test-colocation.test.js  # Tests for skills/setup/scripts/lib/check-test-colocation.js
     ├── generate-claude-md.test.js  # Tests for skills/setup/scripts/generate-claude-md.js
     ├── generate-docs-helpers.test.js  # Tests for generate-docs-helpers.js: directory trees, module indexes,
     ├── generate-docs.test.js  # Tests for generate-docs.js marker operations: replaceMarkers,
+    ├── incremental-doc-indexing.test.js  # Tests for incremental doc indexing — verifies that adding a new source file
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
     ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
-    └── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
+    ├── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
+    └── validate-docs.test.js  # Tests for skills/setup/scripts/lib/validate-docs.js
 <!-- /AUTO:tree -->
 
 ### Data Flow
