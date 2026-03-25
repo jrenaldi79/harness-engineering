@@ -38,23 +38,8 @@ function check(name, pass, detail) {
   checks.push({ name, pass: Boolean(pass), detail: detail || '' });
 }
 
-function pathExists(p) {
-  try {
-    fs.statSync(p);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function isExecutable(p) {
-  try {
-    const stat = fs.statSync(p);
-    return (stat.mode & 0o111) !== 0;
-  } catch {
-    return false;
-  }
-}
+function pathExists(p) { try { fs.statSync(p); return true; } catch { return false; } }
+function isExecutable(p) { try { return (fs.statSync(p).mode & 0o111) !== 0; } catch { return false; } }
 
 // ─── 1. Required files must exist ───
 for (const filePath of expected.files_must_exist || []) {
@@ -111,6 +96,19 @@ if (pathExists(claudeMdPath)) {
   }
 } else if ((expected.claude_md_sections || []).length > 0) {
   check('CLAUDE.md exists for section checks', false, 'CLAUDE.md not found');
+}
+
+// ─── 5b. CLAUDE.md content checks ───
+if (pathExists(claudeMdPath)) {
+  const claudeContent = fs.readFileSync(claudeMdPath, 'utf8').toLowerCase();
+  for (const term of expected.claude_md_must_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(`CLAUDE.md mentions "${term}"`, found, found ? '' : `Not found`);
+  }
+  for (const term of expected.claude_md_must_not_mention || []) {
+    const found = claudeContent.includes(term.toLowerCase());
+    check(`CLAUDE.md omits "${term}"`, !found, found ? `Found forbidden term` : '');
+  }
 }
 
 // ─── 6. Settings allow/deny structure ───

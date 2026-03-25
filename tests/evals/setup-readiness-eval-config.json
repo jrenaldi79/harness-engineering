@@ -1,0 +1,36 @@
+{
+  "description": "Setup-then-Readiness evaluation — runs /setup on a bare project, then /readiness to verify the scaffolded project scores well",
+  "plugin_dir": "../../",
+  "skill": "multi",
+  "grader": "setup-readiness-grader.js",
+  "run_count": 1,
+  "timeout_seconds": 600,
+  "test_cases": [
+    {
+      "name": "setup-then-readiness",
+      "fixture": "fixtures/setup-bare",
+      "description": "Run /setup to scaffold a Node/TS Express project, then /readiness to verify it scores Level 3+.",
+      "steps": [
+        {
+          "label": "Setup",
+          "prompt": "Run /setup on this project IN THE CURRENT DIRECTORY — do not create a subdirectory. Here are my answers to your Socratic questions: I am building a REST API. Use Node.js with TypeScript and Express as the framework. The project name is myapp but set it up in this directory, not in a myapp/ subdirectory. Please proceed with the full setup without asking me further questions — use those answers directly. IMPORTANT: Skip npm install and dependency installation — just create the files and configs. For verification (Phase 6), skip the linter check since dependencies are not installed."
+        },
+        {
+          "label": "Readiness",
+          "prompt": "Run /readiness on this project. Output the full readiness report."
+        }
+      ],
+      "expected": {
+        "setup_files_exist": [
+          "package.json",
+          "CLAUDE.md",
+          ".claude/settings.json",
+          "scripts/check-secrets.js",
+          ".git/hooks/pre-commit"
+        ],
+        "readiness_report_created": true,
+        "readiness_level": { "min": 3 }
+      }
+    }
+  ]
+}

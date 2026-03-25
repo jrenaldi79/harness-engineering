@@ -106,6 +106,48 @@
         ],
         "hook_commit_validation": true
       }
+    },
+    {
+      "name": "setup-python",
+      "fixture": "fixtures/setup-python",
+      "description": "Empty directory — tests the adaptive path for Python/FastAPI. Claude creates pyproject.toml, enforcement scripts, hooks, and documentation without using the Node fast-path scripts.",
+      "prompt": "Run /setup on this project IN THE CURRENT DIRECTORY — do not create a subdirectory. Here are my answers to your Socratic questions: I am building a REST API. Use Python with FastAPI as the framework. The project name is myapi but set it up in this directory, not in a myapi/ subdirectory. Please proceed with the full setup without asking me further questions — use those answers directly. IMPORTANT: Skip pip install and dependency installation — just create the files and configs. For verification (Phase 6), skip the linter check since dependencies are not installed.",
+      "expected": {
+        "files_must_exist": [
+          "CLAUDE.md",
+          ".claude/settings.json"
+        ],
+        "files_should_exist": [
+          "pyproject.toml",
+          "src",
+          "tests",
+          ".claude/rules/tdd.md",
+          ".claude/rules/code-quality.md",
+          ".gitignore"
+        ],
+        "json_valid": [
+          ".claude/settings.json"
+        ],
+        "hooks_executable": [
+          ".git/hooks/pre-commit",
+          ".git/hooks/pre-push"
+        ],
+        "claude_md_sections": [
+          "Commands",
+          "Architecture"
+        ],
+        "claude_md_must_mention": [
+          "pytest"
+        ],
+        "claude_md_must_not_mention": [
+          "npm install",
+          "node_modules"
+        ],
+        "settings_has_allow_deny": true,
+        "rules_have_globs_frontmatter": true,
+        "auto_doc_pipeline": false,
+        "hook_commit_validation": false
+      }
     }
   ]
 }

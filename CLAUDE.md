@@ -92,6 +92,8 @@ tests/
 │   ├── run-evals.sh
 │   ├── setup-eval-config.json
 │   ├── setup-grader.js  # Setup Skill Grader — validates /setup output against setup-eval-config.json.
+│   ├── setup-readiness-eval-config.json
+│   ├── setup-readiness-grader.js  # Setup-then-Readiness Grader — validates that /setup produces a project
 │   └── test-marketplace-install.sh
 └── scripts/
     ├── check-file-sizes.test.js  # Tests for skills/setup/scripts/lib/check-file-sizes.js
@@ -149,8 +151,9 @@ User runs /setup
 | `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
 | `tests/evals/grader.js` | Readiness Skill Grader |
 | `tests/evals/hook-commit-validator.js` | Hook-driven commit validation for setup eval grader. |
-| `tests/evals/run-evals.sh` | run-evals.sh |
+| `tests/evals/run-evals.sh` | Skill Eval Runner — runs claude -p against fixtures, grades output. |
 | `tests/evals/setup-grader.js` | Setup Skill Grader — validates /setup output against setup-eval-config.json. |
+| `tests/evals/setup-readiness-grader.js` | Setup-then-Readiness Grader — validates that /setup produces a project |
 | `tests/evals/test-marketplace-install.sh` | test-marketplace-install.sh |
 <!-- /AUTO:modules -->
 
