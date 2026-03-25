@@ -170,7 +170,6 @@ SKILL_OUTPUT=$(
     -p "/readiness" \
     --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
     --permission-mode acceptEdits \
-    --settings "$EVAL_SETTINGS" \
     --output-format json \
     2>"$RESULT_DIR/skill-stderr.log"
 ) || EXIT_CODE=$?
