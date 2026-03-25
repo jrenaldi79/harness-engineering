@@ -45,6 +45,10 @@ function validateHookCommits(fixtureDir) {
       fs.mkdirSync(path.dirname(gitHook), { recursive: true });
       fs.writeFileSync(gitHook, content);
       fs.chmodSync(gitHook, 0o755);
+      // Remove .husky/pre-commit to prevent double-execution via husky runner
+      if (pathExists(huskyHook)) {
+        try { fs.unlinkSync(huskyHook); } catch { /* ok */ }
+      }
       hookReady = true;
     } catch (e) {
       check('Hook commit: prepare hook', false, e.message);

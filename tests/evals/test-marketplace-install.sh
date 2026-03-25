@@ -65,7 +65,9 @@ cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 # Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox)
 mkdir -p "$TMP_DIR/.claude"
 if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
-  echo '{"permissions":{"allow":["Bash(*)"],"deny":[]}}' > "$TMP_DIR/.claude/settings.json"
+  cat > "$TMP_DIR/.claude/settings.json" <<'SEED'
+{"permissions":{"allow":["Bash(*)"],"deny":["Bash(rm -rf /)","Bash(git push --force*)","Bash(git reset --hard*)"]}}
+SEED
 fi
 (cd "$TMP_DIR" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
 EVAL_SETTINGS="$TMP_DIR/.claude/settings.json"

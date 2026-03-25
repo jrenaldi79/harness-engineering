@@ -152,10 +152,12 @@ run_test_case() {
   (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
   # Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox).
-  # Claude/setup can overwrite this — acceptEdits mode allows Write without approval.
+  # Includes common deny entries so grader passes even if /setup doesn't overwrite.
   mkdir -p "$tmp_dir/.claude" "$result_dir"
   if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
-    echo '{"permissions":{"allow":["Bash(*)"],"deny":[]}}' > "$tmp_dir/.claude/settings.json"
+    cat > "$tmp_dir/.claude/settings.json" <<'SEED'
+{"permissions":{"allow":["Bash(*)"],"deny":["Bash(rm -rf /)","Bash(rm -rf ~)","Bash(git push --force*)","Bash(git push -f*)","Bash(git reset --hard*)","Bash(git clean -fd*)","Bash(npm publish*)"]}}
+SEED
   fi
   (cd "$tmp_dir" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
   local eval_settings="$tmp_dir/.claude/settings.json"
