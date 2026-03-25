@@ -11,7 +11,7 @@
       "name": "setup-bare",
       "fixture": "fixtures/setup-bare",
       "description": "Empty directory — tests the full greenfield Node/TS Express setup path including project scaffolding, enforcement scripts, hooks, and documentation.",
-      "prompt": "Run /setup on this project. Here are my answers to your Socratic questions: I am building a REST API. Use Node.js with TypeScript and Express as the framework. Call the project myapp. Please proceed with the full setup without asking me further questions — use those answers directly.",
+      "prompt": "Run /setup on this project IN THE CURRENT DIRECTORY — do not create a subdirectory. Here are my answers to your Socratic questions: I am building a REST API. Use Node.js with TypeScript and Express as the framework. The project name is myapp but set it up in this directory, not in a myapp/ subdirectory. Please proceed with the full setup without asking me further questions — use those answers directly. IMPORTANT: Skip npm install and dependency installation — just create the files and configs. For verification (Phase 6), skip the linter check since dependencies are not installed.",
       "expected": {
         "files_must_exist": [
           "package.json",
@@ -67,7 +67,7 @@
       "name": "setup-existing-node",
       "fixture": "fixtures/setup-existing-node",
       "description": "Existing Node/TS Express project with source files but no enforcement, hooks, or agent config — tests the enhancement path that adds enforcement without destroying existing work.",
-      "prompt": "Run /setup to enhance this existing Node.js TypeScript Express project with enforcement scripts, git hooks, agent configuration, and documentation. Do not ask me questions — proceed directly with the full setup. The project is a REST API.",
+      "prompt": "Run /setup to enhance this existing Node.js TypeScript Express project with enforcement scripts, git hooks, agent configuration, and documentation. Do not ask me questions — proceed directly with the full setup. The project is a REST API. IMPORTANT: Skip npm install and dependency installation — just create the files and configs. For verification (Phase 6), skip the linter check since dependencies are not installed.",
       "expected": {
         "files_must_exist": [
           "package.json",

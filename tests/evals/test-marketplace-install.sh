@@ -160,7 +160,7 @@ SKILL_OUTPUT=$(
   timeout "${SKILL_TIMEOUT}s" claude \
     -p "/readiness" \
     --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
-    --permission-mode acceptEdits \
+    --permission-mode bypassPermissions \
     --output-format json \
     2>"$RESULT_DIR/skill-stderr.log"
 ) || EXIT_CODE=$?

@@ -171,7 +171,7 @@ run_test_case() {
       --plugin-dir "$PLUGIN_DIR" \
       -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $effective_prompt" \
       --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
-      --permission-mode acceptEdits \
+      --permission-mode bypassPermissions \
       --output-format json \
       2>"$result_dir/stderr.log"
   ) || exit_code=$?
