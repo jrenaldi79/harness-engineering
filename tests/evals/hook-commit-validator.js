@@ -73,10 +73,14 @@ function validateHookCommits(fixtureDir) {
     execFileSync('git', ['add', '-A'], { cwd: fixtureDir, stdio: 'ignore' });
 
     let blocked = false;
+    let blockErr = '';
     try {
-      execFileSync('git', ['commit', '-m', 'bad-secret'], { cwd: fixtureDir, stdio: ['ignore', 'pipe', 'pipe'] });
-    } catch { blocked = true; }
-    check('Hook blocks secret commit', blocked, blocked ? '' : 'Commit with secret was not blocked');
+      execFileSync('git', ['commit', '-m', 'bad-secret'], { cwd: fixtureDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+    } catch (e) {
+      blocked = true;
+      blockErr = (e.stderr || e.stdout || '').slice(0, 200);
+    }
+    check('Hook blocks secret commit', blocked, blocked ? blockErr : 'Commit with secret was not blocked');
 
     // Step 2: Good commit — clean file
     fs.unlinkSync(path.join(badDir, 'secret.js'));
