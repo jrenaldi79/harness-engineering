@@ -87,18 +87,23 @@ tests/
 ├── evals/
 │   ├── eval-config.json
 │   ├── grader.js  # Readiness Skill Grader
+│   ├── hook-commit-validator.js  # Hook-driven commit validation for setup eval grader.
 │   ├── README.md
 │   ├── run-evals.sh
 │   ├── setup-eval-config.json
-│   ├── setup-grader.js  # Setup Skill Grader
+│   ├── setup-grader.js  # Setup Skill Grader — validates /setup output against setup-eval-config.json.
 │   └── test-marketplace-install.sh
 └── scripts/
     ├── check-file-sizes.test.js  # Tests for skills/setup/scripts/lib/check-file-sizes.js
     ├── check-secrets.test.js  # Tests for skills/setup/scripts/lib/check-secrets.js
     ├── check-test-colocation.test.js  # Tests for skills/setup/scripts/lib/check-test-colocation.js
+    ├── doc-drift-detection.test.js  # Tests for doc drift detection — verifies validate-docs.js catches
+    ├── doc-indexing-roundtrip.test.js  # Tests for post-install doc indexing round-trip — verifies that
+    ├── enforcement-roundtrip.test.js  # Tests for post-install enforcement script round-trip — verifies that scripts
     ├── generate-claude-md.test.js  # Tests for skills/setup/scripts/generate-claude-md.js
     ├── generate-docs-helpers.test.js  # Tests for generate-docs-helpers.js: directory trees, module indexes,
     ├── generate-docs.test.js  # Tests for generate-docs.js marker operations: replaceMarkers,
+    ├── hook-integration.test.js  # Tests for git commit hook integration — verifies that git commit triggers
     ├── incremental-doc-indexing.test.js  # Tests for incremental doc indexing — verifies that adding a new source file
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
@@ -143,8 +148,9 @@ User runs /setup
 | `scripts/install-hooks.sh` | Install git hooks for harness-engineering repo. |
 | `scripts/repo-generate-docs.js` | Repo-level CLAUDE.md auto-generator. |
 | `tests/evals/grader.js` | Readiness Skill Grader |
+| `tests/evals/hook-commit-validator.js` | Hook-driven commit validation for setup eval grader. |
 | `tests/evals/run-evals.sh` | run-evals.sh |
-| `tests/evals/setup-grader.js` | Setup Skill Grader |
+| `tests/evals/setup-grader.js` | Setup Skill Grader — validates /setup output against setup-eval-config.json. |
 | `tests/evals/test-marketplace-install.sh` | test-marketplace-install.sh |
 <!-- /AUTO:modules -->
 

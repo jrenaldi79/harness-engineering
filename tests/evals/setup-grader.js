@@ -1,17 +1,5 @@
 #!/usr/bin/env node
-/**
- * Setup Skill Grader
- *
- * Validates the /setup skill output against expected criteria
- * defined in setup-eval-config.json. Checks file creation,
- * JSON validity, hook executability, CLAUDE.md sections,
- * settings structure, and rule frontmatter.
- *
- * Usage:
- *   node setup-grader.js --config setup-eval-config.json \
- *     --test-case setup-bare --result-dir ./results/... \
- *     --fixture-dir /tmp/...
- */
+/** Setup Skill Grader — validates /setup output against setup-eval-config.json. */
 
 const fs = require('fs');
 const path = require('path');
@@ -275,6 +263,14 @@ if (expected.conversation_must_mention) {
       found,
       found ? '' : `Term "${term}" not found in output`,
     );
+  }
+}
+
+// ─── 11. Hook-driven commit validation ───
+if (expected.hook_commit_validation) {
+  const { validateHookCommits } = require('./hook-commit-validator');
+  for (const hc of validateHookCommits(fixtureDir)) {
+    check(hc.name, hc.pass, hc.detail);
   }
 }
 
