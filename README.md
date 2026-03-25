@@ -79,7 +79,7 @@ Claude will recognize what you need and invoke the right skill automatically. Yo
 
 Or just ask: *"How ready is my project?"*, *"Analyze my codebase"*, *"What should I improve?"*
 
-For existing projects, start here. The readiness report scores your project across 8 pillars, assigns a maturity level (1-5), and gives you prioritized recommendations. It saves the report to `.claude/readiness-report.md` so you can track improvement over time.
+For existing projects, start here. The readiness report scores your project across 8 pillars, assigns a maturity level (1-5), and gives you prioritized recommendations. It saves the report to `readiness-report.md` so you can track improvement over time.
 
 For new/empty projects, skip to step 3.
 
@@ -316,7 +316,7 @@ The skill runs **3 parallel subagents** to keep the main context clean:
 
 ### Report Output
 
-Reports are saved to `.claude/readiness-report.md` with YAML frontmatter for machine-parseable delta tracking. Run `/readiness` again later to see what improved or regressed.
+Reports are saved to `readiness-report.md` with YAML frontmatter for machine-parseable delta tracking. Run `/readiness` again later to see what improved or regressed.
 
 The skill also provides **conversational insights**: prose analysis of what's working, what's costing you time, and nuanced observations the checklist can't capture.
 

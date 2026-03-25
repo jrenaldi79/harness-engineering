@@ -194,8 +194,8 @@ SEED
   fi
 
   # Capture artifacts (check for both setup and readiness outputs)
-  if [ -f "$tmp_dir/.claude/readiness-report.md" ]; then
-    cp "$tmp_dir/.claude/readiness-report.md" "$result_dir/readiness-report.md"
+  if [ -f "$tmp_dir/readiness-report.md" ]; then
+    cp "$tmp_dir/readiness-report.md" "$result_dir/readiness-report.md"
     echo -e "  ${GREEN}✓ Report file created${NC}"
   fi
   for f in CLAUDE.md package.json .prettierrc .gitignore .env.example; do

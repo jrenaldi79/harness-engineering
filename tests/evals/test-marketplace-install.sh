@@ -83,7 +83,7 @@ if [ "$DRY_RUN" = true ]; then
   echo "    claude -p \"Run a readiness analysis...\" --output-format json"
   echo ""
   echo -e "  ${BLUE}[DRY RUN] Step 4 — Verify report:${NC}"
-  echo "    Check .claude/readiness-report.md exists and contains expected sections"
+  echo "    Check readiness-report.md exists and contains expected sections"
   echo ""
   exit 0
 fi
@@ -189,10 +189,10 @@ echo ""
 # ─── Step 4: Verify the readiness report ───
 echo -e "${YELLOW}Step 4: Verify readiness report${NC}"
 
-REPORT_PATH="$TMP_DIR/.claude/readiness-report.md"
+REPORT_PATH="$TMP_DIR/readiness-report.md"
 
 if [ -f "$REPORT_PATH" ]; then
-  pass "Report file created at .claude/readiness-report.md"
+  pass "Report file created at readiness-report.md"
   cp "$REPORT_PATH" "$RESULT_DIR/readiness-report.md"
 
   REPORT_CONTENT=$(cat "$REPORT_PATH")

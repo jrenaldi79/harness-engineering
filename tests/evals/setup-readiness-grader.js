@@ -50,7 +50,7 @@ for (const filePath of expected.setup_files_exist || []) {
 }
 
 // ─── 2. Readiness report created ───
-const reportPath = path.join(fixtureDir, '.claude/readiness-report.md');
+const reportPath = path.join(fixtureDir, 'readiness-report.md');
 const reportExists = pathExists(reportPath);
 check('Readiness report created', reportExists, reportExists ? '' : 'Not found');
 
