@@ -174,8 +174,10 @@ SEED
 
   if [ -n "$steps_json" ] && [ "$steps_json" != "null" ]; then
     # Multi-step test case
+    local step_count=$(echo "$steps_json" | jq 'length')
     local step_idx=0
-    echo "$steps_json" | jq -c '.[]' | while IFS= read -r step; do
+    while [ $step_idx -lt $step_count ]; do
+      local step=$(echo "$steps_json" | jq -c ".[$step_idx]")
       step_idx=$((step_idx + 1))
       local step_prompt=$(echo "$step" | jq -r '.prompt')
       local step_label=$(echo "$step" | jq -r '.label // "Step '"$step_idx"'"')
