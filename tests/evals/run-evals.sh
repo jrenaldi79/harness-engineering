@@ -156,7 +156,7 @@ run_test_case() {
   mkdir -p "$tmp_dir/.claude" "$result_dir"
   if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
     cat > "$tmp_dir/.claude/settings.json" <<'SEED'
-{"permissions":{"allow":["Bash(*)"],"deny":["Bash(rm -rf /)","Bash(rm -rf ~)","Bash(git push --force*)","Bash(git push -f*)","Bash(git reset --hard*)","Bash(git clean -fd*)","Bash(npm publish*)"]}}
+{"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(rm -rf ~)","Bash(git push --force*)","Bash(git push -f*)","Bash(git reset --hard*)","Bash(git clean -fd*)","Bash(npm publish*)"]}}
 SEED
   fi
   (cd "$tmp_dir" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true

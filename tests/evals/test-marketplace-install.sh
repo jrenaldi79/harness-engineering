@@ -66,7 +66,7 @@ cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 mkdir -p "$TMP_DIR/.claude"
 if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
   cat > "$TMP_DIR/.claude/settings.json" <<'SEED'
-{"permissions":{"allow":["Bash(*)"],"deny":["Bash(rm -rf /)","Bash(git push --force*)","Bash(git reset --hard*)"]}}
+{"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(git push --force*)","Bash(git reset --hard*)"]}}
 SEED
 fi
 (cd "$TMP_DIR" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
