@@ -1,6 +1,6 @@
 /**
  * Tests for generate-docs.js marker operations: replaceMarkers,
- * validateCrossLinks, buildPlansIndex, and checkMarkersAreCurrent.
+ * validateCrossLinks, buildDocsIndex, and checkMarkersAreCurrent.
  */
 
 const fs = require('node:fs');
@@ -10,7 +10,7 @@ const os = require('node:os');
 const {
   replaceMarkers,
   validateCrossLinks,
-  buildPlansIndex,
+  buildDocsIndex,
   checkMarkersAreCurrent,
 } = require('../../skills/setup/scripts/lib/generate-docs');
 
@@ -150,16 +150,16 @@ describe('validateCrossLinks', () => {
 });
 
 // ---------------------------------------------------------------------------
-// buildPlansIndex
+// buildDocsIndex
 // ---------------------------------------------------------------------------
-describe('buildPlansIndex', () => {
+describe('buildDocsIndex', () => {
   it('lists plan files from docs/plans/', () => {
     const plansDir = path.join(tmpDir, 'docs', 'plans');
     fs.mkdirSync(plansDir, { recursive: true });
     fs.writeFileSync(path.join(plansDir, '2026-03-06-cool-design.md'), '# Cool Design');
     fs.writeFileSync(path.join(plansDir, '2026-03-06-cool-plan.md'), '# Cool Plan');
 
-    const index = buildPlansIndex(tmpDir);
+    const index = buildDocsIndex(tmpDir);
     expect(index).toContain('2026-03-06-cool-design.md');
     expect(index).toContain('2026-03-06-cool-plan.md');
   });
@@ -169,27 +169,27 @@ describe('buildPlansIndex', () => {
     fs.mkdirSync(archiveDir, { recursive: true });
     fs.writeFileSync(path.join(archiveDir, '2026-01-01-old-plan.md'), '# Old');
 
-    const index = buildPlansIndex(tmpDir);
+    const index = buildDocsIndex(tmpDir);
     expect(index).toContain('2026-01-01-old-plan.md');
   });
 
-  it('separates active and archived plans', () => {
+  it('groups files by subdirectory', () => {
     const plansDir = path.join(tmpDir, 'docs', 'plans');
-    const archiveDir = path.join(tmpDir, 'docs', 'archive', 'plans');
+    const archiveDir = path.join(tmpDir, 'docs', 'archive');
     fs.mkdirSync(plansDir, { recursive: true });
     fs.mkdirSync(archiveDir, { recursive: true });
     fs.writeFileSync(path.join(plansDir, 'active.md'), '');
-    fs.writeFileSync(path.join(archiveDir, 'archived.md'), '');
+    fs.writeFileSync(path.join(archiveDir, 'old.md'), '');
 
-    const index = buildPlansIndex(tmpDir);
-    expect(index).toContain('Active');
-    expect(index).toContain('Archive');
+    const index = buildDocsIndex(tmpDir);
+    expect(index).toContain('plans');
+    expect(index).toContain('archive');
   });
 
-  it('returns empty message when no plans exist', () => {
-    // No docs/plans/ directory at all
-    const index = buildPlansIndex(tmpDir);
-    expect(index).toMatch(/no plan/i);
+  it('returns empty message when no docs exist', () => {
+    // No docs/ directory at all
+    const index = buildDocsIndex(tmpDir);
+    expect(index).toMatch(/no doc/i);
   });
 });
 

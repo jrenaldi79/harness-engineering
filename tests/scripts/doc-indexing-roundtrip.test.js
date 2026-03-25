@@ -194,13 +194,13 @@ describe('check mode', () => {
 // Docs indexing
 // ---------------------------------------------------------------------------
 describe('docs indexing', () => {
-  it('creates docs/plans/index.md', () => {
-    fs.mkdirSync(path.join(tmpDir, 'docs', 'plans'), { recursive: true });
-    createFile('docs/plans/design.md', '# Design Doc\n');
+  it('creates docs/index.md', () => {
+    fs.mkdirSync(path.join(tmpDir, 'docs'), { recursive: true });
+    createFile('docs/design.md', '# Design Doc\n');
 
     runGenerateDocs();
 
-    const indexPath = path.join(tmpDir, 'docs', 'plans', 'index.md');
+    const indexPath = path.join(tmpDir, 'docs', 'index.md');
     expect(fs.existsSync(indexPath)).toBe(true);
     const content = fs.readFileSync(indexPath, 'utf8');
     expect(content).toContain('design.md');
