@@ -148,6 +148,17 @@ run_test_case() {
   cp -r "$fixture_path/." "$tmp_dir/"
 
   (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
+
+  # Ensure Bash commands are auto-approved (required for root/sandbox environments)
+  mkdir -p "$tmp_dir/.claude"
+  if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
+    echo '{"permissions":{"allow":["Bash(*)"]}}' > "$tmp_dir/.claude/settings.json"
+  else
+    # Merge Bash(*) into existing settings
+    local existing=$(cat "$tmp_dir/.claude/settings.json")
+    echo "$existing" | jq '.permissions.allow += ["Bash(*)"] | .permissions.allow |= unique' > "$tmp_dir/.claude/settings.json" 2>/dev/null || true
+  fi
+
   mkdir -p "$result_dir"
   local tc_prompt=$(echo "$tc" | jq -r '.prompt // empty')
   local effective_prompt="${tc_prompt:-$PROMPT}"
@@ -171,7 +182,8 @@ run_test_case() {
       --plugin-dir "$PLUGIN_DIR" \
       -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $effective_prompt" \
       --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
-      --permission-mode bypassPermissions \
+      --permission-mode acceptEdits \
+      --settings "$tmp_dir/.claude/settings.json" \
       --output-format json \
       2>"$result_dir/stderr.log"
   ) || exit_code=$?

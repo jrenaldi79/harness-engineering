@@ -62,6 +62,12 @@ trap "rm -rf $TMP_DIR" EXIT
 cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 (cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
+# Ensure Bash commands are auto-approved (required for root/sandbox environments)
+mkdir -p "$TMP_DIR/.claude"
+if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
+  echo '{"permissions":{"allow":["Bash(*)"]}}' > "$TMP_DIR/.claude/settings.json"
+fi
+
 if [ "$DRY_RUN" = true ]; then
   echo -e "  ${BLUE}[DRY RUN] Step 1 — Add marketplace:${NC}"
   echo "    claude plugin marketplace add $REPO --scope local"
@@ -160,7 +166,8 @@ SKILL_OUTPUT=$(
   timeout "${SKILL_TIMEOUT}s" claude \
     -p "/readiness" \
     --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
-    --permission-mode bypassPermissions \
+    --permission-mode acceptEdits \
+    --settings "$TMP_DIR/.claude/settings.json" \
     --output-format json \
     2>"$RESULT_DIR/skill-stderr.log"
 ) || EXIT_CODE=$?
