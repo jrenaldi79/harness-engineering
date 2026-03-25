@@ -70,15 +70,18 @@ for (const filePath of expected.json_valid || []) {
   }
 }
 
-// ─── 4. Hook executability ───
-for (const filePath of expected.hooks_executable || []) {
-  const fullPath = path.join(fixtureDir, filePath);
-  const exists = pathExists(fullPath);
-  const executable = isExecutable(fullPath);
+// ─── 4. Hook executability (checks .git/hooks/ and .husky/) ───
+for (const hookName of expected.hooks_executable || []) {
+  const name = path.basename(hookName);
+  const gitHook = path.join(fixtureDir, '.git/hooks', name);
+  const huskyHook = path.join(fixtureDir, '.husky', name);
+  const foundGit = pathExists(gitHook) && isExecutable(gitHook);
+  const foundHusky = pathExists(huskyHook);
+  const found = foundGit || foundHusky;
   check(
-    `Hook executable: ${filePath}`,
-    exists && executable,
-    !exists ? 'Not found' : !executable ? 'Not executable' : '',
+    `Hook exists: ${name}`,
+    found,
+    found ? (foundHusky ? '.husky/' : '.git/hooks/') : 'Not in .git/hooks/ or .husky/',
   );
 }
 
@@ -200,9 +203,11 @@ if (expected.auto_doc_pipeline) {
     pathExists(genHelpersPath) ? '' : 'Not found',
   );
 
-  // Check pre-commit hook references generate-docs
-  const hookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
-  if (pathExists(hookPath)) {
+  // Check pre-commit hook references generate-docs (check both locations)
+  const gitHookPath = path.join(fixtureDir, '.git/hooks/pre-commit');
+  const huskyHookPath = path.join(fixtureDir, '.husky/pre-commit');
+  const hookPath = pathExists(gitHookPath) ? gitHookPath : pathExists(huskyHookPath) ? huskyHookPath : null;
+  if (hookPath) {
     const hookContent = fs.readFileSync(hookPath, 'utf8');
     const callsGenDocs = /generate-docs/i.test(hookContent);
     check(

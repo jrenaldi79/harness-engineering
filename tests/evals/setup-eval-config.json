@@ -20,9 +20,7 @@
           "scripts/check-secrets.js",
           "scripts/check-file-sizes.js",
           "scripts/generate-docs.js",
-          "scripts/generate-docs-helpers.js",
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "scripts/generate-docs-helpers.js"
         ],
         "files_should_exist": [
           "src",
@@ -41,8 +39,8 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",
@@ -68,9 +66,7 @@
           "package.json",
           "CLAUDE.md",
           ".claude/settings.json",
-          "scripts/check-secrets.js",
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "scripts/check-secrets.js"
         ],
         "files_should_exist": [
           "scripts/check-file-sizes.js",
@@ -86,8 +82,8 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",
@@ -129,8 +125,8 @@
           ".claude/settings.json"
         ],
         "hooks_executable": [
-          ".git/hooks/pre-commit",
-          ".git/hooks/pre-push"
+          "pre-commit",
+          "pre-push"
         ],
         "claude_md_sections": [
           "Commands",

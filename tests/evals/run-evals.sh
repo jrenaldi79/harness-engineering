@@ -151,11 +151,14 @@ run_test_case() {
 
   (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
-  # Create eval-only settings file for Bash auto-approval (required for root/sandbox)
-  # This is separate from the project .claude/settings.json so /setup can create its own
-  local eval_settings="$result_dir/eval-settings.json"
-  mkdir -p "$result_dir"
-  echo '{"permissions":{"allow":["Bash(*)"]}}' > "$eval_settings"
+  # Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox).
+  # Claude/setup can overwrite this — acceptEdits mode allows Write without approval.
+  mkdir -p "$tmp_dir/.claude" "$result_dir"
+  if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
+    echo '{"permissions":{"allow":["Bash(*)"],"deny":[]}}' > "$tmp_dir/.claude/settings.json"
+  fi
+  (cd "$tmp_dir" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
+  local eval_settings="$tmp_dir/.claude/settings.json"
   # Build list of steps: either from "steps" array or single prompt
   local steps_json=$(echo "$tc" | jq -c '.steps // empty')
   local tc_prompt=$(echo "$tc" | jq -r '.prompt // empty')

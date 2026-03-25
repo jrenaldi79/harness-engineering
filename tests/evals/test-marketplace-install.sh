@@ -62,9 +62,13 @@ trap "rm -rf $TMP_DIR" EXIT
 cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 (cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
-# Create eval-only settings for Bash auto-approval (separate from project settings)
-EVAL_SETTINGS="$RESULT_DIR/eval-settings.json"
-echo '{"permissions":{"allow":["Bash(*)"]}}' > "$EVAL_SETTINGS"
+# Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox)
+mkdir -p "$TMP_DIR/.claude"
+if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
+  echo '{"permissions":{"allow":["Bash(*)"],"deny":[]}}' > "$TMP_DIR/.claude/settings.json"
+fi
+(cd "$TMP_DIR" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
+EVAL_SETTINGS="$TMP_DIR/.claude/settings.json"
 
 if [ "$DRY_RUN" = true ]; then
   echo -e "  ${BLUE}[DRY RUN] Step 1 — Add marketplace:${NC}"
