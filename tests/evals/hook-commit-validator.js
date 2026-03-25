@@ -82,11 +82,14 @@ function validateHookCommits(fixtureDir) {
     execFileSync('git', ['add', '-A'], { cwd: fixtureDir, stdio: 'ignore' });
 
     let ok = false;
+    let commitErr = '';
     try {
-      execFileSync('git', ['commit', '-m', 'clean-code'], { cwd: fixtureDir, stdio: ['ignore', 'pipe', 'pipe'] });
+      execFileSync('git', ['commit', '-m', 'clean-code'], { cwd: fixtureDir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
       ok = true;
-    } catch { ok = false; }
-    check('Hook allows clean commit', ok, ok ? '' : 'Clean commit was blocked by hook');
+    } catch (e) {
+      commitErr = (e.stderr || e.stdout || e.message || '').slice(0, 300);
+    }
+    check('Hook allows clean commit', ok, ok ? '' : `Blocked: ${commitErr}`);
 
     // Step 3: Verify auto-doc
     if (ok) {

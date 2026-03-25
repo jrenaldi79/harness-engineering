@@ -62,11 +62,9 @@ trap "rm -rf $TMP_DIR" EXIT
 cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
 (cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
-# Ensure Bash commands are auto-approved (required for root/sandbox environments)
-mkdir -p "$TMP_DIR/.claude"
-if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
-  echo '{"permissions":{"allow":["Bash(*)"]}}' > "$TMP_DIR/.claude/settings.json"
-fi
+# Create eval-only settings for Bash auto-approval (separate from project settings)
+EVAL_SETTINGS="$RESULT_DIR/eval-settings.json"
+echo '{"permissions":{"allow":["Bash(*)"]}}' > "$EVAL_SETTINGS"
 
 if [ "$DRY_RUN" = true ]; then
   echo -e "  ${BLUE}[DRY RUN] Step 1 — Add marketplace:${NC}"
@@ -167,7 +165,7 @@ SKILL_OUTPUT=$(
     -p "/readiness" \
     --allowedTools "Bash,Read,Glob,Grep,Write,Agent" \
     --permission-mode acceptEdits \
-    --settings "$TMP_DIR/.claude/settings.json" \
+    --settings "$EVAL_SETTINGS" \
     --output-format json \
     2>"$RESULT_DIR/skill-stderr.log"
 ) || EXIT_CODE=$?

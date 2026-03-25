@@ -55,12 +55,7 @@
           "reset --hard"
         ],
         "rules_have_globs_frontmatter": true,
-        "hook_commit_validation": true,
-        "conversation_must_mention": [
-          "enforcement",
-          "pre-commit",
-          "CLAUDE.md"
-        ]
+        "hook_commit_validation": true
       }
     },
     {
@@ -109,11 +104,7 @@
           "src/index.ts",
           "src/utils.ts"
         ],
-        "hook_commit_validation": true,
-        "conversation_must_mention": [
-          "enforcement",
-          "pre-commit"
-        ]
+        "hook_commit_validation": true
       }
     }
   ]

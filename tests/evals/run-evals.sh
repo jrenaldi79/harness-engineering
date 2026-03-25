@@ -149,17 +149,11 @@ run_test_case() {
 
   (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
-  # Ensure Bash commands are auto-approved (required for root/sandbox environments)
-  mkdir -p "$tmp_dir/.claude"
-  if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
-    echo '{"permissions":{"allow":["Bash(*)"]}}' > "$tmp_dir/.claude/settings.json"
-  else
-    # Merge Bash(*) into existing settings
-    local existing=$(cat "$tmp_dir/.claude/settings.json")
-    echo "$existing" | jq '.permissions.allow += ["Bash(*)"] | .permissions.allow |= unique' > "$tmp_dir/.claude/settings.json" 2>/dev/null || true
-  fi
-
+  # Create eval-only settings file for Bash auto-approval (required for root/sandbox)
+  # This is separate from the project .claude/settings.json so /setup can create its own
+  local eval_settings="$result_dir/eval-settings.json"
   mkdir -p "$result_dir"
+  echo '{"permissions":{"allow":["Bash(*)"]}}' > "$eval_settings"
   local tc_prompt=$(echo "$tc" | jq -r '.prompt // empty')
   local effective_prompt="${tc_prompt:-$PROMPT}"
 
@@ -183,7 +177,7 @@ run_test_case() {
       -p "You are working on the project in the CURRENT WORKING DIRECTORY only. Do not look at files outside this directory. $effective_prompt" \
       --allowedTools "Bash,Read,Glob,Grep,Write,Agent,Edit" \
       --permission-mode acceptEdits \
-      --settings "$tmp_dir/.claude/settings.json" \
+      --settings "$eval_settings" \
       --output-format json \
       2>"$result_dir/stderr.log"
   ) || exit_code=$?
