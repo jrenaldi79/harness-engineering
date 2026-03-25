@@ -60,16 +60,15 @@ TMP_DIR=$(mktemp -d)
 trap "rm -rf $TMP_DIR" EXIT
 
 cp -r "$FIXTURE_DIR/." "$TMP_DIR/"
-(cd "$TMP_DIR" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
 
-# Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox)
+# Seed .claude/settings.json BEFORE git init so it's part of the initial commit
 mkdir -p "$TMP_DIR/.claude"
 if [ ! -f "$TMP_DIR/.claude/settings.json" ]; then
   cat > "$TMP_DIR/.claude/settings.json" <<'SEED'
 {"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(git push --force*)","Bash(git reset --hard*)"]}}
 SEED
 fi
-(cd "$TMP_DIR" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
+(cd "$TMP_DIR" && git init -q && git config commit.gpgsign false && git add -A && git commit -q -m "Initial commit") || true
 EVAL_SETTINGS="$TMP_DIR/.claude/settings.json"
 
 if [ "$DRY_RUN" = true ]; then

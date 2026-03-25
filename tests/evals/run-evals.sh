@@ -149,17 +149,14 @@ run_test_case() {
   # Copy fixture into temp dir
   cp -r "$fixture_path/." "$tmp_dir/"
 
-  (cd "$tmp_dir" && git init -q && git add -A && git commit -q -m "Initial commit" 2>/dev/null) || true
-
-  # Seed .claude/settings.json with Bash(*) for auto-approval (required for root/sandbox).
-  # Includes common deny entries so grader passes even if /setup doesn't overwrite.
+  # Seed .claude/settings.json BEFORE git init so it's part of the initial commit.
   mkdir -p "$tmp_dir/.claude" "$result_dir"
   if [ ! -f "$tmp_dir/.claude/settings.json" ]; then
     cat > "$tmp_dir/.claude/settings.json" <<'SEED'
 {"permissions":{"allow":["Bash(*)","Read","Write","Edit","Glob","Grep","Agent"],"deny":["Bash(rm -rf /)","Bash(rm -rf ~)","Bash(git push --force*)","Bash(git push -f*)","Bash(git reset --hard*)","Bash(git clean -fd*)","Bash(npm publish*)"]}}
 SEED
   fi
-  (cd "$tmp_dir" && git add -A && git commit -q --amend --no-edit 2>/dev/null) || true
+  (cd "$tmp_dir" && git init -q && git config commit.gpgsign false && git add -A && git commit -q -m "Initial commit") || true
   local eval_settings="$tmp_dir/.claude/settings.json"
   # Build list of steps: either from "steps" array or single prompt
   local steps_json=$(echo "$tc" | jq -c '.steps // empty')
