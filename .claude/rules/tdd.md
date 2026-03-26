@@ -4,11 +4,18 @@ globs: ["skills/setup/scripts/**", "tests/**"]
 # MANDATORY: Test-Driven Development (TDD) First
 
 **EVERY feature request MUST start with writing tests before any implementation.**
+**EVERY bug fix MUST start by reproducing the bug in a failing test.**
 
 When receiving ANY feature request, your FIRST response should be:
 1. "Following TDD - I'll write tests first to define what success looks like"
 2. Write comprehensive failing tests using the Red-Green-Refactor cycle
 3. Only then proceed with implementation to make tests pass
+
+When receiving ANY bug report, your FIRST response should be:
+1. "Reproducing the bug first - writing a test that triggers the exact error"
+2. Write a test that demonstrates the reported failure
+3. Run it and confirm it FAILS (proves you captured the bug)
+4. Only then write the fix
 
 ## TDD Process - ALWAYS FOLLOW
 
@@ -23,6 +30,28 @@ When receiving ANY feature request, your FIRST response should be:
 3. **Refactor Phase**:
    - Clean up and optimize without changing behavior
    - Run tests after each refactor
+
+## Bug Fix Workflow — Reproduce First
+
+**EVERY bug fix MUST start by reproducing the bug in a test.**
+
+1. **Reproduce** (REQUIRED FIRST STEP):
+   - Write a test that triggers the exact error or behavior reported
+   - Run the test and confirm it FAILS — this proves you've captured the bug
+   - If you cannot reproduce it, investigate further before writing any fix
+
+2. **Fix**:
+   - Implement the minimal change that makes the reproduction test pass
+   - Do NOT merge or commit the fix before the reproduction test exists
+
+3. **Validate**:
+   - Run the full test suite to check for regressions
+   - Confirm the reproduction test passes with the fix applied
+
+**Red Flags — STOP immediately if:**
+- Editing source/config files before a reproduction test exists
+- Theorizing about root cause without confirming it with a failing test
+- Merging a fix that was never verified against the actual error
 
 ## TDD Enforcement Checklist
 
@@ -39,5 +68,6 @@ When receiving ANY feature request, your FIRST response should be:
 
 TDD may be relaxed ONLY for:
 - Documentation-only changes (*.md files)
-- Configuration files (settings.json, plugin.json)
 - Simple refactoring with existing test coverage
+
+Bug fixes are NEVER exempt — always reproduce first, even for configuration file changes.
