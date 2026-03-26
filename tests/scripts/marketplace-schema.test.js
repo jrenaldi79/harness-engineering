@@ -5,6 +5,9 @@
  * so that `claude plugin marketplace add` can register the marketplace
  * and `claude plugin install` can install plugins from it.
  *
+ * Also detects self-referential plugin sources that cause recursive
+ * caching (ENAMETOOLONG errors during plugin install).
+ *
  * Can be run standalone: node tests/scripts/marketplace-schema.test.js
  * Or via Jest if a jest config is present.
  */
@@ -20,6 +23,26 @@ const MARKETPLACE_PATH = path.resolve(
 );
 
 const VALID_SOURCE_TYPES = ['github', 'url', 'git-subdir', 'npm'];
+
+/**
+ * Derive the marketplace's GitHub repo identifier (owner/repo, lowercase)
+ * from plugin homepage URLs or the marketplace name. Returns null if the
+ * repo cannot be determined.
+ */
+function deriveMarketplaceRepo(manifest) {
+  // Check plugin homepage URLs for GitHub repo references
+  if (Array.isArray(manifest.plugins)) {
+    for (const p of manifest.plugins) {
+      if (typeof p.homepage === 'string') {
+        const match = p.homepage.match(
+          /github\.com\/([^/]+\/[^/]+?)(?:\.git)?(?:\/|$)/
+        );
+        if (match) return match[1].toLowerCase();
+      }
+    }
+  }
+  return null;
+}
 
 function validate() {
   const raw = fs.readFileSync(MARKETPLACE_PATH, 'utf8');
@@ -60,6 +83,11 @@ function validate() {
   if (!Array.isArray(manifest.plugins) || manifest.plugins.length === 0) {
     errors.push('plugins must be a non-empty array');
   } else {
+    // Derive the marketplace repo from the homepage or known repo name.
+    // Used to detect self-referential GitHub sources that cause recursive
+    // caching and ENAMETOOLONG errors during plugin install.
+    const marketplaceRepo = deriveMarketplaceRepo(manifest);
+
     for (let i = 0; i < manifest.plugins.length; i++) {
       const p = manifest.plugins[i];
       const prefix = `plugins[${i}]`;
@@ -68,21 +96,37 @@ function validate() {
         errors.push(`${prefix}.name must be a non-empty string`);
       }
 
-      // source must be an object with a valid source type
+      // source can be a relative path string (e.g. "./plugins/my-plugin")
+      // or an object with a source type
       if (typeof p.source === 'string') {
-        errors.push(
-          `${prefix}.source must be an object (e.g. {"source": "github", "repo": "owner/repo"}), got string "${p.source}"`
-        );
+        if (!p.source.startsWith('./')) {
+          errors.push(
+            `${prefix}.source string must start with "./" (relative path), got "${p.source}"`
+          );
+        }
       } else if (
         typeof p.source !== 'object' ||
         p.source === null ||
         Array.isArray(p.source)
       ) {
-        errors.push(`${prefix}.source must be an object`);
+        errors.push(`${prefix}.source must be a string (relative path) or an object`);
       } else if (!VALID_SOURCE_TYPES.includes(p.source.source)) {
         errors.push(
           `${prefix}.source.source must be one of: ${VALID_SOURCE_TYPES.join(', ')} (got "${p.source.source}")`
         );
+      } else if (p.source.source === 'github' && marketplaceRepo) {
+        // Detect self-referential GitHub sources: when a plugin's GitHub
+        // source points to the same repo that hosts the marketplace, Claude
+        // Code re-clones the repo inside its own cache on every install,
+        // creating deeply nested directories until ENAMETOOLONG.
+        const pluginRepo = (p.source.repo || '').toLowerCase();
+        if (pluginRepo === marketplaceRepo) {
+          errors.push(
+            `${prefix}.source is self-referential: GitHub source "${p.source.repo}" ` +
+            `points to the same repo as the marketplace. Use a relative path ` +
+            `(e.g. "source": "./") instead to avoid recursive caching (ENAMETOOLONG).`
+          );
+        }
       }
     }
   }
