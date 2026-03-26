@@ -112,6 +112,7 @@ tests/
     ├── init-project.test.js  # Tests for skills/setup/scripts/init-project.js
     ├── install-enforcement.test.js  # Tests for skills/setup/scripts/install-enforcement.js
     ├── marketplace-schema.test.js  # Tests for .claude-plugin/marketplace.json schema validity.
+    ├── plugin-cache-recursion.test.js  # Tests for plugin cache recursion bug (ENAMETOOLONG).
     ├── README.md
     ├── release.test.js  # Tests for scripts/release.sh — validates version bumping, changelog
     ├── repo-generate-docs.test.js  # Tests for scripts/repo-generate-docs.js — the repo-level CLAUDE.md
