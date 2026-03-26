@@ -8,10 +8,7 @@
     {
       "name": "harness-engineering",
       "description": "Readiness analysis and enforcement scaffolding for AI coding agent projects.",
-      "source": {
-        "source": "github",
-        "repo": "jrenaldi79/harness-engineering"
-      },
+      "source": "./",
       "homepage": "https://github.com/jrenaldi79/harness-engineering"
     }
   ]

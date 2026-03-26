@@ -149,6 +149,19 @@ fi
 
 pass "Plugin installed successfully"
 
+# Check for recursive cache nesting (ENAMETOOLONG bug)
+# If the plugin source is self-referential, Claude Code creates deeply nested
+# directories like harness-engineering/1.0.0/harness-engineering/1.0.0/...
+CACHE_DIR="$HOME/.claude/plugins/cache"
+if [ -d "$CACHE_DIR" ]; then
+  NESTED=$(find "$CACHE_DIR" -maxdepth 6 -type d -name "$PLUGIN_NAME" 2>/dev/null | wc -l)
+  if [ "$NESTED" -gt 2 ]; then
+    fail "Recursive cache nesting detected ($NESTED nested '$PLUGIN_NAME' dirs in cache). Self-referential source in marketplace.json?"
+  else
+    pass "No recursive cache nesting"
+  fi
+fi
+
 # Verify plugin is listed
 PLUGIN_LIST=$(cd "$TMP_DIR" && claude plugin list 2>/dev/null) || true
 echo "$PLUGIN_LIST" > "$RESULT_DIR/plugin-list-output.txt"
