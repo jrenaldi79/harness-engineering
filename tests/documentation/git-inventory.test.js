@@ -40,3 +40,12 @@ test('ignored directories are pruned and tracked descendants retain link validat
   const outside=fs.mkdtempSync(path.join(os.tmpdir(),'ignored-link-'));t.after(()=>fs.rmSync(outside,{recursive:true,force:true}));
   fs.symlinkSync(outside,path.join(root,'src/link'),'junction');assert.throws(()=>build(root),/link/i);
 });
+test('CRLF blank ignore lines do not hide unignored runtime directories',t=>{
+  const root=fixture(t);generate(root);init(root);put(root,'.gitignore','# Synthetic ignore\r\n\r\n# End\r\n');
+  put(root,'src/runtime/engine.js','Unread synthetic runtime');put(root,'docs/new.md',header({...meta,title:'New'}));
+  const {spawnSync}=require('node:child_process');
+  assert.equal(spawnSync('git',['check-ignore','--no-index','src/runtime/engine.js'],{cwd:root}).status,1);
+  assert.equal(spawnSync('git',['check-ignore','--no-index','src/runtime'],{cwd:root}).status,1);
+  const output=generate(root).outputs['docs/index.md'];assert.ok(output.includes('src/runtime/engine.js'));assert.ok(output.includes('[New]'));
+  git(root,'add','src/runtime/engine.js','docs/new.md','docs/index.md','CLAUDE.md');assert.doesNotThrow(()=>generate(root,{staged:true}));
+});

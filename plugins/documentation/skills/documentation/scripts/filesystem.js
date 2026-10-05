@@ -63,7 +63,7 @@ function working(root, overlay={}) {
         const stat=info(name);if(!stat)continue;
         if(stat.isSymbolicLink())throw new Error('Filesystem link: '+name);
         if(!stat.isFile() && !stat.isDirectory())throw new Error('Non-regular path: '+name);
-        entries.push({name,directory:stat.isDirectory(),query:name+(stat.isDirectory()?'/':'')});
+        entries.push({name,directory:stat.isDirectory(),query:name});
       }
       const ignored=new Set(gitAware && entries.length?gitInventory(root,['check-ignore','--no-index','--stdin','-z'],Buffer.from(entries.map(item=>item.query).join('\0')+'\0'),[0,1]):[]);
       pending=[];
