@@ -1,0 +1,4 @@
+interface:
+  display_name: "Self-documentation"
+  short_description: "Maintain document indexes and project guidance"
+  default_prompt: "Use $documentation to set up or refresh this project's documentation index and guidance."

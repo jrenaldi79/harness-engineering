@@ -1,0 +1,8 @@
+{
+  "version": 1,
+  "sourceRoots": ["skills", "scripts", "tests", "plugins"],
+  "docsRoot": "docs",
+  "instruction": "CLAUDE.md",
+  "index": "docs/index.md",
+  "strict": false
+}

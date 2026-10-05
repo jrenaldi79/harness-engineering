@@ -7,7 +7,7 @@
  * Actions:
  *   1. Creates scripts/ and .husky/ in target if needed
  *   2. Copies 6 enforcement scripts (skip if already exists)
- *   3. Runs npx husky init (unless --skip-install)
+ *   3. Preserves existing hooks and initializes Husky after dependency installation
  *   4. Copies hooks → .husky/ (chmod 755)
  *   5. Copies configs with eslint rename
  *   6. Copies .claude/settings.json (skip if exists)
@@ -70,8 +70,6 @@ const ENFORCEMENT_SCRIPTS = [
   'check-file-sizes.js',
   'check-test-colocation.js',
   'validate-docs.js',
-  'generate-docs.js',
-  'generate-docs-helpers.js',
 ];
 
 const HOOKS = ['pre-commit', 'pre-push'];
@@ -79,6 +77,7 @@ const HOOKS = ['pre-commit', 'pre-push'];
 const SETTINGS_TEMPLATE = 'settings.json';
 
 const NPM_SCRIPTS = {
+  prepare: 'husky',
   test: 'jest',
   'test:all': 'jest --testPathPattern="\\.(test|integration\\.test)\\.[jt]s$"',
   posttest: 'git rev-parse HEAD > .test-passed',
@@ -102,7 +101,7 @@ function copyHooks(targetDir) {
   fs.mkdirSync(huskyDir, { recursive: true });
   for (const hook of HOOKS) {
     const dest = path.join(huskyDir, hook);
-    fs.copyFileSync(path.join(HOOKS_DIR, hook), dest);
+    copyIfAbsent(path.join(HOOKS_DIR, hook), dest);
     fs.chmodSync(dest, 0o755);
   }
 }
@@ -182,11 +181,9 @@ function main() {
   const flags = parseArgs(process.argv);
   const targetDir = path.resolve(flags.target);
 
-  copyEnforcementScripts(targetDir);
+  installDocumentation(targetDir);
 
-  if (!flags.skipInstall) {
-    run('npx', ['husky', 'init'], targetDir);
-  }
+  copyEnforcementScripts(targetDir);
 
   copyHooks(targetDir);
   copyConfigs(targetDir);
@@ -198,9 +195,31 @@ function main() {
 
   if (!flags.skipInstall) {
     run('npm', ['install', '--save-dev', 'husky', 'lint-staged', 'jest', 'eslint'], targetDir);
+    run('npx', ['husky'], targetDir);
   }
 
   console.log('Enforcement tooling installed into ' + targetDir);
 }
 
 main();
+
+/** Reuse the self-contained capability; target projects receive one engine. */
+function installDocumentation(targetDir) {
+  const {install} = require('../../../plugins/documentation/skills/documentation/scripts/install');
+  const {working} = require('../../../plugins/documentation/skills/documentation/scripts/filesystem');
+  working(targetDir).validatePath('scripts/generate-docs.js');
+  const wrapper = '#!/usr/bin/env node\n' +
+    "// harness documentation compatibility launcher\n" +
+    "const {cli} = require('./self-documentation/generate');\n" +
+    "try { cli(['--root=' + require('node:path').resolve(__dirname, '..'), ...process.argv.slice(2)]); }\n" +
+    "catch (error) { console.error(error.message); process.exitCode = 1; }\n";
+  const wrapperPath = path.join(targetDir, 'scripts', 'generate-docs.js');
+  if (fs.existsSync(wrapperPath)) {
+    const existing = fs.readFileSync(wrapperPath, 'utf8').replace(/\r\n/g, '\n');
+    if (existing !== wrapper) {
+      throw new Error('Existing scripts/generate-docs.js requires explicit migration; preserve it and use the documentation-only installer.');
+    }
+  }
+  install(targetDir, {createInstruction: false, refresh: false});
+  fs.writeFileSync(wrapperPath, wrapper);
+}

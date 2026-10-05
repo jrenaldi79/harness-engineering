@@ -10,6 +10,12 @@
       "description": "Readiness analysis and enforcement scaffolding for AI coding agent projects.",
       "source": "./",
       "homepage": "https://github.com/jrenaldi79/harness-engineering"
+    },
+    {
+      "name": "documentation",
+      "description": "Standalone self-documentation: classified indexes, progressive disclosure and staged Git checks.",
+      "source": "./plugins/documentation",
+      "homepage": "https://github.com/jrenaldi79/harness-engineering/tree/main/plugins/documentation"
     }
   ]
 }

@@ -44,7 +44,7 @@ afterEach(() => {
 // Enforcement scripts
 // ---------------------------------------------------------------------------
 describe('enforcement scripts', () => {
-  it('copies all 6 enforcement scripts to target scripts/', () => {
+  it('copies enforcement scripts and the canonical documentation engine', () => {
     runScript([`--target=${tmpDir}`, '--skip-install'], tmpDir);
 
     const scripts = [
@@ -53,11 +53,11 @@ describe('enforcement scripts', () => {
       'check-test-colocation.js',
       'validate-docs.js',
       'generate-docs.js',
-      'generate-docs-helpers.js',
     ];
     for (const file of scripts) {
       expect(fs.existsSync(path.join(tmpDir, 'scripts', file))).toBe(true);
     }
+    expect(fs.existsSync(path.join(tmpDir, 'scripts/self-documentation/generate.js'))).toBe(true);
   });
 
   it('does not overwrite existing scripts in target scripts/', () => {
@@ -92,7 +92,8 @@ describe('hooks', () => {
       expect(fs.existsSync(hookPath)).toBe(true);
       // Check executable bit: mode & 0o111 should be non-zero
       const stat = fs.statSync(hookPath);
-      expect(stat.mode & 0o111).not.toBe(0);
+      if (process.platform !== 'win32') expect(stat.mode & 0o111).not.toBe(0);
+      else expect(fs.readFileSync(hookPath, 'utf8')).toMatch(/^#!\/usr\/bin\/env bash/);
     }
   });
 

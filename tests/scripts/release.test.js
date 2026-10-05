@@ -13,7 +13,9 @@ const SCRIPT = path.resolve(__dirname, '../../scripts/release.sh');
 let tmpDir;
 
 function run(args, opts = {}) {
-  return execSync(`bash ${SCRIPT} ${args}`, {
+  return execFileSync(process.env.TEST_BASH || 'bash', [
+    SCRIPT.split(path.sep).join('/'), ...args.split(/\s+/).filter(Boolean),
+  ], {
     cwd: opts.cwd || tmpDir,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],

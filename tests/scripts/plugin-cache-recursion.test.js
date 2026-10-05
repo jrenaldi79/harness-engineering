@@ -161,7 +161,7 @@ describe('plugin cache recursion (ENAMETOOLONG reproduction)', () => {
       const pattern = new RegExp(
         `(${name}/${version}/){2,}`.replace(/\./g, '\\.')
       );
-      expect(recursivePath).toMatch(pattern);
+      expect(recursivePath.split(path.sep).join('/')).toMatch(pattern);
 
       // After enough nesting, the path blows past filesystem limits
       let fullPath = baseCachePath;
@@ -188,6 +188,9 @@ describe('plugin cache recursion (ENAMETOOLONG reproduction)', () => {
           deepPath = path.join(deepPath, segment);
         }
 
+        // Extended Windows paths can exceed PATH_MAX. A component over 255
+        // characters fails on both Windows and Unix, without assuming that cap.
+        deepPath = path.join(deepPath, 'x'.repeat(256));
         // This MUST throw ENAMETOOLONG (or ENOENT on some systems)
         expect(() => {
           fs.mkdirSync(deepPath, { recursive: true });

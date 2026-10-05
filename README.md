@@ -52,6 +52,23 @@ This repo contains:
 
 ## Quick Start
 
+### Documentation only
+
+Install the independently packaged documentation capability when you want indexes
+and instruction maintenance without the rest of the harness:
+
+```text
+/plugin marketplace add jrenaldi79/harness-engineering
+/plugin install documentation@harness-engineering
+/documentation:documentation
+```
+
+It provides document metadata, classified reading indexes, source inventories,
+explicit refresh/check commands and optional staged Git validation. Node.js 18+
+is its tooling runtime for any application stack. It preserves existing prose,
+hooks and settings; it never stages files automatically. The full `/setup` reuses
+the same implementation. See [documentation setup and metadata](plugins/documentation/README.md).
+
 **Prerequisites:** [Claude Code](https://claude.ai/code) with plugin support, [Git](https://git-scm.com/), and [Node.js](https://nodejs.org/) (v18+) for Node/TypeScript projects.
 
 ### 1. Install the plugin
@@ -253,15 +270,15 @@ This kit implements the core patterns from leading voices in agent-assisted engi
 | **Repository as system of record** | OpenAI, Augment, Thariq | OpenAI: "What Codex can't see doesn't exist." Augment: Don't restate what's in code. Thariq: "The file system is an elegant way of representing state that your agent could read into context." | Templates encode architecture, commands, and gotchas in CLAUDE.md and `docs/`. AUTO markers write generated content to files. |
 | **Linters over instructions** | Augment, OpenAI, Böckeler, Vincent, Factory.ai, Karpathy | Augment: "Never send an LLM to do a linter's job." Böckeler: "Agents flounder in unconstrained environments." Vincent: "Hard gates test compliance." Factory.ai: "Agents write the code; linters write the law." Karpathy: Agents bloat abstractions and ignore style guidance in AGENTS.md. | Three-layer enforcement: git hooks block violations mechanically, `.claude/rules/` provides path-scoped advisory context, CLAUDE.md sets global principles. Priority: automated checks > rules > prose. |
 | **Grep-ability** | Factory.ai | Named exports over defaults, absolute imports, consistent error types. When every symbol has exactly one name across the codebase, agents can search/replace with confidence during multi-file refactors. Default exports let consumers pick any name, breaking grep-based navigation. | `rules/typescript.md` advises naming conventions. ESLint template includes `import/no-default-export`. |
-| **Automated enforcement** | OpenAI, Boris, Thariq, Akshay Kothari | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification. Akshay: Notion's Claude Code setup uses pre-commit hooks, lint-staged, file size limits, and secret scanning, the same stack this kit provides. | Pre-commit hooks run 6 checks automatically: lint, secret scan, file size, test colocation, doc generation, drift warning. |
-| **Auto-generated docs** | OpenAI | A "doc-gardening" agent scans for stale documentation and opens fix-up PRs. | `generate-docs.js` auto-regenerates CLAUDE.md sections from source code on every commit via AUTO markers. |
+| **Automated enforcement** | OpenAI, Boris, Thariq, Akshay Kothari | OpenAI: Custom linters and CI validate docs are up to date. Boris: PostToolUse hooks auto-format every file edit. Thariq: Hooks for deterministic verification. Akshay: Notion's Claude Code setup uses pre-commit hooks, lint-staged, file size limits, and secret scanning, the same stack this kit provides. | Pre-commit hooks run 6 checks automatically: lint, secret scan, file size, test colocation, staged documentation validation, drift warning. |
+| **Auto-generated docs** | OpenAI | A "doc-gardening" agent scans for stale documentation and opens fix-up PRs. | The standalone documentation capability refreshes inventories/indexes explicitly and validates staged output at commit time. |
 | **Drift detection / self-improvement** | OpenAI, Augment, Boris | OpenAI: Documentation "rots instantly." Boris: "Update your CLAUDE.md so you don't make that mistake again." Claude writes rules for itself, compounding institutional knowledge. | `validate-docs.js` warns when source files change without CLAUDE.md updates. Global template includes self-improvement loop guidance. |
 | **Enforce invariants, not implementations** | OpenAI, Augment, DHH | OpenAI: "Set boundaries, allow autonomy locally." DHH: "Convention over configuration." Agents predict conventional code extremely well. Augment: Don't restate conventions your linter already enforces. | File size limits (300 lines), complexity red flags, and configurable `CONFIG` objects. Rules are strict; how you meet them is flexible. |
 | **Verification feedback loops** | Boris, Thariq, Karpathy | Boris: "Give Claude a way to verify its work" for 2-3x quality improvement." Thariq's agent loop: Gather Context → Take Action → Verify Work. Karpathy: "Give it success criteria and watch it go." | Global template enforces TDD (Red-Green-Refactor). Pre-push hook blocks on test failure. Pre-commit runs lint + secret scan. |
 | **Spec-driven development** | Thariq, Boris | Thariq: Have Claude interview you with 40+ questions to build a comprehensive spec before coding. Execute in a separate session. Boris: "Start in Plan mode, iterate until satisfied, then auto-accept." | Referenced in Planning Tools section. BMAD's analysis phase and Superpowers brainstorming implement this pattern. |
 | **Parallel sessions via worktrees** | Boris | "The single biggest productivity unlock, and the top tip from the team." Run 3-5+ Claude sessions simultaneously with separate git worktrees. | Referenced in Planning Tools section. Superpowers `using-git-worktrees` skill automates this. |
 | **Design for prompt caching** | Thariq | "You fundamentally have to design agents for prompt caching first." Static content first, dynamic last. Never switch models mid-conversation; use subagents instead. | Two-tier CLAUDE.md is inherently cache-friendly: static global + static project files loaded once at conversation start. |
-| **Codify repetitive workflows** | Boris, Thariq | Boris: "Convert anything done more than once daily into a slash command." Check into git for team sharing. Include inline bash preprocessing to pre-compute context. | Bootstrap creates `scripts/` directory with 6 enforcement scripts. Templates encourage building project-specific commands and skills. |
+| **Codify repetitive workflows** | Boris, Thariq | Boris: "Convert anything done more than once daily into a slash command." Check into git for team sharing. Include inline bash preprocessing to pre-compute context. | Bootstrap creates enforcement scripts and portable documentation tooling. Templates encourage building project-specific commands and skills. |
 | **Subagent dispatch over swarms** | Boris, Vincent | Boris: Use subagents to keep main context clean by offloading subtasks to preserve focus. Vincent: Decompose plans into dependency-aware atomic units; dispatch one subagent per task with two-stage review. Sequential dispatch with a controller avoids crosstalk and merge conflicts. | Referenced in Planning Tools section. Superpowers `subagent-driven-development` and `dispatching-parallel-agents` implement this. |
 | **Golden principles** | OpenAI | Opinionated rules encoded in the repo, with background tasks that scan for deviations and open refactoring PRs. | Global CLAUDE.md template encodes universal standards (TDD, naming, security). Enforcement scripts catch deviations on every commit. |
 | **Structured architecture** | OpenAI | Rigid layered domain architecture with validated dependency directions, enforced by custom linters and structural tests. | Bootstrap creates `src/`, `tests/`, `scripts/`, `docs/` structure. Templates guide modular design with file and function size constraints. |
@@ -336,6 +353,7 @@ After the report, the skill offers to apply targeted fixes: editing existing fil
 harness-engineering/
 ├── .claude-plugin/
 │   └── plugin.json               # Plugin manifest
+├── plugins/documentation/        # Independently installable plugin and self-contained skill
 ├── skills/readiness/
 │   └── SKILL.md                  # Codebase analysis, runs on /readiness
 ├── skills/setup/
@@ -349,7 +367,7 @@ harness-engineering/
 │   │   │   ├── check-file-sizes.js   # Blocks files over 300 lines
 │   │   │   ├── check-test-colocation.js # Blocks source files without colocated tests
 │   │   │   ├── validate-docs.js      # Warns when CLAUDE.md drifts from code
-│   │   │   ├── generate-docs.js      # Auto-regenerates CLAUDE.md sections from source
+│   │   │   ├── generate-docs.js      # Compatibility API; CLI delegates to canonical engine
 │   │   │   └── generate-docs-helpers.js
 │   │   └── hooks/
 │   │       ├── pre-commit            # Runs all checks on every commit (<2s)
@@ -439,43 +457,29 @@ The **Docs Map** pattern in `CLAUDE.md` links to topic docs so agents can find d
 
 ### Auto-Generated Sections
 
-Sections of `CLAUDE.md` can regenerate automatically from your source code, so you don't have to manually keep code and docs in sync.
+The canonical documentation capability updates inventories and the generated
+reading index, while agents maintain explanatory prose alongside implementation.
+CLAUDE.md or AGENTS.md stays compact: AUTO:docs links to the index, and existing
+AUTO:tree/modules blocks show source-root counts and link to the full inventory.
 
-#### How It Works
+The index discovers documents under the configured docs root. Frontmatter or a
+catalog supplies title, description, type, status and read_when. Current guidance
+comes before proposals, history and temporary notes; missing metadata stays visible.
+Source contents and attachment contents are never read by normal generation.
 
-Add marker pairs to your `CLAUDE.md`:
-
-```markdown
-<!-- AUTO:tree -->
-...this content regenerates automatically...
-<!-- /AUTO:tree -->
+```text
+node scripts/self-documentation/generate.js           # Refresh; never stage
+node scripts/self-documentation/generate.js --check   # Read-only working tree
+node scripts/self-documentation/generate.js --staged  # Read-only staged snapshot
+node scripts/self-documentation/generate.js --check --strict
 ```
 
-The `generate-docs.js` script scans your source directories and replaces content between markers with fresh data.
-
-| Marker | What It Generates | Source |
-|--------|------------------|--------|
-| `tree` | ASCII directory structure with JSDoc annotations | Walks `src/`, `scripts/`, `tests/` |
-| `modules` | Module table with purpose and key exports from source files | Extracts JSDoc + `module.exports` from source files |
-
-#### Two Modes
-
-```bash
-node scripts/generate-docs.js          # Write mode: regenerate + auto-stage
-node scripts/generate-docs.js --check  # Check mode: validate only (for CI)
-```
-
-Write mode runs automatically in the pre-commit hook. Check mode exits with code 1 if sections are stale, which is useful for CI pipelines.
-
-The script also validates that all markdown cross-links in `CLAUDE.md` point to files that actually exist.
-
-#### Extending
-
-To add a new auto-generated section:
-
-1. Add markers: `<!-- AUTO:yourname -->` ... `<!-- /AUTO:yourname -->`
-2. Write a builder function that returns the content as a string
-3. Add the marker name to the `generated` map in `generate-docs.js`
+Full setup retains `scripts/generate-docs.js` as a compatibility launcher for the
+same engine. Refresh, review and stage inputs/outputs before committing. Commit
+checks detect stale output without rewriting it. Structural checks do not prove
+that authored prose is semantically correct. Configuration declares safe roots;
+see [the standalone capability](plugins/documentation/README.md) for migration,
+ownership, runtime and hook-adoption details.
 
 ---
 
@@ -491,7 +495,7 @@ Hooks are the enforcement layer. They run automatically and block commits or pus
 | **2. Secret scan** | Pattern-matches for API keys, tokens, private keys | Yes, if secrets found |
 | **3. File size check** | Rejects files over 300 lines | Yes, if oversized |
 | **4. Test colocation** | Verifies source files in `src/` have matching `.test.*` or `.spec.*` files | Yes, if missing tests |
-| **5. Doc generation** | Regenerates AUTO markers, auto-stages `CLAUDE.md` | No |
+| **5. Documentation validation** | Checks reviewed generated outputs against the staged Git snapshot | Yes |
 | **6. Drift warning** | Warns if source files changed without `CLAUDE.md` update | No |
 
 #### Pre-Push (runs on every push)
@@ -547,7 +551,7 @@ Every enforcement script has a `CONFIG` object at the top. Edit patterns, limits
 | `check-file-sizes.js` | `CONFIG.maxLines` (default: 300), `CONFIG.include`/`CONFIG.exclude` (file globs) |
 | `check-test-colocation.js` | `CONFIG.include`/`CONFIG.exclude` (file globs), `CONFIG.testSuffixes` (default: `.test`, `.spec`) |
 | `validate-docs.js` | `CONFIG.docFile`, `CONFIG.trackedDirs`, `CONFIG.mappings` |
-| `generate-docs.js` | `TREE_DIRS` (directories to scan), `SKIP_DIRS` in helpers (directories to exclude) |
+| `generate-docs.js` | `documentation.config.json` (explicit source/doc roots and instruction/index paths) |
 
 The templates use `<!-- TIP: ... -->` HTML comments that are invisible when rendered but visible when editing. They guide you through customization without cluttering the final document.
 
@@ -565,7 +569,7 @@ See the scripts in `skills/setup/scripts/lib/` for full details on each enforcem
 
 **200-300 line target.** CLAUDE.md should be small enough that agents process the full content without diluting the important parts. Detailed docs go in `docs/` and are loaded on demand.
 
-**Auto-generation over manual sync.** The `generate-docs.js` script eliminates the most common source of harness drift: developers changing code without updating docs. The pre-commit hook regenerates automatically.
+**Generated inventories and maintained prose.** The documentation engine detects additions, removals, and metadata changes. Authors update explanations when behavior changes; the pre-commit hook validates reviewed, staged inventories without auto-staging.
 
 **SHA-based test caching.** Running the full test suite on every push is wasteful if you just ran tests. The cache is per-developer, automatically invalidated by new commits, and zero-config.
 

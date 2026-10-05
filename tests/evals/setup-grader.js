@@ -191,14 +191,14 @@ if (expected.settings_deny_must_contain) {
 if (expected.auto_doc_pipeline) {
   // Check generate-docs scripts exist
   const genDocsPath = path.join(fixtureDir, 'scripts/generate-docs.js');
-  const genHelpersPath = path.join(fixtureDir, 'scripts/generate-docs-helpers.js');
+  const genHelpersPath = path.join(fixtureDir, 'scripts/self-documentation/metadata.js');
   check(
     'Auto-doc: generate-docs.js exists',
     pathExists(genDocsPath),
     pathExists(genDocsPath) ? '' : 'Not found',
   );
   check(
-    'Auto-doc: generate-docs-helpers.js exists',
+    'Auto-doc: canonical metadata runtime exists',
     pathExists(genHelpersPath),
     pathExists(genHelpersPath) ? '' : 'Not found',
   );
@@ -209,7 +209,7 @@ if (expected.auto_doc_pipeline) {
   const hookPath = pathExists(gitHookPath) ? gitHookPath : pathExists(huskyHookPath) ? huskyHookPath : null;
   if (hookPath) {
     const hookContent = fs.readFileSync(hookPath, 'utf8');
-    const callsGenDocs = /generate-docs/i.test(hookContent);
+    const callsGenDocs = /self-documentation\/generate\.js\s+--staged/.test(hookContent);
     check(
       'Auto-doc: pre-commit hook runs generate-docs',
       callsGenDocs,

@@ -4,6 +4,22 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-10-05
+
+### Added
+
+- Independently installable `documentation` plugin and self-contained skill, with
+  classified indexes, description/read_when metadata, safe catalog migration and
+  optional read-only checks of the staged Git snapshot.
+- Dependency-free Node documentation runtime with bounded, explicit scanning and
+  installer ownership hashes for safe reinstallation and upgrades.
+
+### Changed
+
+- Full setup delegates documentation installation to the standalone capability.
+  Documentation is refreshed explicitly and reviewed/staged by the developer;
+  commit validation no longer auto-stages generated files.
+
 ## [1.2.1] - 2026-03-25
 
 ### Fixed

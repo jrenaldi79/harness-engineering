@@ -6,7 +6,7 @@ set -e
 # 2. Secret detection
 # 3. File size enforcement
 # 4. Test colocation enforcement
-# 5. Auto-regenerate doc sections
+# 5. Validate documentation in the staged snapshot (read-only)
 # 6. CLAUDE.md drift warning
 
 npx lint-staged
@@ -14,5 +14,5 @@ npx lint-staged
 node scripts/check-secrets.js
 node scripts/check-file-sizes.js
 node scripts/check-test-colocation.js
-node scripts/generate-docs.js
+node scripts/self-documentation/generate.js --staged
 node scripts/validate-docs.js

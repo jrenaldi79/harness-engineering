@@ -28,6 +28,8 @@ const CLAUDE_MD_CONTENT = [
   '',
   '<!-- AUTO:modules -->',
   '<!-- /AUTO:modules -->',
+  '<!-- AUTO:docs -->',
+  '<!-- /AUTO:docs -->',
 ].join('\n');
 
 let tmpDir;
@@ -85,7 +87,7 @@ function createFile(relPath, content) {
 }
 
 function readClaudeMd() {
-  return fs.readFileSync(path.join(tmpDir, 'CLAUDE.md'), 'utf8');
+  return fs.readFileSync(path.join(tmpDir, 'docs/index.md'), 'utf8');
 }
 
 // ---------------------------------------------------------------------------
@@ -117,7 +119,7 @@ describe('tree indexing', () => {
 // Module indexing
 // ---------------------------------------------------------------------------
 describe('module indexing', () => {
-  it('indexes exports and JSDoc', () => {
+  it('inventories filenames without reading JSDoc or exports', () => {
     createFile(
       'src/service.js',
       '/** User service layer */\nmodule.exports = { getUser, createUser };\n'
@@ -125,7 +127,7 @@ describe('module indexing', () => {
     runGenerateDocs();
 
     const doc = readClaudeMd();
-    expect(doc).toContain('User service layer');
+    expect(doc).not.toContain('User service layer');
     expect(doc).toContain('service.js');
   });
 });
