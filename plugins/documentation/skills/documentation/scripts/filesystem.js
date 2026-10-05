@@ -25,8 +25,22 @@ function safeAbsolute(root) {
   }
   return root;
 }
+function hasGitRepository(root) {
+  for(let current=root;;current=path.dirname(current)) {
+    try {fs.lstatSync(path.join(current,'.git'));return true;} catch(error) {if(error.code!=='ENOENT')throw error;}
+    if(path.dirname(current)===current)return false;
+  }
+}
+function gitInventory(root,args,input,success=[0]) {
+  const limit=16777216;
+  if(input && input.length>limit)throw new Error('Git ignore inventory failed: filename batch exceeds 16 MiB');
+  const result=spawnSync('git',args,{cwd:root,input,maxBuffer:limit,windowsHide:true});
+  if(result.error)throw new Error('Git ignore inventory failed: '+result.error.message);
+  if(!success.includes(result.status))throw new Error('Git ignore inventory failed (exit '+result.status+'); verify repository metadata and Git availability');
+  return decode(result.stdout,'Git ignore inventory').split('\0').filter(Boolean);
+}
 function working(root, overlay={}) {
-  root=safeAbsolute(root);
+  root=safeAbsolute(root); const gitAware=hasGitRepository(root);
   for(const name of Object.keys(overlay)) safeRelative(name);
   function validatePath(name) {
     safeRelative(name); let current=root;
@@ -40,16 +54,32 @@ function working(root, overlay={}) {
   }
   function files(scope) {
     validatePath(scope); const found=new Set();
-    function walk(name) {
-      const absolute=path.join(root,name); let info;
-      try { info=fs.lstatSync(absolute); } catch(error) {if(error.code==='ENOENT')return; throw error;}
-      if(info.isSymbolicLink()) throw new Error(`Filesystem link: ${name}`);
-      if(info.isFile()) { found.add(name); return; }
-      if(!info.isDirectory()) throw new Error(`Non-regular path: ${name}`);
-      for(const entry of fs.readdirSync(absolute).sort(lexical)) {const child=name+'/'+entry; if(allowed(child)) {safeRelative(child); walk(child);}}
+    const tracked=gitAware?gitInventory(root,['--literal-pathspecs','ls-files','--cached','-z','--',scope]):[];
+    function info(name) {try {return fs.lstatSync(path.join(root,name));} catch(error) {if(error.code==='ENOENT')return null;throw error;}}
+    let pending=[scope];
+    while(pending.length) {
+      const entries=[];
+      for(const name of pending) {
+        const stat=info(name);if(!stat)continue;
+        if(stat.isSymbolicLink())throw new Error('Filesystem link: '+name);
+        if(!stat.isFile() && !stat.isDirectory())throw new Error('Non-regular path: '+name);
+        entries.push({name,directory:stat.isDirectory(),query:name+(stat.isDirectory()?'/':'')});
+      }
+      const ignored=new Set(gitAware && entries.length?gitInventory(root,['check-ignore','--no-index','--stdin','-z'],Buffer.from(entries.map(item=>item.query).join('\0')+'\0'),[0,1]):[]);
+      pending=[];
+      for(const entry of entries) {
+        if(ignored.has(entry.query))continue;
+        if(!entry.directory){found.add(entry.name);continue;}
+        for(const child of fs.readdirSync(path.join(root,entry.name)).sort(lexical)) {const name=entry.name+'/'+child;if(allowed(name)){safeRelative(name);pending.push(name);}}
+      }
     }
-    walk(scope);
-    for(const [name,content] of Object.entries(overlay)) if(within(name,scope)) {if(content===null)found.delete(name); else found.add(name);}
+    // Tracked files can be force-added below ignored directories. Validate their
+    // exact parent chains without enumerating those directories or reading bytes.
+    for(const name of tracked)if(within(name,scope) && allowed(name)) {
+      validatePath(name);const stat=info(name);if(!stat)continue;
+      if(!stat.isFile())throw new Error('Non-regular tracked path: '+name);found.add(name);
+    }
+    for(const [name,content] of Object.entries(overlay))if(within(name,scope)) {validatePath(name);if(content===null)found.delete(name);else found.add(name);}
     return [...found].sort(lexical);
   }
   function read(name,limit=262144,prefix=false) {

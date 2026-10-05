@@ -94,6 +94,14 @@ excluded. Linked paths and non-regular staged entries are rejected. Do not add
 client-data directories to source roots. Source files are inventoried by filename;
 the generator neither imports modules nor reads their source contents.
 
+In Git repositories, working inventories exclude ignored untracked files and
+directories, including runtime logs. Tracked files remain visible even when
+force-added beneath an ignored directory; new unignored documents and source
+files remain discoverable. Ignored directories are pruned without enumerating
+their contents, while tracked paths retain link and containment checks. Installer
+preflight overlays are included intentionally. Non-Git projects do not require
+Git for refresh or check; Git inventory errors in a repository fail explicitly.
+
 The index is generated and owned by the capability. Handwritten instruction
 content outside AUTO markers stays unchanged. Full documentation correctness
 still requires maintaining authored descriptions, read_when cues and prose.

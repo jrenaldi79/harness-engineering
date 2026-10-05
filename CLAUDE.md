@@ -18,7 +18,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Testing
 ```bash
-node --test tests/documentation/engine.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
+node --test tests/documentation/engine.test.js tests/documentation/git-inventory.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
 node --experimental-vm-modules node_modules/.bin/jest tests/scripts/   # Unit tests for setup scripts
 bash tests/evals/run-evals.sh                                          # E2E readiness evals (default)
 bash tests/evals/run-evals.sh --config setup-eval-config.json          # E2E setup evals
@@ -44,7 +44,7 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 [Source inventory](docs/index.md#source-inventory)
 - skills: 27 files
 - scripts: 6 files
-- tests: 33 files
+- tests: 34 files
 - plugins: 11 files
 <!-- /AUTO:tree -->
 
@@ -74,7 +74,7 @@ User runs /setup
 | --- | --- |
 | skills | 27 |
 | scripts | 6 |
-| tests | 33 |
+| tests | 34 |
 | plugins | 11 |
 <!-- /AUTO:modules -->
 

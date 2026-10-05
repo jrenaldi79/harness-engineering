@@ -70,6 +70,7 @@ Filenames only; module purposes belong in authored documentation.
 - [skills/setup/templates/rules/typescript.md](../skills/setup/templates/rules/typescript.md)
 - [skills/setup/templates/settings.json](../skills/setup/templates/settings.json)
 - [tests/documentation/engine.test.js](../tests/documentation/engine.test.js)
+- [tests/documentation/git-inventory.test.js](../tests/documentation/git-inventory.test.js)
 - [tests/documentation/install.test.js](../tests/documentation/install.test.js)
 - [tests/documentation/integration.test.js](../tests/documentation/integration.test.js)
 - [tests/evals/README.md](../tests/evals/README.md)

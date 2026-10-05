@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Test standalone documentation and integration
-        run: node --test tests/documentation/engine.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
+        run: node --test tests/documentation/engine.test.js tests/documentation/git-inventory.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
       - name: Check repository documentation
         run: node scripts/repo-generate-docs.js --check
 
