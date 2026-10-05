@@ -6,7 +6,7 @@ function escape(value) {
   return String(value).replace(/&/g,'&amp;').replace(/[|<>\[\]`*_\r\n]/g,c=>`&#${c.charCodeAt(0)};`);
 }
 function href(name) {return name.split('/').map(part=>encodeURIComponent(part).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())).join('/');}
-function replaceMarkers(text,blocks) {
+function replaceMarkers(text,blocks,managedMarkers=['docs','tree','modules']) {
   const stack=[],managed=new Set(['tree','modules','docs']);
   for(const token of text.matchAll(/<!--\s*\/?\s*AUTO\s*:[^\r\n]*/g)) {
     const match=/^<!-- (\/?)AUTO:([A-Za-z0-9_-]+) -->$/.exec(token[0]);
@@ -35,7 +35,7 @@ function replaceMarkers(text,blocks) {
   regions.sort((a,b)=>a.start-b.start);
   for(let i=1;i<regions.length;i++)if(regions[i].outerStart<regions[i-1].outerEnd)throw new Error('Nested AUTO markers');
   const newline=text.includes('\r\n')?'\r\n':'\n';
-  for(const region of regions.reverse()) text=text.slice(0,region.start)+newline+blocks[region.name].replace(/\n/g,newline)+newline+text.slice(region.end);
+  for(const region of regions.reverse()) if(managedMarkers.includes(region.name))text=text.slice(0,region.start)+newline+blocks[region.name].replace(/\n/g,newline)+newline+text.slice(region.end);
   return text;
 }
 function renderIndex(documents,docsRoot,index,sources=[]) {
@@ -63,6 +63,6 @@ function renderInstruction(text,sources,config) {
   const counts=config.sourceRoots.map(root=>[root,sources.filter(name=>name.startsWith(root+'/')||name===root).length]);
   const inventory=link+'\n'+counts.map(([root,count])=>`- ${escape(root)}: ${count} files`).join('\n');
   const modules=link+'\n\n| Source root | Files |\n| --- | --- |\n'+counts.map(([root,count])=>`| ${escape(root)} | ${count} |`).join('\n');
-  return replaceMarkers(text,{tree:inventory,modules,docs:`[Documentation index](${href(config.index)})`});
+  return replaceMarkers(text,{tree:inventory,modules,docs:`[Documentation index](${href(config.index)})`},config.managedMarkers);
 }
 module.exports={INDEX_MARKER,escape,href,replaceMarkers,renderIndex,renderInstruction};

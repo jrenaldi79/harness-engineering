@@ -6,7 +6,7 @@ function decode(bytes,name,prefix=false) {
   try {return new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes,{stream:prefix});}
   catch {throw new Error(`Invalid UTF-8: ${name}`);}
 }
-const blocked = new Set(['private','secrets','runs','outputs','fixtures','node_modules','cache','caches','build','builds','dist','coverage']);
+const blocked = new Set(['private','secrets','runs','outputs','fixtures','node_modules','__pycache__','cache','caches','build','builds','dist','coverage']);
 const lexical = (a,b) => a < b ? -1 : a > b ? 1 : 0;
 function allowed(name) { return name.split('/').every(p=>!p.startsWith('.') && !blocked.has(p.toLowerCase())); }
 function safeRelative(name) {

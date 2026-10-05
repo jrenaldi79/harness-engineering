@@ -8,7 +8,7 @@ const {INDEX_MARKER,renderIndex,renderInstruction} = require('./render');
 const defaults={version:1,sourceRoots:['src','lib','app','scripts'],docsRoot:'docs',instruction:'CLAUDE.md',index:'docs/index.md',strict:false};
 function validateConfig(config) {
   if(!config || typeof config!=='object' || Array.isArray(config))throw new Error('Invalid documentation config');
-  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key))throw new Error(`Unknown config key: ${key}`);
+  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key) && key!=='managedMarkers')throw new Error(`Unknown config key: ${key}`);
   for(const key of Object.keys(defaults))if(!Object.hasOwn(config,key))throw new Error(`Missing config key: ${key}`);
   if(config.version!==1)throw new Error('Unsupported documentation config version');
   if(typeof config.strict!=='boolean')throw new Error('Invalid config strict value');
@@ -16,12 +16,13 @@ function validateConfig(config) {
   safeRelative(config.docsRoot);safeRelative(config.index);
   if(!within(config.index,config.docsRoot) || config.index===config.docsRoot || !config.index.endsWith('.md') || config.index===config.docsRoot+'/catalog.json')throw new Error('Config index must be a .md file inside docs root and cannot be catalog.json');
   if(!['CLAUDE.md','AGENTS.md'].includes(config.instruction))throw new Error('Config instruction must be CLAUDE.md or AGENTS.md');
+  if(Object.hasOwn(config,'managedMarkers') && (!Array.isArray(config.managedMarkers) || !config.managedMarkers.includes('docs') || new Set(config.managedMarkers).size!==config.managedMarkers.length || config.managedMarkers.some(name=>!['docs','tree','modules'].includes(name))))throw new Error('Invalid managedMarkers config: use distinct docs/tree/modules names and include docs');
   const roots=[config.docsRoot,...config.sourceRoots];roots.forEach(safeRelative);
   for(const root of roots)for(const control of ['documentation.config.json',config.instruction])if(within(root.toLowerCase(),control.toLowerCase()))throw new Error('Config roots cannot alias control or instruction files');
   for(let a=0;a<roots.length;a++)for(let b=a+1;b<roots.length;b++) {
     const x=roots[a].toLowerCase(),y=roots[b].toLowerCase();if(within(x,y)||within(y,x))throw new Error('Config roots must be distinct and disjoint');
   }
-  return {...config,sourceRoots:[...config.sourceRoots]};
+  return {...config,sourceRoots:[...config.sourceRoots],...(Object.hasOwn(config,'managedMarkers')?{managedMarkers:[...config.managedMarkers]}:{})};
 }
 function loadConfig(reader) {
   const content=reader.read('documentation.config.json',65536);
@@ -48,8 +49,9 @@ function buildFromReader(reader,config=loadConfig(reader),options={}) {
   if(instruction===null)throw new Error(`Missing instruction file with AUTO:docs markers: ${config.instruction}`);
   const existingIndex=reader.read(config.index,1048576);
   if(existingIndex!==null && !existingIndex.startsWith(INDEX_MARKER+'\n') && !existingIndex.startsWith(INDEX_MARKER+'\r\n'))throw new Error(`Index ownership requires Generated marker: ${config.index}`);
+  const renderedIndex=renderIndex(documents,config.docsRoot,config.index,sources);
   const outputs={
-    [config.index]:renderIndex(documents,config.docsRoot,config.index,sources),
+    [config.index]:existingIndex?.includes('\r\n')?renderedIndex.replace(/\n/g,'\r\n'):renderedIndex,
     [config.instruction]:renderInstruction(instruction,sources,config)
   };
   for(const [name,content] of Object.entries(outputs))if(Buffer.byteLength(content,'utf8')>1048576)throw new Error(`Generated output exceeds 1 MiB limit: ${name}. Reduce the configured source/doc inventory or authored instruction size.`);

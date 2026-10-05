@@ -236,3 +236,47 @@ test('unknown marker nesting cannot cross a managed region',t=>{
 test('exports CLI entrypoint for the full-harness compatibility launcher',()=>{
   assert.equal(typeof require('../../plugins/documentation/skills/documentation/scripts/generate').cli,'function');
 });
+test('managedMarkers docs-only preserves existing tree and module bytes',t=>{
+  const root=fixture(t);put(root,'documentation.config.json',JSON.stringify({...config,managedMarkers:['docs']}));
+  const tree='<!-- AUTO:tree -->\r\nAuthored Python inventory \u00fc\r\n<!-- /AUTO:tree -->';
+  const modules='<!-- AUTO:modules -->\r\n| Module | Authored purpose |\r\n<!-- /AUTO:modules -->';
+  put(root,'CLAUDE.md',`Before\r\n${tree}\r\n${modules}\r\n<!-- AUTO:docs -->\r\nold\r\n<!-- /AUTO:docs -->\r\nAfter`);
+  const output=generate(root).outputs['CLAUDE.md'];assert.ok(output.includes(tree));assert.ok(output.includes(modules));
+  assert.ok(output.includes('[Documentation index](docs/index.md)'));assert.doesNotThrow(()=>generate(root,{check:true}));
+  init(root);assert.doesNotThrow(()=>generate(root,{staged:true}));
+  put(root,'CLAUDE.md','Working-only malformed instruction');assert.doesNotThrow(()=>generate(root,{staged:true}));
+});
+test('managedMarkers supports explicit tree ownership while retaining module block',t=>{
+  const root=fixture(t);put(root,'documentation.config.json',JSON.stringify({...config,managedMarkers:['docs','tree']}));
+  put(root,'CLAUDE.md','<!-- AUTO:tree -->\nOld tree\n<!-- /AUTO:tree -->\n<!-- AUTO:modules -->\nAuthored modules\n<!-- /AUTO:modules -->\n<!-- AUTO:docs -->\nold\n<!-- /AUTO:docs -->');
+  const output=build(root).outputs['CLAUDE.md'];assert.ok(!output.includes('Old tree'));assert.ok(output.includes('Authored modules'));assert.ok(output.includes('Source inventory'));
+});
+test('managedMarkers rejects invalid lists and validates unowned known markers',t=>{
+  const root=fixture(t);
+  for(const managedMarkers of [null,[],['tree'],['docs','docs'],['docs','unknown'],'docs',[1,'docs']]) {
+    put(root,'documentation.config.json',JSON.stringify({...config,managedMarkers}));assert.throws(()=>build(root),/Invalid managedMarkers/i);
+  }
+  put(root,'documentation.config.json',JSON.stringify({...config,managedMarkers:['docs']}));
+  put(root,'CLAUDE.md','<!-- AUTO:tree -->\nUnbalanced authored tree\n<!-- AUTO:docs -->\nold\n<!-- /AUTO:docs -->');
+  assert.throws(()=>generate(root),/marker/i);assert.ok(!fs.existsSync(path.join(root,'docs/index.md')));
+});
+test('Python cache presence does not change working or staged documentation',t=>{
+  const root=fixture(t);const baseline=generate(root);init(root);
+  put(root,'src/__pycache__/module.cpython-313.pyc',Buffer.from([0,255,42]));
+  put(root,'docs/__pycache__/cached.pyc',Buffer.from([0,255,43]));
+  const refreshed=generate(root);assert.deepEqual(refreshed,baseline);
+  assert.doesNotThrow(()=>generate(root,{staged:true}));
+  git(root,'add','src/__pycache__/module.cpython-313.pyc','docs/__pycache__/cached.pyc');
+  assert.doesNotThrow(()=>generate(root,{staged:true}));
+  assert.deepEqual(build(root).outputs,baseline.outputs);
+});
+test('Windows autocrlf checkout preserves generated index newline checks',t=>{
+  const root=fixture(t);generate(root);init(root);
+  git(root,'-c','core.autocrlf=true','add','--renormalize','.');
+  git(root,'-c','user.name=Synthetic Test','-c','user.email=synthetic@example.invalid','commit','--quiet','-m','Synthetic fixture');
+  fs.unlinkSync(path.join(root,'docs/index.md'));
+  git(root,'-c','core.autocrlf=true','checkout','--','docs/index.md');
+  const checkedOut=fs.readFileSync(path.join(root,'docs/index.md'),'utf8');assert.ok(checkedOut.includes('\r\n'));
+  assert.doesNotThrow(()=>generate(root,{check:true}));assert.doesNotThrow(()=>generate(root,{staged:true}));
+  assert.equal(build(root).outputs['docs/index.md'],checkedOut);
+});
