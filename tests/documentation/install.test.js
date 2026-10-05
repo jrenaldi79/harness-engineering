@@ -10,7 +10,10 @@ function fixture(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'documentati
 function git(root,...args){return execFileSync('git',['-c','core.autocrlf=false',...args],{cwd:root,encoding:'utf8',stdio:['ignore','pipe','pipe']});}
 const meta={title:'Guide',description:'Useful',type:'guidance',status:'maintained',read_when:'Editing'};
 test('standalone install owns seven scripts, preserves authored instruction and repeats',t=>{
- const source=fixture(t),root=fixture(t);fs.cpSync(scripts,path.join(source,'scripts'),{recursive:true});
+ const source=fixture(t),root=fixture(t),copy=path.join(source,'scripts');fs.mkdirSync(copy);
+ const names=fs.readdirSync(scripts).filter(name=>name.endsWith('.js')).sort();assert.deepEqual(names,[...get().FILES].sort());
+ for(const name of names){assert.ok(fs.lstatSync(path.join(scripts,name)).isFile(),name);fs.copyFileSync(path.join(scripts,name),path.join(copy,name));}
+ assert.deepEqual(fs.readdirSync(copy).sort(),names,'the standalone fixture contains all seven regular scripts');
  put(root,'CLAUDE.md','Authored\r\n');put(root,'src/a.js','payload');
  const copiedInstaller=path.join(source,'scripts/install.js');
  assert.ok(fs.statSync(copiedInstaller).isFile(),'the standalone copy includes its installer entrypoint');
