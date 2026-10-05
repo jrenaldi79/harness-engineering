@@ -12,12 +12,16 @@ const meta={title:'Guide',description:'Useful',type:'guidance',status:'maintaine
 test('standalone install owns seven scripts, preserves authored instruction and repeats',t=>{
  const source=fixture(t),root=fixture(t);fs.cpSync(scripts,path.join(source,'scripts'),{recursive:true});
  put(root,'CLAUDE.md','Authored\r\n');put(root,'src/a.js','payload');
- const install=require(path.join(source,'scripts/install')).install;
+ const copiedInstaller=path.join(source,'scripts/install.js');
+ assert.ok(fs.statSync(copiedInstaller).isFile(),'the standalone copy includes its installer entrypoint');
+ const install=require(fs.realpathSync.native(copiedInstaller)).install;
  const first=install(root);assert.equal(first.version,'0.1.0');assert.equal(Object.keys(first.hashes).length,7);
  const instruction=read(root,'CLAUDE.md');assert.ok(instruction.startsWith('Authored\r\n'));
  for(const text of ['title:','description:','type:','status:','read_when:','one-line strings','guidance/status/reference/proposal/generated/history/temporary','maintained/snapshot/pending/completed/abandoned/superseded/temporary/generated','authored prose in the same change'])assert.ok(instruction.includes(text),text);
  const index=read(root,'docs/index.md');assert.match(index,/self-documentation\/install.js/);
  install(root);assert.equal(read(root,'CLAUDE.md'),instruction);
+ const copiedCLI=spawnSync(process.execPath,[copiedInstaller,'--target='+root],{encoding:'utf8'});
+ assert.equal(copiedCLI.status,0,copiedCLI.stderr);assert.equal(read(root,'CLAUDE.md'),instruction);
  for(const name of ['.claude','.codex','package.json'])assert.ok(!fs.existsSync(path.join(root,name)));
  assert.equal(spawnSync(process.execPath,[path.join(root,'scripts/self-documentation/generate.js'),'--root='+root,'--check']).status,0);
 });
