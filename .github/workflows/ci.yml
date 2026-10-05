@@ -10,6 +10,7 @@ jobs:
   documentation:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
         node-version: [18, 22]

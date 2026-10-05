@@ -159,3 +159,11 @@ test('reinstall restores exact owned hook permissions without changing bytes or 
  const customFile=path.join(custom,'.git/hooks/pre-commit');fs.chmodSync(customFile,process.platform==='win32'?0o444:0o644);
  const customMode=fs.statSync(customFile).mode;assert.equal(hook.installHook(custom).installed,false);assert.equal(fs.statSync(customFile).mode,customMode);
 });
+test('hook compares real directory identity across Windows root casing',t=>{
+ const root=fixture(t);git(root,'init','--quiet');const hook=require(path.join(scripts,'install-hook'));
+ fs.rmSync(path.join(root,'.git/hooks'),{recursive:true});
+ const input=process.platform==='win32'?root.toUpperCase():root;
+ const plan=hook.planHook(input);assert.equal(plan.installed,true);assert.ok(!fs.existsSync(path.join(root,'.git/hooks/pre-commit')));
+ hook.installHook(input);assert.match(read(root,'.git/hooks/pre-commit'),/generate\.js --staged/);
+ const nested=path.join(root,'child');fs.mkdirSync(nested);assert.throws(()=>hook.planHook(nested),/Git repository|project root/);
+});
