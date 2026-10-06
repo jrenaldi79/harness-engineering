@@ -7,6 +7,23 @@ on:
     branches: [main]
 
 jobs:
+  documentation:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node-version: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Test standalone documentation and integration
+        run: node --test tests/documentation/engine.test.js tests/documentation/git-inventory.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
+      - name: Check repository documentation
+        run: node scripts/repo-generate-docs.js --check
+
   test:
     runs-on: ubuntu-latest
     strategy:
@@ -44,7 +61,7 @@ jobs:
           node -e "
             const fs = require('fs');
             const path = require('path');
-            const dirs = ['skills', 'scripts', 'tests/scripts', 'tests/evals'];
+            const dirs = ['skills', 'scripts', 'plugins', 'tests/documentation', 'tests/scripts', 'tests/evals'];
             let violations = 0;
             function walk(dir) {
               for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

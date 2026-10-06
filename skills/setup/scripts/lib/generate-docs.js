@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
 /**
- * Auto-generate CLAUDE.md sections from source code.
+ * Legacy documentation helper exports; CLI delegates to the canonical capability.
  *
  * Two modes:
- * - Default (write): Regenerates AUTO markers in CLAUDE.md, writes plans index, auto-stages.
- * - --check: Compares generated vs current, validates cross-links, exits 1 if stale.
+ * - Default (write): Refreshes configured inventories and index, never stages.
+ * - --check: Read-only validation of all generated output.
  *
  * Usage:
- *   node scripts/generate-docs.js          # Write mode (regenerate + stage)
+ *   node scripts/generate-docs.js          # Refresh mode (review/stage explicitly)
  *   node scripts/generate-docs.js --check  # Check mode (validate only)
  */
 
@@ -192,88 +192,11 @@ function checkMarkersAreCurrent(docContent, generated) {
 }
 
 // ---------------------------------------------------------------------------
-// Main Entry Point
-// ---------------------------------------------------------------------------
-
-/** Main: regenerate or check CLAUDE.md auto-generated sections. */
-function main() {
-  const rootDir = path.resolve(__dirname, '..');
-  const docPath = path.join(rootDir, 'CLAUDE.md');
-  const checkMode = process.argv.includes('--check');
-
-  const treeDirs = detectSourceDirs(rootDir);
-  const tree = buildDirectoryTree(rootDir, treeDirs);
-  const modules = buildModuleIndex(rootDir);
-  const docsIndex = buildDocsIndex(rootDir);
-  const generated = { tree, modules };
-
-  if (checkMode) {
-    runCheckMode(docPath, rootDir, generated);
-    return;
-  }
-
-  runWriteMode(docPath, rootDir, generated, docsIndex);
-}
-
-/** Check mode: validate markers and cross-links, exit 1 if stale. */
-function runCheckMode(docPath, rootDir, generated) {
-  let doc;
-  try {
-    doc = fs.readFileSync(docPath, 'utf-8');
-  } catch {
-    console.error('Cannot read CLAUDE.md');
-    process.exit(1);
-  }
-
-  const stale = checkMarkersAreCurrent(doc, generated);
-  const linkErrors = validateCrossLinks(doc, rootDir);
-
-  if (stale.length > 0) {
-    console.error(`Stale markers: ${stale.join(', ')}`);
-  }
-  for (const err of linkErrors) {
-    console.error(err);
-  }
-  if (stale.length > 0 || linkErrors.length > 0) {
-    console.error('\nRun `node scripts/generate-docs.js` to regenerate.');
-    process.exit(1);
-  }
-  console.log('All markers are current.');
-}
-
-/** Write mode: regenerate markers, write docs index, auto-stage. */
-function runWriteMode(docPath, rootDir, generated, docsIndex) {
-  let doc;
-  try {
-    doc = fs.readFileSync(docPath, 'utf-8');
-  } catch {
-    console.error('Cannot read CLAUDE.md');
-    process.exit(1);
-  }
-
-  doc = replaceMarkers(doc, 'tree', generated.tree);
-  doc = replaceMarkers(doc, 'modules', generated.modules);
-  fs.writeFileSync(docPath, doc);
-
-  const docsIndexPath = path.join(rootDir, 'docs', 'index.md');
-  if (fs.existsSync(path.dirname(docsIndexPath))) {
-    fs.writeFileSync(docsIndexPath, `# Documentation Index\n\n${docsIndex}\n`);
-  }
-
-  try {
-    execFileSync('git', ['add', docPath], { stdio: 'ignore' });
-    if (fs.existsSync(docsIndexPath)) {
-      execFileSync('git', ['add', docsIndexPath], { stdio: 'ignore' });
-    }
-  } catch {
-    // Not in a git repo - that's fine
-  }
-
-  console.log('CLAUDE.md markers regenerated.');
-}
-
+// Canonical CLI; exports below remain for legacy helper consumers.
 if (require.main === module) {
-  main();
+  const {cli} = require('../../../../plugins/documentation/skills/documentation/scripts/generate');
+  try { cli(process.argv.slice(2)); }
+  catch(error) { console.error(error.message); process.exitCode = 1; }
 }
 
 module.exports = {

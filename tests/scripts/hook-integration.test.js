@@ -1,6 +1,6 @@
 /**
  * Tests for git commit hook integration — verifies that git commit triggers
- * the pre-commit hook, blocks bad code, and auto-updates CLAUDE.md.
+ * the pre-commit hook blocks stale documentation until reviewed output is staged.
  */
 
 'use strict';
@@ -20,7 +20,7 @@ set -e
 node scripts/check-secrets.js
 node scripts/check-file-sizes.js
 node scripts/check-test-colocation.js
-node scripts/generate-docs.js
+node scripts/self-documentation/generate.js --staged
 node scripts/validate-docs.js
 `;
 
@@ -81,6 +81,8 @@ beforeEach(() => {
     '',
     '<!-- AUTO:modules -->',
     '<!-- /AUTO:modules -->',
+    '<!-- AUTO:docs -->',
+    '<!-- /AUTO:docs -->',
   ].join('\n');
   fs.writeFileSync(path.join(tmpDir, 'CLAUDE.md'), claudeMd);
 
@@ -136,6 +138,7 @@ describe('git pre-commit hook integration', () => {
       'test("placeholder", () => {});\n'
     );
 
+    execFileSync(process.execPath, ['scripts/generate-docs.js'], {cwd:tmpDir, stdio:'ignore'});
     execFileSync('git', ['add', '-A'], { cwd: tmpDir, stdio: 'ignore' });
 
     expect(() => {
@@ -147,7 +150,7 @@ describe('git pre-commit hook integration', () => {
     }).not.toThrow();
   });
 
-  it('auto-updates CLAUDE.md on commit', () => {
+  it('blocks stale docs without staging; succeeds after reviewed refresh', () => {
     fs.writeFileSync(
       path.join(tmpDir, 'src', 'sub', 'app.js'),
       '/** App module */\nfunction run() { return true; }\nmodule.exports = { run };\n'
@@ -158,6 +161,11 @@ describe('git pre-commit hook integration', () => {
     );
 
     execFileSync('git', ['add', '-A'], { cwd: tmpDir, stdio: 'ignore' });
+    const stagedBefore = execFileSync('git', ['diff','--cached','--name-only'], {cwd:tmpDir, encoding:'utf8'});
+    expect(() => execFileSync('git', ['commit','-m','stale'], {cwd:tmpDir, stdio:'pipe'})).toThrow();
+    expect(execFileSync('git', ['diff','--cached','--name-only'], {cwd:tmpDir, encoding:'utf8'})).toBe(stagedBefore);
+    execFileSync(process.execPath, ['scripts/generate-docs.js'], {cwd:tmpDir, stdio:'ignore'});
+    execFileSync('git', ['add','CLAUDE.md','docs/index.md'], {cwd:tmpDir, stdio:'ignore'});
     execFileSync('git', ['commit', '-m', 'with-docs'], {
       cwd: tmpDir,
       encoding: 'utf8',
@@ -165,7 +173,7 @@ describe('git pre-commit hook integration', () => {
     });
 
     const claudeMd = fs.readFileSync(
-      path.join(tmpDir, 'CLAUDE.md'),
+      path.join(tmpDir, 'docs/index.md'),
       'utf8'
     );
     expect(claudeMd).toContain('app.js');

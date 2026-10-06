@@ -35,7 +35,7 @@ if [ -n "$STAGED_JS" ]; then
   fi
 fi
 
-# --- Auto-regenerate CLAUDE.md sections ---
-node scripts/repo-generate-docs.js
+# --- Validate the staged documentation snapshot without writes or staging ---
+node scripts/repo-generate-docs.js --staged
 
 echo "Pre-commit checks passed."

@@ -92,50 +92,20 @@ node scripts/validate-docs.js --full  # full drift analysis
 
 ---
 
-### generate-docs.js
+### Documentation capability
 
-Auto-regenerates sections of `CLAUDE.md` that are bounded by `<!-- AUTO:name -->` ... `<!-- /AUTO:name -->` markers. Also writes a plans index to `docs/plans/index.md`.
+The full installer delegates to the self-contained documentation skill under
+`plugins/documentation/skills/documentation/`. It copies the canonical scripts to
+`scripts/self-documentation/`; `scripts/generate-docs.js` is only a compatibility
+launcher. Legacy helper exports remain in this repository for existing consumers,
+but are not installed as a second project generator.
 
-**Two modes:**
-
-- **Write mode (default):** Regenerates `tree` and `modules` markers in `CLAUDE.md`, writes `docs/plans/index.md`, and auto-stages both files with `git add`.
-- **Check mode (`--check`):** Generates the same content and compares it against what's currently in the file. Exits 1 if any marker is stale or if any markdown cross-link points to a non-existent file.
-
-**AUTO markers (place these in CLAUDE.md):**
-```
-<!-- AUTO:tree -->
-<!-- /AUTO:tree -->
-
-<!-- AUTO:modules -->
-<!-- /AUTO:modules -->
-```
-
-**What it generates:**
-- `tree`: ASCII directory tree of `src/`, `scripts/`, and `tests/`, with JSDoc descriptions annotated on `.js` files.
-- `modules`: Markdown table of `src/` modules with columns `Module`, `Purpose` (from JSDoc), and `Key Exports` (up to 5 exports extracted from `module.exports`).
-- Plans index: lists `.md` files under `docs/plans/` and `docs/archive/plans/`.
-
-**Usage:**
-```bash
-node scripts/generate-docs.js          # write mode
-node scripts/generate-docs.js --check  # check mode (CI / pre-push)
-```
-
----
-
-### generate-docs-helpers.js
-
-Helper module used by `generate-docs.js`. Not invoked directly.
-
-**JSDoc extraction (`extractJSDocDescription`):** Reads a `.js` file and returns the first description line from the file-level `/** ... */` comment. Handles both single-line (`/** desc */`) and multi-line block comments. Returns an empty string if no JSDoc is found.
-
-**Export extraction (`extractExports`):** Reads a `.js` file and returns up to 5 exported names. Parses two patterns:
-- `module.exports = { name1, name2, ... }` (object destructure)
-- `exports.name = ...` (named property assignment)
-
-**Directory tree builder (`buildDirectoryTree`):** Walks the specified top-level directories recursively, skips `node_modules`, `.git`, `coverage`, `dist`, `build`, and `fixtures`. Outputs an ASCII tree with `├──` / `└──` connectors. Annotates `.js` files with their JSDoc description (`  # description`).
-
-**Module index builder (`buildModuleIndex`):** Walks `src/` recursively, collects all `.js` files, and builds a markdown table row for each using `extractJSDocDescription` and `extractExports`.
+Refresh inventories/indexes explicitly; review and stage output with its inputs.
+Use `--check` for read-only working-tree validation and `--staged` for the exact
+Git index. Never auto-stage. Source inventories read filenames only. Document
+metadata and classifications come from frontmatter/catalog, not inferred policy.
+Read the documentation skill's metadata reference for its bounded grammar and
+explicit catalog migration. Keep authored prose current in the same code change.
 
 ---
 
@@ -147,7 +117,7 @@ Helper module used by `generate-docs.js`. Not invoked directly.
 npx lint-staged                  # ESLint + Prettier on staged files
 node scripts/check-secrets.js    # block if secrets found
 node scripts/check-file-sizes.js # block if file >300 lines
-node scripts/generate-docs.js    # regenerate AUTO markers + auto-stage
+node scripts/self-documentation/generate.js --staged # validate the staged snapshot
 node scripts/validate-docs.js    # warn if CLAUDE.md may need updating
 ```
 
@@ -196,8 +166,8 @@ The git hook mechanism (`hooks/pre-commit`) is the same regardless of language. 
 
 ### Doc generation
 
-The AUTO marker concept (`<!-- AUTO:name -->` ... `<!-- /AUTO:name -->`) works in any markdown file. To adapt for a non-Node project:
-
-- Write a script in the target language that reads the markers and replaces content between them
-- For the directory tree, any language can walk the filesystem and emit ASCII tree output
-- For module index, parse JSDoc equivalents: Python docstrings, Go doc comments, etc.
+The standalone documentation runtime uses Node.js 18+ in every project, including
+Python, Go, and Rust projects. It has no npm dependencies and reads source filenames
+only, so full setup uses the same installer and staged validation for every stack.
+Keep authored module explanations current alongside code changes; inventories do
+not infer API semantics or replace prose review.

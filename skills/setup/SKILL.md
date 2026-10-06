@@ -88,6 +88,15 @@ node $SCRIPTS_DIR/init-project.js --name=<name> --framework=<framework>
 
 ## Phase 4: Install Enforcement
 
+Documentation is independently packaged under `plugins/documentation/`. Resolve
+its skill directory relative to this loaded root plugin, never by searching another
+plugin's cache. The Node fast-path installer delegates to its canonical installer.
+For adaptive application stacks, use the same dependency-free Node18+ documentation
+scripts when Node is available; do not invent a competing generator. If unavailable,
+report the runtime requirement and leave documentation installation explicit.
+Honor project restrictions; documentation-only setup does not edit agent settings.
+
+
 Read `$REFERENCES_DIR/enforcement-scripts.md` first to understand the enforcement principles and the secret-scanning regex patterns before writing any scripts.
 
 **Node/TypeScript path (fast path):**
@@ -175,7 +184,11 @@ Verify the file exists and contains at minimum: a Commands section, an Architect
 - At least one `.claude/rules/*.md` file exists with `globs:` in its YAML frontmatter
 
 **5. Auto-documentation pipeline works:**
-If `generate-docs.js` (or equivalent) was installed, run it and verify it completes without errors. This confirms that future commits will auto-update CLAUDE.md.
+Run `node scripts/self-documentation/generate.js`, review output, then run
+`node scripts/self-documentation/generate.js --check`. Documents require title,
+description, type, status and read_when metadata; classify missing entries visibly.
+Stage intended inputs and outputs before testing `--staged`; checks never stage.
+The instruction file points to docs/index.md; substantive prose remains authored.
 
 **6. Linter runs clean:**
 Run the stack's linter on the scaffolded code. A freshly generated project should have zero lint errors.

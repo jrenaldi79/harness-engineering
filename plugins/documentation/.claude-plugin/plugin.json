@@ -1,0 +1,6 @@
+{
+  "name": "documentation",
+  "version": "0.1.0",
+  "description": "Maintain project documentation maps, metadata and source inventories with portable scripts and staged Git checks.",
+  "author": { "name": "John Renaldi" }
+}

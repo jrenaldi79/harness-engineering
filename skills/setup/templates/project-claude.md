@@ -17,8 +17,6 @@ This file provides guidance to Claude Code when working with code in this reposi
 - **[Feature 2]**: [One-line description]
 - **[Feature 3]**: [One-line description]
 
----
-
 ## Essential Commands
 
 ### Development
@@ -56,8 +54,6 @@ Pre-approved commands (no confirmation needed): test, lint, build, git operation
 Denied commands (blocked entirely): `rm -rf /`, `git push --force`, `git reset --hard`, `npm publish`, pipe-to-shell patterns.
 Everything else prompts for approval — including normal `rm` for individual files.
 
----
-
 ## Architecture
 
 <!-- TIP: Use ASCII diagrams to show high-level architecture. Agents parse these
@@ -88,8 +84,6 @@ User action
   -> [Data layer] persists or retrieves data
   -> Response returned to user
 ```
-
----
 
 ## Directory Structure
 
@@ -124,8 +118,6 @@ scripts/
 └── validate-docs.js     # CLAUDE.md drift detection
 <!-- /AUTO:tree -->
 
----
-
 ## Key Modules
 
 <!-- AUTO:modules -->
@@ -139,8 +131,6 @@ scripts/
 | `utils/logger.js` | Structured logging | `logger()`, `LOG_LEVELS()` |
 <!-- /AUTO:modules -->
 
----
-
 ## Code Quality Rules
 
 Code quality rules (file size limits, complexity red flags, monitoring commands) are in `.claude/rules/code-quality.md` — auto-loaded when working on source files.
@@ -148,8 +138,6 @@ Code quality rules (file size limits, complexity red flags, monitoring commands)
 ### Documentation Sync (HARD RULE)
 
 Any commit that adds, removes, or renames a file in `src/`, `bin/`, or `scripts/` MUST include a CLAUDE.md update in the same commit. This is not optional. The pre-commit hook will warn if CLAUDE.md is not staged alongside tracked file changes.
-
----
 
 ## Git Hooks
 
@@ -164,7 +152,7 @@ Runs on every `git commit`. Blocks the commit if any check fails.
 | 1. lint-staged | `npx lint-staged` | Linter auto-fix on staged files |
 | 2. Secret scan | `node scripts/check-secrets.js` | Blocks commits containing API keys, tokens, or private keys |
 | 3. File size check | `node scripts/check-file-sizes.js` | Blocks files over 300 lines |
-| 4. Doc generation | `node scripts/generate-docs.js` | Regenerates auto sections, auto-stages CLAUDE.md |
+| 4. Documentation check | `node scripts/self-documentation/generate.js --staged` | Validates the staged index and instructions; never stages files |
 | 5. Doc drift warning | `node scripts/validate-docs.js` | Warns if `src/`/`bin/`/`scripts/` changed without CLAUDE.md |
 
 ### pre-push (thorough)
@@ -187,15 +175,11 @@ To avoid re-running the full test suite on push when you just ran `npm test`, th
 
 The cache is invalidated automatically by any new commit. `.test-passed` is gitignored.
 
----
-
 ## Structured Logging
 
 <!-- TIP: Replace with your project's logger module path and configuration. -->
 
 Use a centralized logger module (not `console.log` directly). Route logs to stderr if stdout is used for program output. See global CLAUDE.md for general logging guidelines.
-
----
 
 ## Language Standards
 
@@ -223,8 +207,6 @@ module.exports = {
 };
 ```
 
----
-
 ## Development Workflow Checklists
 
 ### Before Starting New Work
@@ -240,33 +222,43 @@ module.exports = {
 
 Detailed quality checks (file sizes, TDD, complexity) are in `.claude/rules/` and enforced by git hooks.
 
----
-
 ## Auto-Generated Sections
 
-Sections between `<!-- AUTO:name -->` markers are maintained by `scripts/generate-docs.js`.
+Sections between AUTO markers are maintained by `scripts/generate-docs.js`.
 Do NOT edit these by hand. To update: `node scripts/generate-docs.js`.
-The pre-commit hook runs this automatically. Use `--check` flag for CI validation.
+Refresh explicitly, review and stage outputs alongside their inputs. The pre-commit
+hook validates the staged snapshot without writing or staging. Use `--check` for
+working-tree or CI validation. Keep explanatory prose current in the same change.
 
+## Documentation reading map
+
+<!-- AUTO:docs -->
+[Documentation index](docs/index.md)
+<!-- /AUTO:docs -->
+
+When creating a Markdown document, add title, description, type, status and read_when
+as flat one-line strings in frontmatter, preferably JSON-quoted:
+```yaml
 ---
+title: "Guide"
+description: "Document purpose"
+type: "guidance"
+status: "maintained"
+read_when: "When changing related behavior"
+---
+```
+Statuses: maintained, snapshot, pending, completed, abandoned, superseded, temporary, generated.
+Types: guidance, status, reference, proposal, generated, history or
+temporary; keep historical assumptions and proposals visibly separate. Attachments
+use docs/catalog.json metadata without reading their contents. Missing metadata
+stays visible until classified. Inventory generation does not establish prose correctness.
 
 ## Writing Good CLAUDE.md Content
 
-Every line in this file is part of the agent's prompt — make each one earn its place.
-
-**Good content** (add this):
-- Commands that save re-discovery: `npm run seed -- --reset` resets the dev database
-- Gotchas that prevent repeat debugging: "Auth middleware must run before rate-limiter or tokens are rejected"
-- Config quirks: "PORT must be 3001 in dev — 3000 conflicts with the frontend proxy"
-- Architecture knowledge not obvious from code: "Billing events are async — webhook handler in `src/webhooks/` processes them"
-
-**Bad content** (don't add this):
-- Obvious code descriptions: "UserService handles user operations" — the class name already says this
-- Generic best practices: "Always write tests" — that's universal, not project-specific
-- One-off fixes unlikely to recur: "Fixed typo in line 42 of config.js"
-- Verbose explanations: use one line, not a paragraph
-
----
+Every line enters the agent's prompt. Include commands that save re-discovery,
+configuration quirks, architecture decisions and gotchas that prevent repeat failures.
+Prefer a concrete instruction such as "Auth runs before the rate limiter" to
+generic best practices, obvious class descriptions or one-off fixes.
 
 ## Critical Gotchas
 
@@ -279,31 +271,9 @@ Every line in this file is part of the agent's prompt — make each one earn its
 - **[Gotcha 2]**: [Brief explanation of the trap and the correct approach]
 - **[Gotcha 3]**: [Brief explanation of the trap and the correct approach]
 
----
-
-## Agent Documentation
-
-<!-- TIP: If you use multiple AI coding agents (Cursor, Windsurf, etc.), create
-     a symlink so all agents share the same context:
-     ln -s CLAUDE.md AGENTS.md
-     This keeps a single source of truth. -->
-
----
-
 ## Adding New Rules
 
 New path-scoped rules go in `.claude/rules/` (not this file). See global CLAUDE.md for the full rule enforcement hierarchy: mechanical enforcement > path-scoped rules > CLAUDE.md prose.
 
----
-
-## Docs Map
-
-<!-- TIP: Create these topic docs as your project grows. Start with the ones
-     you need most. The agent will find and read them when working in that area. -->
-
-| Topic | File |
-|-------|------|
-| API reference and CLI commands | `docs/usage.md` |
-| Testing strategy and patterns | `docs/testing.md` |
-| Configuration and environment variables | `docs/configuration.md` |
-| Troubleshooting common issues | `docs/troubleshooting.md` |
+Create topic docs as needed for usage, testing, configuration and troubleshooting;
+the generated reading map above discovers them on refresh.
