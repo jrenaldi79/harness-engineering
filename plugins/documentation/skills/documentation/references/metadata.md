@@ -17,7 +17,8 @@ Authored documentation follows here.
 ```
 
 This is a deliberately bounded flat YAML subset, not a general YAML parser.
-Use JSON-quoted string values (including Unicode) or simple unquoted strings.
+Use JSON-quoted string values (including Unicode), YAML single-quoted strings (`''`
+escapes a quote, as Prettier writes with `singleQuote`), or simple unquoted strings.
 Arrays, nesting, multiline values, anchors, aliases, duplicate/unknown fields and
 empty strings are rejected. Keep frontmatter within the first 16 KiB. Prefer
 quoted strings when punctuation could be interpreted as YAML syntax.

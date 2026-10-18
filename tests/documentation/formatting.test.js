@@ -59,3 +59,13 @@ test('CRLF instruction files keep CRLF inside the ignore range', t => {
   assert.ok(output.includes(`\r\n${END}\r\n<!-- /AUTO:docs -->`));
   assert.ok(!/[^\r]\n/.test(output));
 });
+
+test('frontmatter accepts single-quoted YAML strings, as Prettier writes with singleQuote', () => {
+  const {parseFrontmatter} = require('../../plugins/documentation/skills/documentation/scripts/metadata');
+  const doc = q => `---\ntitle: ${q('Guide')}\ndescription: ${q("It's: a guide")}\ntype: ${q('guidance')}\nstatus: ${q('maintained')}\nread_when: ${q('Always')}\n---\nBody\n`;
+  const single = s => `'${s.replace(/'/g, "''")}'`;
+  assert.deepEqual(parseFrontmatter(doc(single),'a.md'), parseFrontmatter(doc(JSON.stringify),'a.md'));
+  assert.equal(parseFrontmatter(doc(single),'a.md').description, "It's: a guide");
+  assert.throws(()=>parseFrontmatter(doc(s=>`'${s}`),'a.md'),/Malformed frontmatter string/);
+  assert.throws(()=>parseFrontmatter(doc(s=>`'it's'`),'a.md'),/Malformed frontmatter string/);
+});

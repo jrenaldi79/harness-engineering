@@ -50,6 +50,8 @@ function parseFrontmatter(text,name) {
     const match=/^([a-z_]+):[ \t]*(.*)$/.exec(line); if(!match)throw new Error(`Malformed frontmatter: ${name}`);
     const [,key,raw]=match;if(Object.hasOwn(record,key))throw new Error(`Duplicate frontmatter field ${key}: ${name}`);
     if(raw.startsWith('"')) {try {record[key]=JSON.parse(raw);} catch {throw new Error(`Malformed frontmatter string: ${name}`);}}
+    // YAML single-quoted scalar ('' escapes a quote), which Prettier writes when singleQuote is set.
+    else if(raw.startsWith("'")) {if(!/^'(?:[^']|'')*'$/.test(raw))throw new Error(`Malformed frontmatter string: ${name}`);record[key]=raw.slice(1,-1).replace(/''/g,"'");}
     else {if(!raw.trim() || raw!==raw.trim() || /^[\[\]{}&*!|>'%@`?-]/.test(raw) || /[:#]/.test(raw))throw new Error(`Malformed frontmatter string: ${name}`);record[key]=raw;}
   }
   return normalizeMetadata(record,name);

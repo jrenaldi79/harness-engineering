@@ -17,6 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   files. Refresh migrates existing blocks.
 - `install-enforcement.js` no longer writes `.eslintrc.js` beside an ESLint flat config, and
   no longer adds Jest scripts or dependencies to projects that already use Vitest.
+- Frontmatter accepts YAML single-quoted strings, so notes and docs reformatted by Prettier
+  with `singleQuote: true` still parse.
 - Documentation engine (#33): installed scripts now run in `"type": "module"` projects
   (nested `package.json`) and the installer self-checks; `--staged` reads blobs through
   one batched Git process; marker scanning ignores code spans and fences and reports
