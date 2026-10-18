@@ -128,7 +128,7 @@ Steps for the adaptive path:
 5. Create `.git/hooks/pre-push` — runs the test suite with SHA-based caching to skip unchanged code
 6. Make both hook files executable: `chmod +x .git/hooks/pre-commit .git/hooks/pre-push`
 7. Install and configure the linter and formatter for the chosen stack
-8. Create `.claude/settings.json` by copying `$TEMPLATES_DIR/settings.json` into the target project. Adjust the allow list entries to match the stack's commands (e.g., replace `npm test` with `pytest` for Python, `go test ./...` for Go)
+8. Create `.claude/settings.json` by copying `$TEMPLATES_DIR/settings.json` into the target project. Adjust the allow list entries to match the stack's commands, keeping the `Tool(specifier)` rule syntax (e.g., replace `Bash(npm test)` with `Bash(pytest:*)` for Python, `Bash(go test:*)` for Go). A bare string such as `"npm test"` is read as a tool name and matches nothing
 9. Copy `.claude/rules/*.md` from `$TEMPLATES_DIR/rules/` into the target project. For non-TypeScript stacks, adapt `rules/typescript.md` to the relevant language conventions (e.g., PEP 8 for Python, Go naming conventions for Go)
 
 ---

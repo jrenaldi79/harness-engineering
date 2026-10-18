@@ -93,6 +93,10 @@ files are discovered on each run; uncategorized files stay visible.
 See [the metadata contract](skills/documentation/references/metadata.md) for the
 flat frontmatter format, catalog fallback, conflict handling and migration.
 
+Generated content (inside each AUTO block and below the index ownership marker)
+sits in a `<!-- prettier-ignore-start/end -->` range, so `prettier --write` leaves it
+byte-identical and `--check` stays clean. A refresh migrates older unwrapped blocks.
+
 The generator maintains indexes and filename inventories. Agents maintain
 substantive documentation alongside implementation changes. Passing a check
 establishes structural freshness, not semantic correctness of authored prose.

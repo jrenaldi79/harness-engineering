@@ -20,7 +20,8 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Test standalone documentation and integration
-        run: node --test tests/documentation/engine.test.js tests/documentation/git-inventory.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
+        shell: bash # expands the glob on Windows and Node 18, whose test runner has no glob support
+        run: node --test tests/documentation/*.test.js
       - name: Check repository documentation
         run: node scripts/repo-generate-docs.js --check
 

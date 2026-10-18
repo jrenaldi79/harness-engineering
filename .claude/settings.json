@@ -2,65 +2,61 @@
   "hooks": {
     "SessionStart": [
       {
-        "type": "command",
-        "command": "echo 'Session start: checking repo state...' && git status --short && echo 'Hooks installed:' && ls -1 .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null || echo 'WARNING: Git hooks not installed. Run: bash scripts/install-hooks.sh'"
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Session start: checking repo state...' && git status --short && echo 'Hooks installed:' && ls -1 .git/hooks/pre-commit .git/hooks/pre-push 2>/dev/null || echo 'WARNING: Git hooks not installed. Run: bash scripts/install-hooks.sh'"
+          }
+        ]
       }
     ]
   },
   "permissions": {
     "allow": [
-      "node --experimental-vm-modules*",
-      "node skills/*",
-      "node tests/*",
-      "npx jest*",
-      "bash tests/*",
-      "git status",
-      "git diff*",
-      "git log*",
-      "git branch*",
-      "git add*",
-      "git commit*",
-      "git stash*",
-      "git checkout*",
-      "git switch*",
-      "git merge*",
-      "git rebase*",
-      "ls*",
-      "cat*",
-      "head*",
-      "tail*",
-      "wc*",
-      "find*",
-      "grep*",
-      "which*",
-      "echo*",
-      "mkdir*"
+      "Bash(node --experimental-vm-modules:*)",
+      "Bash(node --test:*)",
+      "Bash(node skills/:*)",
+      "Bash(node tests/:*)",
+      "Bash(node scripts/repo-generate-docs.js:*)",
+      "Bash(npx jest:*)",
+      "Bash(npx jest@30:*)",
+      "Bash(bash tests/:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git show:*)",
+      "Bash(git branch:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git stash:*)",
+      "Bash(git switch:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(mkdir:*)"
     ],
     "deny": [
-      "rm -rf /",
-      "rm -rf ~",
-      "rm -rf /*",
-      "rm -rf ~/*",
-      "rm -rf .",
-      "rm -rf ..",
-      "git push --force",
-      "git push -f",
-      "git push origin --force",
-      "git push origin -f",
-      "git reset --hard",
-      "git clean -fd",
-      "git clean -fdx",
-      "git checkout -- .",
-      "chmod -R 777*",
-      "curl * | sh",
-      "curl * | bash",
-      "wget * | sh",
-      "wget * | bash",
-      "npm publish",
-      "> /dev/sda*",
-      "dd if=*",
-      "mkfs*",
-      ":(){ :|:& };:"
+      "Read(./.env)",
+      "Read(./.env.*.local)",
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(rm -rf .:*)",
+      "Bash(rm -rf ..:*)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git push origin --force:*)",
+      "Bash(git push origin -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git clean -fd:*)",
+      "Bash(git clean -fdx:*)",
+      "Bash(git checkout -- .:*)",
+      "Bash(chmod -R 777:*)",
+      "Bash(curl * | sh:*)",
+      "Bash(curl * | bash:*)",
+      "Bash(wget * | sh:*)",
+      "Bash(wget * | bash:*)",
+      "Bash(npm publish:*)",
+      "Bash(dd if=:*)",
+      "Bash(mkfs:*)"
     ]
   }
 }

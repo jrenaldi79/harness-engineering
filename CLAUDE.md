@@ -18,7 +18,7 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 ### Testing
 ```bash
-node --test tests/documentation/engine.test.js tests/documentation/git-inventory.test.js tests/documentation/install.test.js tests/documentation/integration.test.js
+node --test tests/documentation/*.test.js
 node --experimental-vm-modules node_modules/.bin/jest tests/scripts/   # Unit tests for setup scripts
 bash tests/evals/run-evals.sh                                          # E2E readiness evals (default)
 bash tests/evals/run-evals.sh --config setup-eval-config.json          # E2E setup evals
@@ -41,11 +41,13 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 ## Architecture
 
 <!-- AUTO:tree -->
+<!-- prettier-ignore-start -->
 [Source inventory](docs/index.md#source-inventory)
 - skills: 27 files
 - scripts: 6 files
-- tests: 35 files
+- tests: 38 files
 - plugins: 11 files
+<!-- prettier-ignore-end -->
 <!-- /AUTO:tree -->
 
 ### Data Flow
@@ -68,14 +70,16 @@ User runs /setup
 ## Key Modules
 
 <!-- AUTO:modules -->
+<!-- prettier-ignore-start -->
 [Source inventory](docs/index.md#source-inventory)
 
 | Source root | Files |
 | --- | --- |
 | skills | 27 |
 | scripts | 6 |
-| tests | 35 |
+| tests | 38 |
 | plugins | 11 |
+<!-- prettier-ignore-end -->
 <!-- /AUTO:modules -->
 
 ---
@@ -128,7 +132,9 @@ skill's metadata reference. The canonical scripts live under plugins/documentati
 full setup reuses their installer and target scripts work without the plugin cache.
 
 <!-- AUTO:docs -->
+<!-- prettier-ignore-start -->
 [Documentation index](docs/index.md)
+<!-- prettier-ignore-end -->
 <!-- /AUTO:docs -->
 
 ## Docs Map

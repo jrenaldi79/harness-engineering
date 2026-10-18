@@ -19,6 +19,8 @@ npx jest --config '{}' tests/scripts/release.test.js  # Single file
 | `generate-claude-md.test.js` | CLAUDE.md generation from templates with framework-specific commands |
 | `init-project.test.js` | Node/TS project scaffolding (directories, package.json, tsconfig) |
 | `install-enforcement.test.js` | Enforcement script copying, hook installation, config generation |
+| `install-enforcement-existing.test.js` | Existing projects: ESLint flat-config and Vitest detection |
+| `settings-schema.test.js` | `Tool(specifier)` permission syntax and nested hook shape in shipped and repo settings |
 | `marketplace-schema.test.js` | Plugin manifest validation (plugin.json, marketplace.json) |
 | `release.test.js` | Release script: version validation, changelog check, version bump, tagging |
 | `repo-generate-docs.test.js` | Repo-level CLAUDE.md auto-generation (tree + modules for this repo) |

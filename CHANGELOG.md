@@ -8,6 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `/setup` settings template (and this repo's `.claude/settings.json`) used bare command
+  strings such as `"npm test"`, which Claude Code reads as tool names, so the allow and
+  deny lists matched nothing. Rules now use `Bash(...)`/`Read(...)` syntax, the deny list
+  blocks reading `.env`, and the repo's SessionStart hook uses the nested matcher-group shape.
+- Documentation engine output is Prettier-stable: generated regions are wrapped in
+  `prettier-ignore` ranges, so `prettier --write` no longer makes `--check` report stale
+  files. Refresh migrates existing blocks.
+- `install-enforcement.js` no longer writes `.eslintrc.js` beside an ESLint flat config, and
+  no longer adds Jest scripts or dependencies to projects that already use Vitest.
+
 - Documentation engine (#33): installed scripts now run in `"type": "module"` projects
   (nested `package.json`) and the installer self-checks; `--staged` reads blobs through
   one batched Git process; marker scanning ignores code spans and fences and reports

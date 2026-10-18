@@ -9,14 +9,14 @@
  *   2. Copies 6 enforcement scripts (skip if already exists)
  *   3. Preserves existing hooks and initializes Husky after dependency installation
  *   4. Copies hooks → .husky/ (chmod 755)
- *   5. Copies configs with eslint rename
+ *   5. Copies configs (eslint-base -> .eslintrc.js unless a flat config exists)
  *   6. Copies .claude/settings.json (skip if exists)
  *   7. Copies .claude/rules/*.md path-scoped rules (skip if exists)
  *   8. Handles .gitignore (create or append)
  *   9. Copies .env.example (skip if exists)
  *  10. Merges npm scripts into package.json
  *  11. Adds lint-staged config to package.json
- *  12. Installs dev deps (unless --skip-install)
+ *  12. Installs dev deps (unless --skip-install); Vitest projects get no Jest
  */
 
 'use strict';
@@ -88,6 +88,23 @@ const NPM_SCRIPTS = {
 
 const LINT_STAGED_CONFIG = { 'src/**/*.js': ['eslint --fix'] };
 
+const FLAT_ESLINT_CONFIGS = ['js', 'mjs', 'cjs', 'ts', 'mts', 'cts'].map(ext => `eslint.config.${ext}`);
+
+function readPackageJson(targetDir) {
+  return JSON.parse(fs.readFileSync(path.join(targetDir, 'package.json'), 'utf8'));
+}
+
+/** Projects that already chose Vitest keep it; Jest is only the default for new projects. */
+function usesVitest(pkg) {
+  return Boolean(pkg.devDependencies?.vitest || pkg.dependencies?.vitest);
+}
+
+function npmScriptsFor(pkg) {
+  if (!usesVitest(pkg)) return NPM_SCRIPTS;
+  const { 'test:all': _jestOnly, ...scripts } = NPM_SCRIPTS;
+  return { ...scripts, test: 'vitest run' };
+}
+
 function copyEnforcementScripts(targetDir) {
   const scriptsDir = path.join(targetDir, 'scripts');
   fs.mkdirSync(scriptsDir, { recursive: true });
@@ -107,10 +124,10 @@ function copyHooks(targetDir) {
 }
 
 function copyConfigs(targetDir) {
-  fs.copyFileSync(
-    path.join(TEMPLATES_DIR, 'eslint-base.js'),
-    path.join(targetDir, '.eslintrc.js')
-  );
+  // A legacy .eslintrc.js beside a flat config is ignored by ESLint 9+ and misleads agents.
+  if (!FLAT_ESLINT_CONFIGS.some(name => fs.existsSync(path.join(targetDir, name)))) {
+    copyIfAbsent(path.join(TEMPLATES_DIR, 'eslint-base.js'), path.join(targetDir, '.eslintrc.js'));
+  }
   copyIfAbsent(path.join(TEMPLATES_DIR, '.prettierrc'), path.join(targetDir, '.prettierrc'));
   copyIfAbsent(
     path.join(TEMPLATES_DIR, 'lint-staged.config.js'),
@@ -157,11 +174,11 @@ function handleGitignore(targetDir) {
 
 function mergePackageJson(targetDir) {
   const pkgPath = path.join(targetDir, 'package.json');
-  const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+  const pkg = readPackageJson(targetDir);
 
   // Merge scripts (no overwrite)
   pkg.scripts = pkg.scripts || {};
-  for (const [key, value] of Object.entries(NPM_SCRIPTS)) {
+  for (const [key, value] of Object.entries(npmScriptsFor(pkg))) {
     if (!pkg.scripts[key]) pkg.scripts[key] = value;
   }
 
@@ -194,7 +211,8 @@ function main() {
   mergePackageJson(targetDir);
 
   if (!flags.skipInstall) {
-    run('npm', ['install', '--save-dev', 'husky', 'lint-staged', 'jest', 'eslint'], targetDir);
+    const testRunner = usesVitest(readPackageJson(targetDir)) ? [] : ['jest'];
+    run('npm', ['install', '--save-dev', 'husky', 'lint-staged', ...testRunner, 'eslint'], targetDir);
     run('npx', ['husky'], targetDir);
   }
 
