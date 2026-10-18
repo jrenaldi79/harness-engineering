@@ -39,9 +39,11 @@ function loadConfig(reader) {
 // and the engine's own folder is generator-owned. Only note frontmatter is read, never source.
 function folderNotes(reader,config,sources) {
   const name=config.instruction,present=new Set(sources),notes=new Map(),missing=[];
-  const folders=[...new Set(sources.filter(file=>path.posix.basename(file)!==name).map(file=>path.posix.dirname(file)))].sort(lexical);
+  const code=sources.filter(file=>path.posix.basename(file)!==name);
+  const folders=[...new Set(code.map(file=>path.posix.dirname(file)))].sort(lexical);
+  const exempt=folder=>config.sourceRoots.includes(folder) || within(folder,ENGINE_DIR);
   for(const folder of folders) {
-    if(config.sourceRoots.includes(folder) || within(folder,ENGINE_DIR))continue;
+    if(exempt(folder))continue;
     const file=folder+'/'+name;
     if(!present.has(file)) {missing.push(file);continue;}
     let metadata=null;
@@ -50,6 +52,9 @@ function folderNotes(reader,config,sources) {
     notes.set(folder,{file,metadata});
   }
   if(missing.length)throw new Error(`Missing folder notes: ${missing.join(', ')}`);
+  // A note left behind after its folder's last source file moved keeps being auto-loaded; parent notes over sub-folders stay valid.
+  const orphans=sources.filter(file=>path.posix.basename(file)===name && !exempt(path.posix.dirname(file)) && !code.some(other=>within(other,path.posix.dirname(file))));
+  if(orphans.length)throw new Error(`Orphan folder notes: ${orphans.join(', ')}`);
   return notes;
 }
 function buildFromReader(reader,config=loadConfig(reader),options={}) {

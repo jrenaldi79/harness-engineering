@@ -18,7 +18,7 @@ test('standalone install owns seven scripts, preserves authored instruction and 
  const copiedInstaller=path.join(source,'scripts/install.js');
  assert.ok(fs.statSync(copiedInstaller).isFile(),'the standalone copy includes its installer entrypoint');
  const install=require(fs.realpathSync.native(copiedInstaller)).install;
- const first=install(root);assert.equal(first.version,'0.1.0');assert.equal(Object.keys(first.hashes).length,7);
+ const first=install(root);assert.equal(first.version,'0.2.0');assert.equal(Object.keys(first.hashes).length,7);
  const instruction=read(root,'CLAUDE.md');assert.ok(instruction.startsWith('Authored\r\n'));
  for(const text of ['title:','description:','type:','status:','read_when:','one-line strings','guidance/status/reference/proposal/generated/history/temporary','maintained/snapshot/pending/completed/abandoned/superseded/temporary/generated','authored prose in the same change'])assert.ok(instruction.includes(text),text);
  const index=read(root,'docs/index.md');assert.match(index,/self-documentation\/install.js/);
@@ -40,7 +40,7 @@ test('CRLF hashes survive and unmodified version upgrades are reported',t=>{
  const root=fixture(t);get().install(root);
  for(const name of get().FILES)put(root,'scripts/self-documentation/'+name,read(root,'scripts/self-documentation/'+name).replace(/\r?\n/g,'\r\n'));
  const state=JSON.parse(read(root,'scripts/self-documentation/installed.json'));state.version='0.0.9';put(root,'scripts/self-documentation/installed.json',JSON.stringify(state));
- const result=get().install(root);assert.equal(result.previousVersion,'0.0.9');assert.equal(result.version,'0.1.0');
+ const result=get().install(root);assert.equal(result.previousVersion,'0.0.9');assert.equal(result.version,'0.2.0');
 });
 test('handwritten index needs adoption and malformed markers refuse all writes',t=>{
  const root=fixture(t);put(root,'docs/index.md','Handwritten');

@@ -105,3 +105,21 @@ test('installer CLI accepts --folder-notes', t => {
   execFileSync(process.execPath,[path.join(scripts,'install.js'),'--target='+root,'--folder-notes'],{stdio:'pipe'});
   assert.equal(JSON.parse(fs.readFileSync(path.join(root,'documentation.config.json'),'utf8')).folderNotes,true);
 });
+
+test('a note with no source files beneath its folder is an orphan', t => {
+  const root=fixture(t); withNotes(root); put(root,'src/old/CLAUDE.md',note('src/old','Moved away'));
+  assert.throws(()=>generate(root),/Orphan folder notes: src\/old\/CLAUDE\.md$/);
+});
+
+test('a parent note covering only sub-folders is not an orphan', t => {
+  const root=fixture(t); withNotes(root);
+  put(root,'src/admin/CLAUDE.md',note('src/admin','Admin UI')); put(root,'src/admin/auth/oidc.ts','x');
+  put(root,'src/admin/auth/CLAUDE.md',note('src/admin/auth','OIDC session'));
+  assert.doesNotThrow(()=>generate(root));
+});
+
+test('documentation plugin manifest version matches the installer VERSION', () => {
+  const manifest=JSON.parse(fs.readFileSync(path.resolve(__dirname,'../../plugins/documentation/.claude-plugin/plugin.json'),'utf8'));
+  assert.equal(manifest.version, require(path.join(scripts,'install')).VERSION);
+  assert.equal(manifest.version, '0.2.0');
+});

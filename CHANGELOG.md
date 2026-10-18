@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Documentation engine 0.2.0 (plugin and installed `installed.json`). After upgrading, run
+  one refresh: generated regions are now wrapped in `prettier-ignore` ranges, so `--check`
+  reports stale files until then. Engines before 0.2.0 reject the new `folderNotes` key.
+
 ### Fixed
 
 - `/setup` settings template (and this repo's `.claude/settings.json`) used bare command
@@ -30,7 +36,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   installer and `install-enforcement.js`). Every source sub-folder carries an
   instruction-named note (`src/llm/CLAUDE.md`), which Claude Code auto-loads in that
   folder. The index groups the source inventory under each note's description, and
-  refresh/check fail on missing notes. `/setup` enables it for new projects.
+  refresh/check fail on missing or orphaned notes. `/setup` enables it for new projects.
 - Documentation installer flags `--no-section`, `--update-config`, `--exclude=`; config
   keys `exclude` and `lenient`; `generate.js --staged --write` and `--lenient`.
 

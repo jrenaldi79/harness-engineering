@@ -6,7 +6,7 @@ const {parseJSON,types,statuses}=require('./metadata');
 const {defaults,validateConfig,build}=require('./generate');
 const {INDEX_MARKER}=require('./render');
 const {planHook,applyHook}=require('./install-hook');
-const VERSION='0.1.0';
+const VERSION='0.2.0';
 const FILES=['filesystem.js','metadata.js','render.js','generate.js','install.js','migrate.js','install-hook.js'];
 const DEST='scripts/self-documentation',STATE=DEST+'/installed.json';
 const json=value=>JSON.stringify(value,null,2)+'\n';

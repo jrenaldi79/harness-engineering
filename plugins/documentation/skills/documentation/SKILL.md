@@ -72,9 +72,14 @@ Folder notes are opt-in (`--folder-notes`, config `folderNotes: true`). Each fol
 that directly holds source files, below the source roots, then needs a note named like
 the instruction file (`src/llm/CLAUDE.md`). Claude Code auto-loads it when working in
 that folder, and its frontmatter `description` heads the folder's inventory group.
-Refresh and check fail on a missing or unclassified note. Author notes from the code
-(owns, entry points, invariants, tests, gotchas) before enabling it on an existing
-project. Use `exclude` for folders that should not need one.
+Refresh and check fail on a missing or unclassified note, and on an orphan note with no
+source files left beneath its folder (a parent note over sub-folders is fine). Author
+notes from the code (owns, entry points, invariants, tests, gotchas) before enabling it
+on an existing project. Describe what exists now; plans and "coming soon" belong in docs/,
+because time-bound phrasing rots when the plan lands. Use `exclude` for folders that
+should not need one; it also drops their files from the inventory. Folders named
+private, secrets, runs, outputs, fixtures, cache(s), build(s), dist, coverage,
+node_modules or __pycache__ are always skipped, at any depth.
 
 If another generator owns existing tree or module blocks, use optional config
 `managedMarkers: ["docs"]` to preserve them. Omit it for the default ownership

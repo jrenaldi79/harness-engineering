@@ -93,7 +93,9 @@ Optional `folderNotes: true` requires a note named like the instruction file in 
 folder that directly holds source files, except the source roots themselves and
 `scripts/self-documentation/`. Notes use the same five frontmatter fields. Only their
 frontmatter is read; the index groups the source inventory by folder under each note's
-linked description. Missing or unclassified notes fail refresh and check.
+linked description. Missing or unclassified notes fail refresh and check, as does an
+orphan note whose folder has no source files left beneath it. Note names are matched
+exactly (`CLAUDE.md`, not `claude.md`).
 
 Roots are explicit, relative, disjoint and contained in the project. Hidden,
 private, secrets, runs, outputs, fixtures, dependency/cache/build paths are
