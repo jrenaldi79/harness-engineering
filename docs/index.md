@@ -73,6 +73,7 @@ Filenames only; module purposes belong in authored documentation.
 - [tests/documentation/git-inventory.test.js](../tests/documentation/git-inventory.test.js)
 - [tests/documentation/install.test.js](../tests/documentation/install.test.js)
 - [tests/documentation/integration.test.js](../tests/documentation/integration.test.js)
+- [tests/documentation/issue-33.test.js](../tests/documentation/issue-33.test.js)
 - [tests/evals/README.md](../tests/evals/README.md)
 - [tests/evals/eval-config.json](../tests/evals/eval-config.json)
 - [tests/evals/grader.js](../tests/evals/grader.js)

@@ -8,7 +8,7 @@ const {INDEX_MARKER,renderIndex,renderInstruction} = require('./render');
 const defaults={version:1,sourceRoots:['src','lib','app','scripts'],docsRoot:'docs',instruction:'CLAUDE.md',index:'docs/index.md',strict:false};
 function validateConfig(config) {
   if(!config || typeof config!=='object' || Array.isArray(config))throw new Error('Invalid documentation config');
-  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key) && key!=='managedMarkers')throw new Error(`Unknown config key: ${key}`);
+  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key) && key!=='managedMarkers' && key!=='exclude' && key!=='lenient')throw new Error(`Unknown config key: ${key}`);
   for(const key of Object.keys(defaults))if(!Object.hasOwn(config,key))throw new Error(`Missing config key: ${key}`);
   if(config.version!==1)throw new Error('Unsupported documentation config version');
   if(typeof config.strict!=='boolean')throw new Error('Invalid config strict value');
@@ -17,12 +17,15 @@ function validateConfig(config) {
   if(!within(config.index,config.docsRoot) || config.index===config.docsRoot || !config.index.endsWith('.md') || config.index===config.docsRoot+'/catalog.json')throw new Error('Config index must be a .md file inside docs root and cannot be catalog.json');
   if(!['CLAUDE.md','AGENTS.md'].includes(config.instruction))throw new Error('Config instruction must be CLAUDE.md or AGENTS.md');
   if(Object.hasOwn(config,'managedMarkers') && (!Array.isArray(config.managedMarkers) || !config.managedMarkers.includes('docs') || new Set(config.managedMarkers).size!==config.managedMarkers.length || config.managedMarkers.some(name=>!['docs','tree','modules'].includes(name))))throw new Error('Invalid managedMarkers config: use distinct docs/tree/modules names and include docs');
+  if(Object.hasOwn(config,'lenient') && typeof config.lenient!=='boolean')throw new Error('Invalid config lenient value');
+  if(Object.hasOwn(config,'exclude') && (!Array.isArray(config.exclude) || config.exclude.some(x=>typeof x!=='string')))throw new Error('Invalid config exclude');
+  if(Object.hasOwn(config,'exclude'))config.exclude.forEach(safeRelative);
   const roots=[config.docsRoot,...config.sourceRoots];roots.forEach(safeRelative);
   for(const root of roots)for(const control of ['documentation.config.json',config.instruction])if(within(root.toLowerCase(),control.toLowerCase()))throw new Error('Config roots cannot alias control or instruction files');
   for(let a=0;a<roots.length;a++)for(let b=a+1;b<roots.length;b++) {
     const x=roots[a].toLowerCase(),y=roots[b].toLowerCase();if(within(x,y)||within(y,x))throw new Error('Config roots must be distinct and disjoint');
   }
-  return {...config,sourceRoots:[...config.sourceRoots],...(Object.hasOwn(config,'managedMarkers')?{managedMarkers:[...config.managedMarkers]}:{})};
+  return {...config,sourceRoots:[...config.sourceRoots],...(Object.hasOwn(config,'managedMarkers')?{managedMarkers:[...config.managedMarkers]}:{}),...(Object.hasOwn(config,'exclude')?{exclude:[...config.exclude]}:{}),...(Object.hasOwn(config,'lenient')?{lenient:config.lenient}:{})};
 }
 function loadConfig(reader) {
   const content=reader.read('documentation.config.json',65536);
@@ -38,13 +41,16 @@ function buildFromReader(reader,config=loadConfig(reader),options={}) {
   for(const name of reader.files(config.docsRoot)) {
     if(name.toLowerCase()===config.index.toLowerCase() || name.toLowerCase()===catalogPath.toLowerCase())continue;
     const key=name.slice(config.docsRoot.length+1);
-    const front=name.toLowerCase().endsWith('.md')?parseFrontmatter(reader.read(name,16384,true),name):null;
+    let front=null,error=null;
+    // Opt-in (--lenient or config lenient): unparsable frontmatter is listed under "Needs classification" instead of aborting.
+    if(name.toLowerCase().endsWith('.md')) {try {front=parseFrontmatter(reader.read(name,16384,true),name);} catch(failure) {if(options.strict||config.strict||!(options.lenient||config.lenient)||!/frontmatter|metadata/i.test(failure.message))throw failure;error=failure.message;}}
     const listed=catalog[key];
     if(front && listed && JSON.stringify(front)!==JSON.stringify(listed))throw new Error(`Conflicting metadata: ${name}`);
-    const metadata=front||listed||null;documents.push({path:name,metadata});if(!metadata)missing.push(name);
+    const metadata=front||listed||null;documents.push({path:name,metadata,error});if(!metadata)missing.push(name);
   }
   if((options.strict||config.strict) && missing.length)throw new Error(`Missing metadata: ${missing.join(', ')}`);
-  const sources=config.sourceRoots.flatMap(scope=>reader.files(scope)).sort(lexical);
+  const excluded=name=>(config.exclude||[]).some(scope=>within(name,scope));
+  const sources=config.sourceRoots.flatMap(scope=>reader.files(scope)).filter(name=>!excluded(name)).sort(lexical);
   const instruction=reader.read(config.instruction,1048576);
   if(instruction===null)throw new Error(`Missing instruction file with AUTO:docs markers: ${config.instruction}`);
   const existingIndex=reader.read(config.index,1048576);
@@ -65,7 +71,7 @@ function generate(root,options={}) {
   const reader=options.staged?staged(root):working(root);
   const {outputs,missing}=buildFromReader(reader,loadConfig(reader),options);
   for(const name of Object.keys(outputs))reader.validatePath(name);
-  if(options.check||options.staged) {
+  if(options.check||(options.staged&&!options.write)) {
     const stale=Object.entries(outputs).filter(([name,content])=>reader.read(name,1048576)!==content).map(([name])=>name);
     if(stale.length)throw new Error(`Stale generated documentation: ${stale.join(', ')}`);
   } else {
@@ -77,11 +83,12 @@ function cli(args) {
   const options={};let root=process.cwd();
   for(const arg of args) {
     if(arg.startsWith('--root=')) {root=arg.slice(7);if(!root)throw new Error('--root requires a path');}
-    else if(['--check','--staged','--strict'].includes(arg))options[arg.slice(2)]=true;
+    else if(['--check','--staged','--strict','--write','--lenient'].includes(arg))options[arg.slice(2)]=true;
     else throw new Error(`Unknown argument: ${arg}`);
   }
+  if(options.write&&!options.staged)throw new Error('--write requires --staged');
   const result=generate(root,options);
-  console.log(`Documentation ${options.check||options.staged?'checked':'refreshed'}: ${Object.keys(result.outputs).length} outputs, ${result.missing.length} unclassified.`);
+  console.log(`Documentation ${options.check||(options.staged&&!options.write)?'checked':'refreshed'}: ${Object.keys(result.outputs).length} outputs, ${result.missing.length} unclassified.`);
 }
 if(require.main===module) {try {cli(process.argv.slice(2));} catch(error) {console.error(error.message);process.exitCode=1;}}
 module.exports={generate,build,buildFromReader,loadConfig,validateConfig,defaults,cli};

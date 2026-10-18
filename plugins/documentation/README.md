@@ -37,10 +37,24 @@ only into an empty default hook location; existing hooks/custom hooksPath are
 preserved and receive a printed integration command. A handwritten index requires
 explicit `--adopt-index` after its prose has been preserved elsewhere.
 
+Further installer flags: `--no-section` appends only the `AUTO:docs` marker pair and
+a one-line pointer instead of the full maintenance section; `--update-config` merges
+the flags you pass into an existing `documentation.config.json` instead of failing
+with `Existing configuration differs`; `--exclude=a,b` keeps paths (for example
+`scripts/self-documentation`) out of the source inventory. The installer also writes
+`scripts/self-documentation/package.json` (`{"type":"commonjs"}`) so the scripts run
+inside `"type": "module"` projects, then runs one `--check` and fails if it breaks.
+Upgrades tolerate scripts added or removed between releases; retired scripts are
+deleted only while unmodified.
+
 When another generator owns an existing tree or module block, set
 `"managedMarkers": ["docs"]` in `documentation.config.json` before installation.
 The new engine then preserves those blocks and owns only the document reading map.
-Omitting this option keeps the default ownership of docs, tree and modules.
+Omitting this option keeps the default ownership of docs, tree and modules. The
+`tree` and `modules` blocks render the same per-root counts (a list and a table), so
+keep only one of them, or hand the other to its own generator with `managedMarkers`.
+Optional config keys: `exclude` (path prefixes left out of the source inventory) and
+`lenient` (see `--lenient` below).
 
 Installer-owned scripts live under `scripts/self-documentation/`. Installed
 version and file hashes protect locally modified scripts during reinstall/upgrade.
@@ -50,6 +64,8 @@ Project commands work without the plugin checkout or cache:
 node scripts/self-documentation/generate.js          # Refresh inventory/index
 node scripts/self-documentation/generate.js --check  # Read-only working-tree check
 node scripts/self-documentation/generate.js --staged # Read-only Git index check
+node scripts/self-documentation/generate.js --staged --write # Render from the Git index, write to the working tree
+node scripts/self-documentation/generate.js --lenient # List unparsable frontmatter under Needs classification
 node scripts/self-documentation/generate.js --check --strict
 node scripts/self-documentation/migrate.js            # Preview metadata migration
 node scripts/self-documentation/migrate.js --write
@@ -58,7 +74,14 @@ node scripts/self-documentation/migrate.js --write
 For a commit, refresh, review and stage the intended inputs and generated outputs,
 then run `--staged`. Partial staging is supported: the staged check reads that
 snapshot, so unrelated working-tree edits cannot change its result. Nothing is
-automatically staged.
+automatically staged. A plain refresh renders from the working tree, so untracked
+drafts under a source or docs root change its output; use `--staged --write` to
+render from the index instead, then stage the generated files. `--staged` reads the
+index's Markdown and JSON blobs through one batched Git process.
+
+Frontmatter that cannot be parsed (extra fields, an unquoted colon, a leading `---`
+rule) aborts by default. With `--lenient` (or `"lenient": true`) outside strict mode,
+the document is listed under Needs classification with the parse error.
 
 ## Progressive disclosure
 

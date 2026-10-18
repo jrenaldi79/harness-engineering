@@ -6,11 +6,22 @@ function escape(value) {
   return String(value).replace(/&/g,'&amp;').replace(/[|<>\[\]`*_\r\n]/g,c=>`&#${c.charCodeAt(0)};`);
 }
 function href(name) {return name.split('/').map(part=>encodeURIComponent(part).replace(/[!'()*]/g,c=>'%'+c.charCodeAt(0).toString(16).toUpperCase())).join('/');}
+// Blank fenced blocks and inline code spans (same length) so prose that quotes a marker is not scanned.
+function maskCode(text) {
+  let out='',fence=null;
+  for(const line of text.split(/(?<=\n)/)) {
+    const body=line.replace(/\r?\n$/,''),tail=line.slice(body.length),open=/^ {0,3}(`{3,}|~{3,})/.exec(body);
+    if(fence) {if(open && open[1][0]===fence[0] && open[1].length>=fence.length && !body.slice(open[0].length).trim())fence=null;out+=' '.repeat(body.length)+tail;}
+    else if(open) {fence=open[1];out+=' '.repeat(body.length)+tail;}
+    else out+=body.replace(/(?<!`)(`+)(?!`)[^\n]*?(?<!`)\1(?!`)/g,span=>' '.repeat(span.length))+tail;
+  }
+  return out;
+}
 function replaceMarkers(text,blocks,managedMarkers=['docs','tree','modules']) {
-  const stack=[],managed=new Set(['tree','modules','docs']);
-  for(const token of text.matchAll(/<!--\s*\/?\s*AUTO\s*:[^\r\n]*/g)) {
+  const stack=[],managed=new Set(['tree','modules','docs']),scan=maskCode(text);
+  for(const token of scan.matchAll(/<!--\s*\/?\s*AUTO\s*:[^\r\n]*/g)) {
     const match=/^<!-- (\/?)AUTO:([A-Za-z0-9_-]+) -->$/.exec(token[0]);
-    if(!match)throw new Error('Malformed AUTO marker');
+    if(!match)throw new Error(`Malformed AUTO marker at line ${scan.slice(0,token.index).split('\n').length}`);
     const [,closing,name]=match;
     if(closing) {if(stack.pop()!==name)throw new Error('Unbalanced AUTO markers');}
     else {if(stack.length && (managed.has(name)||stack.some(item=>managed.has(item))))throw new Error('Nested AUTO markers crossing a managed region');stack.push(name);}
@@ -19,9 +30,9 @@ function replaceMarkers(text,blocks,managedMarkers=['docs','tree','modules']) {
   const regions=[];
   for(const name of ['tree','modules','docs']) {
     const open=`<!-- AUTO:${name} -->`,close=`<!-- /AUTO:${name} -->`;
-    const near=text.match(new RegExp(`<!--\\s*/?AUTO:${name}\\b[^\\n]*`,'g'))||[];
-    const starts=[...text.matchAll(new RegExp(open,'g'))].map(m=>m.index);
-    const ends=[...text.matchAll(new RegExp(close,'g'))].map(m=>m.index);
+    const near=scan.match(new RegExp(`<!--\\s*/?AUTO:${name}\\b[^\\n]*`,'g'))||[];
+    const starts=[...scan.matchAll(new RegExp(open,'g'))].map(m=>m.index);
+    const ends=[...scan.matchAll(new RegExp(close,'g'))].map(m=>m.index);
     if(!starts.length && !ends.length && !near.length && name!=='docs')continue;
     if(starts.length!==1 || ends.length!==1 || near.length!==2 || starts[0]>=ends[0])throw new Error(`Malformed or duplicate AUTO:${name} markers`);
     const a=starts[0],b=ends[0];
@@ -49,7 +60,7 @@ function renderIndex(documents,docsRoot,index,sources=[]) {
     content+=`\n## ${title}\n\n| Document | Status | Description | Read when |\n| --- | --- | --- | --- |\n`;
     for(const doc of groups.get(group).sort((a,b)=>lexical(a.path,b.path))) {
       const relative=path.posix.relative(path.posix.dirname(index),doc.path);
-      const record=doc.metadata||{title:doc.path.slice(docsRoot.length+1),status:'Unclassified',description:'',read_when:''};
+      const record=doc.metadata||{title:doc.path.slice(docsRoot.length+1),status:'Unclassified',description:doc.error?`Frontmatter error: ${doc.error}`:'',read_when:''};
       content+=`| [${escape(record.title)}](${href(relative)}) | ${escape(record.status)} | ${escape(record.description)} | ${escape(record.read_when)} |\n`;
     }
   }

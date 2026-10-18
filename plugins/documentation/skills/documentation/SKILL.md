@@ -95,6 +95,7 @@ fixes cannot conceal an inconsistent commit:
 
 ```text
 node scripts/self-documentation/generate.js --staged
+node scripts/self-documentation/generate.js --staged --write   # render from the index when untracked drafts exist
 ```
 
 Catalog-to-frontmatter migration is explicit. Preview first, review the affected

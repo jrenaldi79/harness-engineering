@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 'use strict';
-const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto'),{spawnSync}=require('node:child_process');
 const {working}=require('./filesystem');
 const {parseJSON,types,statuses}=require('./metadata');
 const {defaults,validateConfig,build}=require('./generate');
@@ -15,12 +15,14 @@ function nodeVersion(){if(Number(process.versions.node.split('.')[0])<18)throw n
 function stateFrom(text){
  const value=parseJSON(text,'installation state');
  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).sort().join(',')!=='hashes,version'||typeof value.version!=='string'||!/^\d+\.\d+\.\d+$/.test(value.version)||!value.hashes||typeof value.hashes!=='object'||Array.isArray(value.hashes))throw new Error('Invalid installation state');
- if(Object.keys(value.hashes).sort().join(',')!==[...FILES].sort().join(',')||Object.values(value.hashes).some(x=>typeof x!=='string'||! /^[a-f0-9]{64}$/.test(x)))throw new Error('Invalid installation state hashes');
+ const names=Object.keys(value.hashes);// A release may add or remove scripts, so only the shape is checked here.
+ if(!names.length||names.some(x=>!/^[a-z][a-z0-9-]*\.js$/.test(x))||Object.values(value.hashes).some(x=>typeof x!=='string'||! /^[a-f0-9]{64}$/.test(x)))throw new Error('Invalid installation state hashes');
  return value;
 }
-function instructionSection(text){
+function instructionSection(text,compact=false){
  const newline=text.includes('\r\n')?'\r\n':'\n';
  if(/<!--\s*\/?\s*AUTO\s*:\s*docs\b/.test(text))return text;
+ if(compact)return text+(text.endsWith('\n')?'':newline)+newline+['Documentation: run `node scripts/self-documentation/generate.js` to refresh and add `--check` to validate.','','<!-- AUTO:docs -->','','<!-- /AUTO:docs -->',''].join(newline);
  const section=['## Documentation maintenance','','Classify Markdown with flat frontmatter at the start of the document. All five fields are required one-line strings; use JSON-quoted values. Example:','','```yaml','---','title: "Guide"','description: "Purpose of this document"','type: "guidance"','status: "maintained"','read_when: "When making related changes"','---','```','',
   'Types: '+types.join('/')+'.','Statuses: '+statuses.join('/')+'.',
   'Catalog `'+defaults.docsRoot+'/catalog.json` records use the same fields for attachments or Markdown without frontmatter. Use the configured docs root when different.',
@@ -39,31 +41,43 @@ function legacyIndex(text,config,reader){
  }
  return entries>0;
 }
+// Fail at install time, not on the first later run, when the copied scripts cannot execute.
+function selfCheck(root){
+ const run=spawnSync(process.execPath,[path.join(root,DEST,'generate.js'),'--root='+root,'--check'],{encoding:'utf8',windowsHide:true});
+ if(run.status!==0)throw new Error('Installed scripts failed their self-check: '+String(run.stderr||run.stdout||run.error).trim());
+}
 function install(target,options={}){
  nodeVersion();if(typeof target!=='string'||!target)throw new Error('A target directory is required');
  const reader=working(target),overlay={},hashes={};
- for(const key of Object.keys(options))if(!['instruction','sources','sourceRoots','docs','docsRoot','adoptIndex','hook','createInstruction','refresh'].includes(key))throw new Error(`Unknown install option: ${key}`);
- for(const key of ['adoptIndex','hook','createInstruction','refresh'])if(Object.hasOwn(options,key)&&typeof options[key]!=='boolean')throw new Error(`Invalid install option: ${key}`);
+ for(const key of Object.keys(options))if(!['instruction','sources','sourceRoots','docs','docsRoot','adoptIndex','hook','createInstruction','refresh','section','updateConfig','exclude'].includes(key))throw new Error(`Unknown install option: ${key}`);
+ for(const key of ['adoptIndex','hook','createInstruction','refresh','section','updateConfig'])if(Object.hasOwn(options,key)&&typeof options[key]!=='boolean')throw new Error(`Invalid install option: ${key}`);
  const stateText=reader.read(STATE,65536),state=stateText===null?null:stateFrom(stateText);
  for(const name of FILES){
   const destination=DEST+'/'+name,existing=reader.read(destination,1048576);
-  if(state&&(existing===null||hash(existing)!==state.hashes[name]))throw new Error(`Locally modified or missing owned script: ${destination}`);
-  if(!state&&existing!==null)throw new Error(`Unowned conflicting script: ${destination}`);
+  const owned=Boolean(state)&&Object.hasOwn(state.hashes,name);
+  if(owned&&(existing===null||hash(existing)!==state.hashes[name]))throw new Error(`Locally modified or missing owned script: ${destination}`);
+  if(!owned&&existing!==null)throw new Error(`Unowned conflicting script: ${destination}`);
   const source=fs.readFileSync(path.join(__dirname,name),'utf8');if(Buffer.byteLength(source)>1048576)throw new Error(`Script exceeds size limit: ${name}`);
   overlay[destination]=source;hashes[name]=hash(source);
  }
+ // Scripts retired by a newer release are removed only while unmodified.
+ const retired=Object.keys(state?.hashes??{}).filter(name=>!FILES.includes(name)).filter(name=>{reader.validatePath(DEST+'/'+name);const old=reader.read(DEST+'/'+name,1048576);return old!==null&&hash(old)===state.hashes[name];});
+ for(const name of retired)overlay[DEST+'/'+name]=null;
+ overlay[DEST+'/package.json']=json({type:'commonjs'});// Keeps the CommonJS scripts runnable inside "type": "module" projects.
  const supplied={};
  if(Object.hasOwn(options,'instruction'))supplied.instruction=options.instruction;
  if(Object.hasOwn(options,'sources')||Object.hasOwn(options,'sourceRoots'))supplied.sourceRoots=options.sourceRoots??options.sources;
  if(typeof supplied.sourceRoots==='string')supplied.sourceRoots=supplied.sourceRoots.split(',');
+ if(Object.hasOwn(options,'exclude'))supplied.exclude=typeof options.exclude==='string'?options.exclude.split(','):options.exclude;
  if(Object.hasOwn(options,'docs')||Object.hasOwn(options,'docsRoot')){supplied.docsRoot=options.docsRoot??options.docs;supplied.index=supplied.docsRoot+'/index.md';}
  const configText=reader.read('documentation.config.json',65536);
- const config=configText===null?validateConfig({...defaults,...supplied}):validateConfig(parseJSON(configText,'config'));
- if(configText!==null)for(const [key,value]of Object.entries(supplied))if(JSON.stringify(config[key])!==JSON.stringify(value))throw new Error(`Existing configuration differs: ${key}`);
- overlay['documentation.config.json']=configText??json(config);
+ const parsed=configText===null?null:parseJSON(configText,'config'),keep=configText!==null&&!options.updateConfig;
+ const config=parsed===null?validateConfig({...defaults,...supplied}):validateConfig(keep?parsed:{...parsed,...supplied});
+ if(keep)for(const [key,value]of Object.entries(supplied))if(JSON.stringify(config[key])!==JSON.stringify(value))throw new Error(`Existing configuration differs: ${key}`);
+ overlay['documentation.config.json']=keep?configText:json(config);
  overlay[STATE]=json({version:VERSION,hashes});
  const original=reader.read(config.instruction,1048576);
- const instruction=instructionSection(original??'# Project instructions\n');
+ const instruction=instructionSection(original??'# Project instructions\n',options.section===false);
  const index=reader.read(config.index,1048576);
  if(index!==null&&!index.startsWith(INDEX_MARKER+'\n')&&!index.startsWith(INDEX_MARKER+'\r\n')){
   if(!options.adoptIndex&&!legacyIndex(index,config,reader))throw new Error(`Existing index requires --adopt-index: ${config.index}`);
@@ -72,7 +86,7 @@ function install(target,options={}){
  overlay[config.instruction]=instruction;
  for(const name of Object.keys(overlay))reader.validatePath(name);
  const result=build(reader.root,{overlay});
- const writes={...overlay};delete writes[config.index];
+ const writes={...overlay};delete writes[config.index];for(const name of Object.keys(writes))if(writes[name]===null)delete writes[name];
  if(options.refresh!==false)Object.assign(writes,result.outputs);
  else {
   if(original===null&&options.createInstruction===false)delete writes[config.instruction];
@@ -86,6 +100,8 @@ function install(target,options={}){
  const hook=options.hook?planHook(reader.root):null;
  for(const [name,content]of Object.entries(writes)){const file=path.join(reader.root,name);fs.mkdirSync(path.dirname(file),{recursive:true});fs.writeFileSync(file,content,'utf8');}
  if(hook)applyHook(hook);
+ for(const name of retired)fs.rmSync(path.join(reader.root,DEST,name),{force:true});
+ if(options.refresh!==false)selfCheck(reader.root);
  return {version:VERSION,previousVersion:state?.version??null,hashes,config,missing:result.missing,hook,written:Object.keys(writes)};
 }
 function cli(args){
@@ -93,8 +109,9 @@ function cli(args){
  for(const arg of args){if(arg.startsWith('--target=')){target=arg.slice(9);if(!target)throw new Error('--target requires a path');}
   else if(arg.startsWith('--instruction=')){options.instruction=arg.slice(14);if(!options.instruction)throw new Error('--instruction requires a value');}
   else if(arg.startsWith('--sources=')){options.sources=arg.slice(10);if(!options.sources)throw new Error('--sources requires a value');}
+  else if(arg.startsWith('--exclude=')){options.exclude=arg.slice(10);if(!options.exclude)throw new Error('--exclude requires a value');}
   else if(arg.startsWith('--docs=')){options.docs=arg.slice(7);if(!options.docs)throw new Error('--docs requires a value');}
-  else if(arg==='--adopt-index')options.adoptIndex=true;else if(arg==='--hook')options.hook=true;else throw new Error(`Unknown argument: ${arg}`);
+  else if(arg==='--adopt-index')options.adoptIndex=true;else if(arg==='--hook')options.hook=true;else if(arg==='--no-section')options.section=false;else if(arg==='--update-config')options.updateConfig=true;else throw new Error(`Unknown argument: ${arg}`);
  }
  if(!target)throw new Error('--target=<path> is required');const result=install(target,options);
  console.log(`Documentation installed: ${result.previousVersion&&result.previousVersion!==VERSION?result.previousVersion+' -> ':''}${VERSION}, ${FILES.length} scripts.`);

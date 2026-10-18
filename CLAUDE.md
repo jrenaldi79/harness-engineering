@@ -44,7 +44,7 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 [Source inventory](docs/index.md#source-inventory)
 - skills: 27 files
 - scripts: 6 files
-- tests: 34 files
+- tests: 35 files
 - plugins: 11 files
 <!-- /AUTO:tree -->
 
@@ -74,7 +74,7 @@ User runs /setup
 | --- | --- |
 | skills | 27 |
 | scripts | 6 |
-| tests | 34 |
+| tests | 35 |
 | plugins | 11 |
 <!-- /AUTO:modules -->
 

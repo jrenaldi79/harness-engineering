@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Documentation engine (#33): installed scripts now run in `"type": "module"` projects
+  (nested `package.json`) and the installer self-checks; `--staged` reads blobs through
+  one batched Git process; marker scanning ignores code spans and fences and reports
+  line numbers; upgrades tolerate added or removed scripts.
+
+### Added
+
+- Documentation installer flags `--no-section`, `--update-config`, `--exclude=`; config
+  keys `exclude` and `lenient`; `generate.js --staged --write` and `--lenient`.
+
 ## [1.3.0] - 2026-10-05
 
 ### Added

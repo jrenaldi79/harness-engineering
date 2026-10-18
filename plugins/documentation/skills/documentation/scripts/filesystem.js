@@ -126,8 +126,29 @@ function staged(root) {
     for(const name of entries.keys()) if(within(name,scope) && allowed(name)) {validatePath(name); names.push(name);}
     return names.sort(lexical);
   }
+  // One process pair serves every Markdown/JSON blob; per-file git spawns are slow on Windows.
+  let blobs=null;
+  function warm() {
+    blobs=new Map();
+    const shas=[...new Set([...entries].filter(([name,records])=>/\.(?:md|json)$/i.test(name) && records.length===1 && records[0].stage==='0').map(([,records])=>records[0].sha))];
+    if(!shas.length)return;
+    const run=(args,list)=>spawnSync('git',args,{cwd:root,input:Buffer.from(list.join('\n')+'\n'),maxBuffer:268435456,windowsHide:true});
+    const sizes=run(['cat-file','--batch-check'],shas);if(sizes.error || sizes.status!==0)return;
+    let total=0;const wanted=[];
+    for(const line of String(sizes.stdout).split('\n')) {const m=/^([0-9a-f]+) blob (\d+)$/.exec(line);if(m && Number(m[2])<=1048576 && (total+=Number(m[2]))<=67108864)wanted.push(m[1]);}
+    const result=wanted.length?run(['cat-file','--batch'],wanted):null;if(!result || result.error || result.status!==0)return;
+    const out=result.stdout;let offset=0;
+    while(offset<out.length) {
+      const end=out.indexOf(10,offset);if(end<0)break;
+      const m=/^([0-9a-f]+) blob (\d+)$/.exec(out.subarray(offset,end).toString('utf8'));if(!m)break;
+      const size=Number(m[2]);blobs.set(m[1],out.subarray(end+1,end+1+size));offset=end+1+size+1;
+    }
+  }
   function read(name,limit=262144,prefix=false) {
     validatePath(name); const record=entries.get(name)?.[0]; if(!record)return null;
+    if(!blobs)warm();
+    const cached=blobs.get(record.sha);
+    if(cached) {if(!prefix && cached.length>limit)throw new Error(`Bounded read exceeded: ${name}`);return decode(cached.subarray(0,limit),name,prefix);}
     if(!prefix && Number(git(['cat-file','-s',record.sha]).toString('utf8').trim())>limit)throw new Error(`Bounded read exceeded: ${name}`);
     return decode(git(['cat-file','blob',record.sha],limit,prefix),name,prefix);
   }
