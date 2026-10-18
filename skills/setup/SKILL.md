@@ -102,8 +102,10 @@ Read `$REFERENCES_DIR/enforcement-scripts.md` first to understand the enforcemen
 **Node/TypeScript path (fast path):**
 
 ```bash
-node $SCRIPTS_DIR/install-enforcement.js --target=<project-root> --framework=<framework>
+node $SCRIPTS_DIR/install-enforcement.js --target=<project-root> --framework=<framework> --folder-notes
 ```
+
+Pass `--folder-notes` for new projects. For an existing project, offer it and explain the consequence: every folder that directly holds source files (below the source roots) then needs a `CLAUDE.md` note with the five metadata fields, or the docs check fails. Write those notes from the real code before enabling it.
 
 This also creates:
 - `.claude/settings.json` with pre-approved commands (test, lint, build, git) and a deny list blocking destructive operations (rm -rf /, git push --force, etc.). Normal file removal still works — Claude prompts for approval so the user stays in control.
@@ -189,6 +191,7 @@ Run `node scripts/self-documentation/generate.js`, review output, then run
 description, type, status and read_when metadata; classify missing entries visibly.
 Stage intended inputs and outputs before testing `--staged`; checks never stage.
 The instruction file points to docs/index.md; substantive prose remains authored.
+With folder notes enabled, the check also fails on any source folder without its note.
 
 **6. Linter runs clean:**
 Run the stack's linter on the scaffolded code. A freshly generated project should have zero lint errors.

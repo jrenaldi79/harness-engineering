@@ -49,8 +49,8 @@ function selfCheck(root){
 function install(target,options={}){
  nodeVersion();if(typeof target!=='string'||!target)throw new Error('A target directory is required');
  const reader=working(target),overlay={},hashes={};
- for(const key of Object.keys(options))if(!['instruction','sources','sourceRoots','docs','docsRoot','adoptIndex','hook','createInstruction','refresh','section','updateConfig','exclude'].includes(key))throw new Error(`Unknown install option: ${key}`);
- for(const key of ['adoptIndex','hook','createInstruction','refresh','section','updateConfig'])if(Object.hasOwn(options,key)&&typeof options[key]!=='boolean')throw new Error(`Invalid install option: ${key}`);
+ for(const key of Object.keys(options))if(!['instruction','sources','sourceRoots','docs','docsRoot','adoptIndex','hook','createInstruction','refresh','section','updateConfig','exclude','folderNotes'].includes(key))throw new Error(`Unknown install option: ${key}`);
+ for(const key of ['adoptIndex','hook','createInstruction','refresh','section','updateConfig','folderNotes'])if(Object.hasOwn(options,key)&&typeof options[key]!=='boolean')throw new Error(`Invalid install option: ${key}`);
  const stateText=reader.read(STATE,65536),state=stateText===null?null:stateFrom(stateText);
  for(const name of FILES){
   const destination=DEST+'/'+name,existing=reader.read(destination,1048576);
@@ -66,6 +66,7 @@ function install(target,options={}){
  overlay[DEST+'/package.json']=json({type:'commonjs'});// Keeps the CommonJS scripts runnable inside "type": "module" projects.
  const supplied={};
  if(Object.hasOwn(options,'instruction'))supplied.instruction=options.instruction;
+ if(Object.hasOwn(options,'folderNotes'))supplied.folderNotes=options.folderNotes;
  if(Object.hasOwn(options,'sources')||Object.hasOwn(options,'sourceRoots'))supplied.sourceRoots=options.sourceRoots??options.sources;
  if(typeof supplied.sourceRoots==='string')supplied.sourceRoots=supplied.sourceRoots.split(',');
  if(Object.hasOwn(options,'exclude'))supplied.exclude=typeof options.exclude==='string'?options.exclude.split(','):options.exclude;
@@ -111,7 +112,7 @@ function cli(args){
   else if(arg.startsWith('--sources=')){options.sources=arg.slice(10);if(!options.sources)throw new Error('--sources requires a value');}
   else if(arg.startsWith('--exclude=')){options.exclude=arg.slice(10);if(!options.exclude)throw new Error('--exclude requires a value');}
   else if(arg.startsWith('--docs=')){options.docs=arg.slice(7);if(!options.docs)throw new Error('--docs requires a value');}
-  else if(arg==='--adopt-index')options.adoptIndex=true;else if(arg==='--hook')options.hook=true;else if(arg==='--no-section')options.section=false;else if(arg==='--update-config')options.updateConfig=true;else throw new Error(`Unknown argument: ${arg}`);
+  else if(arg==='--adopt-index')options.adoptIndex=true;else if(arg==='--hook')options.hook=true;else if(arg==='--no-section')options.section=false;else if(arg==='--update-config')options.updateConfig=true;else if(arg==='--folder-notes')options.folderNotes=true;else throw new Error(`Unknown argument: ${arg}`);
  }
  if(!target)throw new Error('--target=<path> is required');const result=install(target,options);
  console.log(`Documentation installed: ${result.previousVersion&&result.previousVersion!==VERSION?result.previousVersion+' -> ':''}${VERSION}, ${FILES.length} scripts.`);

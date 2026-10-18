@@ -17,7 +17,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   files. Refresh migrates existing blocks.
 - `install-enforcement.js` no longer writes `.eslintrc.js` beside an ESLint flat config, and
   no longer adds Jest scripts or dependencies to projects that already use Vitest.
-
 - Documentation engine (#33): installed scripts now run in `"type": "module"` projects
   (nested `package.json`) and the installer self-checks; `--staged` reads blobs through
   one batched Git process; marker scanning ignores code spans and fences and reports
@@ -25,6 +24,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Documentation folder notes (opt-in `folderNotes` config, `--folder-notes` on the docs
+  installer and `install-enforcement.js`). Every source sub-folder carries an
+  instruction-named note (`src/llm/CLAUDE.md`), which Claude Code auto-loads in that
+  folder. The index groups the source inventory under each note's description, and
+  refresh/check fail on missing notes. `/setup` enables it for new projects.
 - Documentation installer flags `--no-section`, `--update-config`, `--exclude=`; config
   keys `exclude` and `lenient`; `generate.js --staged --write` and `--lenient`.
 

@@ -67,3 +67,19 @@ describe('test runner detection', () => {
     expect(install().scripts.test).toBe('vitest run --project unit');
   });
 });
+
+describe('folder notes', () => {
+  const config = () => JSON.parse(fs.readFileSync(path.join(tmpDir, 'documentation.config.json'), 'utf8'));
+  const run = args =>
+    execFileSync(process.execPath, [SCRIPT, `--target=${tmpDir}`, '--skip-install', ...args], { cwd: tmpDir, stdio: 'pipe' });
+
+  it('enables folder notes in the documentation config with --folder-notes', () => {
+    run(['--folder-notes']);
+    expect(config().folderNotes).toBe(true);
+  });
+
+  it('leaves folder notes off by default', () => {
+    run([]);
+    expect(config().folderNotes).toBeUndefined();
+  });
+});

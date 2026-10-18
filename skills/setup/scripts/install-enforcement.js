@@ -2,7 +2,7 @@
  * Copies enforcement tooling into a target project.
  *
  * Usage:
- *   node install-enforcement.js --target=<project-root> [--framework=<fw>] [--skip-install]
+ *   node install-enforcement.js --target=<project-root> [--framework=<fw>] [--skip-install] [--folder-notes]
  *
  * Actions:
  *   1. Creates scripts/ and .husky/ in target if needed
@@ -30,11 +30,12 @@ const childProcess = require('node:child_process');
 // ---------------------------------------------------------------------------
 
 function parseArgs(argv) {
-  const flags = { target: null, skipInstall: false, framework: 'none' };
+  const flags = { target: null, skipInstall: false, framework: 'none', folderNotes: false };
   for (const arg of argv.slice(2)) {
     if (arg.startsWith('--target=')) flags.target = arg.slice('--target='.length);
     else if (arg.startsWith('--framework=')) flags.framework = arg.slice('--framework='.length);
     else if (arg === '--skip-install') flags.skipInstall = true;
+    else if (arg === '--folder-notes') flags.folderNotes = true;
   }
   if (!flags.target) {
     console.error('Error: --target=<project-root> is required');
@@ -198,7 +199,7 @@ function main() {
   const flags = parseArgs(process.argv);
   const targetDir = path.resolve(flags.target);
 
-  installDocumentation(targetDir);
+  installDocumentation(targetDir, flags.folderNotes);
 
   copyEnforcementScripts(targetDir);
 
@@ -222,7 +223,7 @@ function main() {
 main();
 
 /** Reuse the self-contained capability; target projects receive one engine. */
-function installDocumentation(targetDir) {
+function installDocumentation(targetDir, folderNotes) {
   const {install} = require('../../../plugins/documentation/skills/documentation/scripts/install');
   const {working} = require('../../../plugins/documentation/skills/documentation/scripts/filesystem');
   working(targetDir).validatePath('scripts/generate-docs.js');
@@ -238,6 +239,6 @@ function installDocumentation(targetDir) {
       throw new Error('Existing scripts/generate-docs.js requires explicit migration; preserve it and use the documentation-only installer.');
     }
   }
-  install(targetDir, {createInstruction: false, refresh: false});
+  install(targetDir, {createInstruction: false, refresh: false, ...(folderNotes ? {folderNotes: true} : {})});
   fs.writeFileSync(wrapperPath, wrapper);
 }

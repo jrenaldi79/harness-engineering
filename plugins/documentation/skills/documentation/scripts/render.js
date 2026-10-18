@@ -52,7 +52,18 @@ function replaceMarkers(text,blocks,managedMarkers=['docs','tree','modules']) {
   for(const region of regions.reverse()) if(managedMarkers.includes(region.name))text=text.slice(0,region.start)+newline+unformatted(blocks[region.name]).replace(/\n/g,newline)+newline+text.slice(region.end);
   return text;
 }
-function renderIndex(documents,docsRoot,index,sources=[]) {
+function inventoryItem(name,index) {return `- [${escape(name)}](${href(path.posix.relative(path.posix.dirname(index),name))})`;}
+// Folder notes head their group (linked, with description) instead of appearing as items.
+function groupedInventory(sources,index,notes) {
+  const headings=new Set([...notes.values()].map(note=>note.file)),groups=new Map();
+  for(const name of sources) {if(headings.has(name))continue;const folder=path.posix.dirname(name);if(!groups.has(folder))groups.set(folder,[]);groups.get(folder).push(name);}
+  return [...groups.keys()].sort(lexical).map(folder=>{
+    const note=notes.get(folder);
+    const heading=note?`[${escape(folder)}](${href(path.posix.relative(path.posix.dirname(index),note.file))}): ${escape(note.metadata.description)}`:escape(folder);
+    return `### ${heading}\n\n`+groups.get(folder).map(name=>inventoryItem(name,index)).join('\n')+'\n';
+  }).join('\n');
+}
+function renderIndex(documents,docsRoot,index,sources=[],notes=null) {
   let content=INDEX_MARKER+'\n'+IGNORE_START+'\n# Documentation index\n\n';
   content+='Use maintained guidance, status, and reference documents for current decisions. Proposals, snapshots, and history may not represent current authority.\n';
   const groups=new Map();
@@ -68,8 +79,9 @@ function renderIndex(documents,docsRoot,index,sources=[]) {
     }
   }
   if(!documents.length)content+='\nNo documentation files found.\n';
-  content+='\n## Source inventory\n\nFilenames only; module purposes belong in authored documentation.\n\n';
-  content+=sources.length?sources.map(name=>`- [${escape(name)}](${href(path.posix.relative(path.posix.dirname(index),name))})`).join('\n')+'\n':'No source files found.\n';
+  content+='\n## Source inventory\n\n'+(notes?'Filenames grouped by folder; each heading links that folder\'s note.':'Filenames only; module purposes belong in authored documentation.')+'\n\n';
+  if(!sources.length)content+='No source files found.\n';
+  else content+=notes?groupedInventory(sources,index,notes):sources.map(name=>inventoryItem(name,index)).join('\n')+'\n';
   return content+IGNORE_END+'\n';
 }
 function renderInstruction(text,sources,config) {

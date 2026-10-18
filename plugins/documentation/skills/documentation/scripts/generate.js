@@ -6,9 +6,10 @@ const {working,staged,safeRelative,within,lexical} = require('./filesystem');
 const {parseJSON,parseCatalog,parseFrontmatter} = require('./metadata');
 const {INDEX_MARKER,renderIndex,renderInstruction} = require('./render');
 const defaults={version:1,sourceRoots:['src','lib','app','scripts'],docsRoot:'docs',instruction:'CLAUDE.md',index:'docs/index.md',strict:false};
+const ENGINE_DIR='scripts/self-documentation';
 function validateConfig(config) {
   if(!config || typeof config!=='object' || Array.isArray(config))throw new Error('Invalid documentation config');
-  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key) && key!=='managedMarkers' && key!=='exclude' && key!=='lenient')throw new Error(`Unknown config key: ${key}`);
+  for(const key of Object.keys(config))if(!Object.hasOwn(defaults,key) && !['managedMarkers','exclude','lenient','folderNotes'].includes(key))throw new Error(`Unknown config key: ${key}`);
   for(const key of Object.keys(defaults))if(!Object.hasOwn(config,key))throw new Error(`Missing config key: ${key}`);
   if(config.version!==1)throw new Error('Unsupported documentation config version');
   if(typeof config.strict!=='boolean')throw new Error('Invalid config strict value');
@@ -18,6 +19,7 @@ function validateConfig(config) {
   if(!['CLAUDE.md','AGENTS.md'].includes(config.instruction))throw new Error('Config instruction must be CLAUDE.md or AGENTS.md');
   if(Object.hasOwn(config,'managedMarkers') && (!Array.isArray(config.managedMarkers) || !config.managedMarkers.includes('docs') || new Set(config.managedMarkers).size!==config.managedMarkers.length || config.managedMarkers.some(name=>!['docs','tree','modules'].includes(name))))throw new Error('Invalid managedMarkers config: use distinct docs/tree/modules names and include docs');
   if(Object.hasOwn(config,'lenient') && typeof config.lenient!=='boolean')throw new Error('Invalid config lenient value');
+  if(Object.hasOwn(config,'folderNotes') && typeof config.folderNotes!=='boolean')throw new Error('Invalid config folderNotes value');
   if(Object.hasOwn(config,'exclude') && (!Array.isArray(config.exclude) || config.exclude.some(x=>typeof x!=='string')))throw new Error('Invalid config exclude');
   if(Object.hasOwn(config,'exclude'))config.exclude.forEach(safeRelative);
   const roots=[config.docsRoot,...config.sourceRoots];roots.forEach(safeRelative);
@@ -25,12 +27,30 @@ function validateConfig(config) {
   for(let a=0;a<roots.length;a++)for(let b=a+1;b<roots.length;b++) {
     const x=roots[a].toLowerCase(),y=roots[b].toLowerCase();if(within(x,y)||within(y,x))throw new Error('Config roots must be distinct and disjoint');
   }
-  return {...config,sourceRoots:[...config.sourceRoots],...(Object.hasOwn(config,'managedMarkers')?{managedMarkers:[...config.managedMarkers]}:{}),...(Object.hasOwn(config,'exclude')?{exclude:[...config.exclude]}:{}),...(Object.hasOwn(config,'lenient')?{lenient:config.lenient}:{})};
+  return {...config,sourceRoots:[...config.sourceRoots],...(Object.hasOwn(config,'managedMarkers')?{managedMarkers:[...config.managedMarkers]}:{}),...(Object.hasOwn(config,'exclude')?{exclude:[...config.exclude]}:{}),...(Object.hasOwn(config,'lenient')?{lenient:config.lenient}:{}),...(Object.hasOwn(config,'folderNotes')?{folderNotes:config.folderNotes}:{})};
 }
 function loadConfig(reader) {
   const content=reader.read('documentation.config.json',65536);
   if(content===null)throw new Error('Missing documentation.config.json');
   return validateConfig(parseJSON(content,'config'));
+}
+// Opt-in: each folder that directly holds source files carries an instruction-named note whose
+// frontmatter heads its inventory group. Source roots are covered by the root instruction file
+// and the engine's own folder is generator-owned. Only note frontmatter is read, never source.
+function folderNotes(reader,config,sources) {
+  const name=config.instruction,present=new Set(sources),notes=new Map(),missing=[];
+  const folders=[...new Set(sources.filter(file=>path.posix.basename(file)!==name).map(file=>path.posix.dirname(file)))].sort(lexical);
+  for(const folder of folders) {
+    if(config.sourceRoots.includes(folder) || within(folder,ENGINE_DIR))continue;
+    const file=folder+'/'+name;
+    if(!present.has(file)) {missing.push(file);continue;}
+    let metadata=null;
+    try {metadata=parseFrontmatter(reader.read(file,16384,true),file);} catch(error) {throw new Error(`Folder note needs metadata: ${file} (${error.message})`);}
+    if(!metadata)throw new Error(`Folder note needs metadata: ${file}`);
+    notes.set(folder,{file,metadata});
+  }
+  if(missing.length)throw new Error(`Missing folder notes: ${missing.join(', ')}`);
+  return notes;
 }
 function buildFromReader(reader,config=loadConfig(reader),options={}) {
   config=validateConfig(config);
@@ -55,7 +75,8 @@ function buildFromReader(reader,config=loadConfig(reader),options={}) {
   if(instruction===null)throw new Error(`Missing instruction file with AUTO:docs markers: ${config.instruction}`);
   const existingIndex=reader.read(config.index,1048576);
   if(existingIndex!==null && !existingIndex.startsWith(INDEX_MARKER+'\n') && !existingIndex.startsWith(INDEX_MARKER+'\r\n'))throw new Error(`Index ownership requires Generated marker: ${config.index}`);
-  const renderedIndex=renderIndex(documents,config.docsRoot,config.index,sources);
+  const notes=config.folderNotes?folderNotes(reader,config,sources):null;
+  const renderedIndex=renderIndex(documents,config.docsRoot,config.index,sources,notes);
   const outputs={
     [config.index]:existingIndex?.includes('\r\n')?renderedIndex.replace(/\n/g,'\r\n'):renderedIndex,
     [config.instruction]:renderInstruction(instruction,sources,config)

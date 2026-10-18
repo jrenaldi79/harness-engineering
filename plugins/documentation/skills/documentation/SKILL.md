@@ -68,6 +68,14 @@ node scripts/self-documentation/install-hook.js
 Installing this plugin or skill alone does not activate a filesystem watcher.
 The installed scripts work after the plugin cache is removed.
 
+Folder notes are opt-in (`--folder-notes`, config `folderNotes: true`). Each folder
+that directly holds source files, below the source roots, then needs a note named like
+the instruction file (`src/llm/CLAUDE.md`). Claude Code auto-loads it when working in
+that folder, and its frontmatter `description` heads the folder's inventory group.
+Refresh and check fail on a missing or unclassified note. Author notes from the code
+(owns, entry points, invariants, tests, gotchas) before enabling it on an existing
+project. Use `exclude` for folders that should not need one.
+
 If another generator owns existing tree or module blocks, use optional config
 `managedMarkers: ["docs"]` to preserve them. Omit it for the default ownership
 of docs, tree and modules. All AUTO markers still must be balanced and well formed.

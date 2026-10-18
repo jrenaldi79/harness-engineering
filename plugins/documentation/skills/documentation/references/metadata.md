@@ -88,6 +88,12 @@ index and strict. Defaults use source roots src/lib/app/scripts, docsRoot `docs`
 instruction `CLAUDE.md`, index `docs/index.md`, strict false. A project need not use
 Node for its application; Node 18+ is the documentation tooling runtime.
 
+Optional `folderNotes: true` requires a note named like the instruction file in every
+folder that directly holds source files, except the source roots themselves and
+`scripts/self-documentation/`. Notes use the same five frontmatter fields. Only their
+frontmatter is read; the index groups the source inventory by folder under each note's
+linked description. Missing or unclassified notes fail refresh and check.
+
 Roots are explicit, relative, disjoint and contained in the project. Hidden,
 private, secrets, runs, outputs, fixtures, dependency/cache/build paths are
 excluded. Linked paths and non-regular staged entries are rejected. Do not add

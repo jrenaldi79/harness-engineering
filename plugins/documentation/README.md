@@ -41,7 +41,9 @@ Further installer flags: `--no-section` appends only the `AUTO:docs` marker pair
 a one-line pointer instead of the full maintenance section; `--update-config` merges
 the flags you pass into an existing `documentation.config.json` instead of failing
 with `Existing configuration differs`; `--exclude=a,b` keeps paths (for example
-`scripts/self-documentation`) out of the source inventory. The installer also writes
+`scripts/self-documentation`) out of the source inventory; `--folder-notes` requires a
+`CLAUDE.md` (or `AGENTS.md`) note with metadata in every source sub-folder and groups
+the inventory under those notes. The installer also writes
 `scripts/self-documentation/package.json` (`{"type":"commonjs"}`) so the scripts run
 inside `"type": "module"` projects, then runs one `--check` and fails if it breaks.
 Upgrades tolerate scripts added or removed between releases; retired scripts are
