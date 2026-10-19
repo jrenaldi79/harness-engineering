@@ -20,6 +20,8 @@ npx jest --config '{}' tests/scripts/release.test.js  # Single file
 | `init-project.test.js` | Node/TS project scaffolding (directories, package.json, tsconfig) |
 | `install-enforcement.test.js` | Enforcement script copying, hook installation, config generation |
 | `install-enforcement-existing.test.js` | Existing projects: ESLint flat-config and Vitest detection |
+| `install-python.test.js` | Python stack installer: checks, config, pytest path, `.githooks`, rules, gitignore, docs |
+| `python-checks-e2e.test.js` | Installed Python checks block real staged changes; their pytest suites pass (needs python3; pytest optional) |
 | `settings-schema.test.js` | `Tool(specifier)` permission syntax and nested hook shape in shipped and repo settings |
 | `marketplace-schema.test.js` | Plugin manifest validation (plugin.json, marketplace.json) |
 | `release.test.js` | Release script: version validation, changelog check, version bump, tagging |

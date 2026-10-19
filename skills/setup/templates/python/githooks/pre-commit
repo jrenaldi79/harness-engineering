@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# Enabled by /setup with: git config core.hooksPath .githooks
+# Fast, read-only gates on the staged snapshot; the full test suite runs on pre-push.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+RUN="{{RUN}}"
+
+$RUN python -m scripts.checks.secret_scan
+$RUN python -m scripts.checks.missing_tests
+$RUN python -m scripts.checks.file_sizes
+if [ -f scripts/self-documentation/generate.js ]; then
+  node scripts/self-documentation/generate.js --staged
+fi
+$RUN ruff check

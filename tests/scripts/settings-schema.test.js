@@ -14,6 +14,7 @@ const path = require('node:path');
 const ROOT = path.resolve(__dirname, '../..');
 const FILES = [
   'skills/setup/templates/settings.json',
+  'skills/setup/templates/python/settings.json',
   '.claude/settings.json',
 ];
 const RULE = /^[A-Z][A-Za-z]*(\(.+\))?$/;
@@ -39,8 +40,11 @@ describe.each(FILES)('%s', file => {
   });
 });
 
-describe('skills/setup/templates/settings.json safety rules', () => {
-  const { deny } = load('skills/setup/templates/settings.json').permissions;
+describe.each([
+  'skills/setup/templates/settings.json',
+  'skills/setup/templates/python/settings.json',
+])('%s safety rules', file => {
+  const { deny } = load(file).permissions;
 
   it.each([
     'Read(./.env)',

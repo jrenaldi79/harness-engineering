@@ -361,6 +361,7 @@ harness-engineering/
 │   ├── scripts/
 │   │   ├── init-project.js       # Node/TS project scaffolding
 │   │   ├── install-enforcement.js # Copies enforcement tooling into target project
+│   │   ├── install-python.js     # Python stack: checks, .githooks, rules, docs
 │   │   ├── generate-claude-md.js # Generates tailored CLAUDE.md files
 │   │   ├── lib/
 │   │   │   ├── check-secrets.js      # Blocks commits containing API keys or tokens
@@ -385,7 +386,8 @@ harness-engineering/
 │   │   ├── .prettierrc               # Code formatting
 │   │   ├── .gitignore                # Standard gitignore
 │   │   ├── .env.example              # Environment variable placeholder
-│   │   └── settings.json             # Claude Code permissions (allow/deny lists)
+│   │   ├── settings.json             # Claude Code permissions (allow/deny lists)
+│   │   └── python/                   # Python stack: stdlib checks + tests, .githooks, rules, settings
 │   └── references/                   # Stack patterns, enforcement docs, CLAUDE.md guide
 ├── tests/                            # Tests for plugin development
 └── README.md                         # You are here

@@ -72,12 +72,15 @@ Skip this phase entirely for existing projects.
 node $SCRIPTS_DIR/init-project.js --name=<name> --framework=<framework>
 ```
 
+**Python path:** `git init`, then `uv init --package <name>` (or write `pyproject.toml` by hand when the
+user prefers pip; `uv init --package` already creates `src/<package>/`). Create `tests/`, then continue to
+Phase 4's Python fast path.
+
 **All other stacks (adaptive path — Claude does the work):**
 
 1. `git init`
 2. Create standard directories: `src/`, `tests/`, `scripts/`, `docs/`
 3. Generate the appropriate manifest file:
-   - Python: `pyproject.toml` with `[build-system]` and `[tool.pytest.ini_options]`
    - C/C++ with CMake: `CMakeLists.txt` with project name, C++ standard, and a test target
    - Go: `go.mod` with module path and Go version
    - Rust: `Cargo.toml` with package metadata
@@ -111,6 +114,30 @@ This also creates:
 - `.claude/settings.json` with pre-approved commands (test, lint, build, git) and a deny list blocking destructive operations (rm -rf /, git push --force, etc.). Normal file removal still works — Claude prompts for approval so the user stays in control.
 - `.claude/rules/*.md` — path-scoped rules (TDD, code quality, testing, TypeScript, and React for vite/nextjs) that auto-load when Claude works on matching file patterns. These use `globs:` YAML frontmatter for path-scoping.
 
+**Python path (fast path):**
+
+Read `$REFERENCES_DIR/stack-python.md` first. Then ask the size policy with AskUserQuestion. Recommend
+`cap` for new projects. For existing projects that already have files over 300 lines, recommend
+`ratchet`: those files may shrink but not grow. List them with
+`find . -name '*.py' -not -path './.venv/*' | xargs wc -l | awk '$1 > 300'`.
+
+```bash
+node $SCRIPTS_DIR/install-python.js --target=<project-root> --size-policy=<ratchet|cap> --folder-notes
+```
+
+It installs:
+- the stdlib checks in `scripts/checks/` with their pytest suites;
+- `scripts/checks/config.json`;
+- `.githooks/` activated through `core.hooksPath`;
+- Python rules and settings;
+- missing `.gitignore` patterns;
+- the documentation engine.
+
+For uv projects it also adds pytest and ruff as dev dependencies. Pass `--folder-notes` only after the
+notes are written (same consequence as above). Afterwards, edit `testMap`, `sizeSkip` and
+`extraPatterns` in `scripts/checks/config.json` to match the project's real layout and credential
+shapes, then run `python -m scripts.checks.missing_tests --all` to see the existing test backlog.
+
 **All other stacks (adaptive path — Claude creates equivalent enforcement):**
 
 Use the equivalents table to choose the right tools:
@@ -120,7 +147,7 @@ Use the equivalents table to choose the right tools:
 | Linter          | ESLint                | ruff / flake8             | clang-tidy         | golangci-lint   |
 | Formatter       | Prettier              | black / ruff              | clang-format       | gofmt           |
 | Test runner     | Jest                  | pytest                    | CTest / GoogleTest | go test         |
-| Pre-commit mgr  | husky + lint-staged   | pre-commit framework      | git hooks (shell)  | git hooks (shell) |
+| Pre-commit mgr  | husky + lint-staged   | `.githooks` + core.hooksPath | git hooks (shell)  | git hooks (shell) |
 
 Steps for the adaptive path:
 1. Write a secret-scanning script using the same regex patterns from `enforcement-scripts.md`, adapted to the stack's scripting language (Python script, shell script, etc.)
@@ -130,8 +157,8 @@ Steps for the adaptive path:
 5. Create `.git/hooks/pre-push` — runs the test suite with SHA-based caching to skip unchanged code
 6. Make both hook files executable: `chmod +x .git/hooks/pre-commit .git/hooks/pre-push`
 7. Install and configure the linter and formatter for the chosen stack
-8. Create `.claude/settings.json` by copying `$TEMPLATES_DIR/settings.json` into the target project. Adjust the allow list entries to match the stack's commands, keeping the `Tool(specifier)` rule syntax (e.g., replace `Bash(npm test)` with `Bash(pytest:*)` for Python, `Bash(go test:*)` for Go). A bare string such as `"npm test"` is read as a tool name and matches nothing
-9. Copy `.claude/rules/*.md` from `$TEMPLATES_DIR/rules/` into the target project. For non-TypeScript stacks, adapt `rules/typescript.md` to the relevant language conventions (e.g., PEP 8 for Python, Go naming conventions for Go)
+8. Create `.claude/settings.json` by copying `$TEMPLATES_DIR/settings.json` into the target project. Adjust the allow list entries to match the stack's commands, keeping the `Tool(specifier)` rule syntax (e.g., replace `Bash(npm test)` with `Bash(go test:*)` for Go or `Bash(cargo test:*)` for Rust). A bare string such as `"npm test"` is read as a tool name and matches nothing
+9. Copy `.claude/rules/*.md` from `$TEMPLATES_DIR/rules/` into the target project. For non-TypeScript stacks, adapt `rules/typescript.md` to the relevant language conventions (e.g., Go naming conventions for Go)
 
 ---
 
@@ -150,7 +177,7 @@ node $SCRIPTS_DIR/generate-claude-md.js --target=<project-root> --framework=<fra
 **All stacks (or if the script doesn't exist yet) — Claude generates CLAUDE.md directly:**
 
 Adapt the template to include:
-- **Commands section**: stack-appropriate build, test, lint, and format commands
+- **Commands section**: stack-appropriate build, test, lint, and format commands (Python: take them from `$REFERENCES_DIR/stack-python.md`, including the `scripts.checks` `--all` audits)
 - **Architecture section**: describe `src/`, `tests/`, `scripts/` layout and what goes where
 - **Enforcement scripts section**: document the installed scripts and what triggers them
 - **Quality gates**: 300-line file limit, 50-line function limit, complexity red flags (verbatim from global CLAUDE.md pattern)
@@ -166,7 +193,7 @@ If no global CLAUDE.md exists in the project's parent directory, read `$TEMPLATE
 
 Run a smoke test to confirm everything was installed correctly. Report each check as pass/fail and fix any failures before moving to the summary.
 
-**1. Git hooks are executable:**
+**1. Git hooks are executable** (Python fast path: check `.githooks/pre-commit` and `.githooks/pre-push`, and that `git config core.hooksPath` prints `.githooks`):
 ```bash
 test -x .git/hooks/pre-commit && echo "PASS: pre-commit hook executable" || echo "FAIL: pre-commit hook not executable"
 test -x .git/hooks/pre-push && echo "PASS: pre-push hook executable" || echo "FAIL: pre-push hook not executable"

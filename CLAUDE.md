@@ -43,9 +43,9 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 <!-- AUTO:tree -->
 <!-- prettier-ignore-start -->
 [Source inventory](docs/index.md#source-inventory)
-- skills: 27 files
+- skills: 46 files
 - scripts: 6 files
-- tests: 39 files
+- tests: 41 files
 - plugins: 11 files
 <!-- prettier-ignore-end -->
 <!-- /AUTO:tree -->
@@ -75,9 +75,9 @@ User runs /setup
 
 | Source root | Files |
 | --- | --- |
-| skills | 27 |
+| skills | 46 |
 | scripts | 6 |
-| tests | 39 |
+| tests | 41 |
 | plugins | 11 |
 <!-- prettier-ignore-end -->
 <!-- /AUTO:modules -->
@@ -144,4 +144,5 @@ full setup reuses their installer and target scripts work without the plugin cac
 | CLAUDE.md quality criteria | `skills/setup/references/claude-md-guide.md` |
 | Enforcement script patterns | `skills/setup/references/enforcement-scripts.md` |
 | Node/TypeScript stack reference | `skills/setup/references/stack-node-typescript.md` |
+| Python stack reference (`install-python.js`) | `skills/setup/references/stack-python.md` |
 | Eval suite documentation | `tests/evals/README.md` |

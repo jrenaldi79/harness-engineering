@@ -32,6 +32,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `/setup` Python stack (`install-python.js`). It installs:
+  - stdlib checks in `scripts/checks/` with their own pytest suites:
+    - a secret scan, covering tests too;
+    - a TDD mapping for new modules;
+    - a 300-line limit with a `ratchet` (default) or `cap` policy;
+  - `scripts/checks/config.json` for `testMap`, `sizeSkip` and `extraPatterns`;
+  - uv-aware `.githooks/` activated through `core.hooksPath`;
+  - Python rules and settings, plus the documentation engine.
+
+  It adds `pythonpath = ["."]` for pytest and runs on Python 3.9+. See
+  `skills/setup/references/stack-python.md`.
 - Documentation folder notes (opt-in `folderNotes` config, `--folder-notes` on the docs
   installer and `install-enforcement.js`). Every source sub-folder carries an
   instruction-named note (`src/llm/CLAUDE.md`), which Claude Code auto-loads in that
