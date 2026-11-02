@@ -93,7 +93,9 @@ fi
 echo "Releasing v$VERSION (current: $CURRENT)"
 
 # Bump version in plugin.json
-sed -i "s/\"version\": *\"$CURRENT\"/\"version\": \"$VERSION\"/" "$PLUGIN_JSON"
+# An attached backup suffix is the one -i form GNU and BSD sed both accept
+sed -i.bak "s/\"version\": *\"$CURRENT\"/\"version\": \"$VERSION\"/" "$PLUGIN_JSON"
+rm "$PLUGIN_JSON.bak"
 echo "  Bumped $PLUGIN_JSON: $CURRENT -> $VERSION"
 
 # Commit and tag

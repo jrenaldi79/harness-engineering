@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Fixed
+
+- `scripts/release.sh` now runs on macOS. Its `sed -i` call only worked with GNU sed.
+
 ## [1.4.0] - 2026-11-02
 
 ### Added

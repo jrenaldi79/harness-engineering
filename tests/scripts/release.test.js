@@ -162,6 +162,13 @@ describe('release', () => {
     expect(plugin.version).toBe('1.1.0');
   });
 
+  it('leaves a clean working tree with no sed backup file', () => {
+    run('1.1.0');
+    const status = execSync('git status --porcelain', { cwd: tmpDir, encoding: 'utf8' });
+    expect(status).toBe('');
+    expect(fs.readdirSync(path.join(tmpDir, '.claude-plugin'))).toEqual(['plugin.json']);
+  });
+
   it('creates a git tag', () => {
     run('1.1.0');
     const tags = execSync('git tag', { cwd: tmpDir, encoding: 'utf8' });
