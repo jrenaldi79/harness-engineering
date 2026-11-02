@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-02
+
+### Added
+
+- `/setup` can install machine-level subagent model routing with `install-agent-routing.js`:
+  Sonnet as the default subagent model, a Haiku `Explore` agent, and guidance for Haiku
+  research and a Fable advisor for stuck subagents. The same guidance is in the global
+  CLAUDE.md template. Existing settings, agents and instructions are kept.
+
 ### Changed
 
 - Documentation engine 0.2.0 (plugin and installed `installed.json`). After upgrading, run

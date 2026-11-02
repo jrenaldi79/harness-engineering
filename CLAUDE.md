@@ -43,9 +43,9 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 <!-- AUTO:tree -->
 <!-- prettier-ignore-start -->
 [Source inventory](docs/index.md#source-inventory)
-- skills: 46 files
+- skills: 49 files
 - scripts: 6 files
-- tests: 41 files
+- tests: 42 files
 - plugins: 11 files
 <!-- prettier-ignore-end -->
 <!-- /AUTO:tree -->
@@ -75,9 +75,9 @@ User runs /setup
 
 | Source root | Files |
 | --- | --- |
-| skills | 46 |
+| skills | 49 |
 | scripts | 6 |
-| tests | 41 |
+| tests | 42 |
 | plugins | 11 |
 <!-- prettier-ignore-end -->
 <!-- /AUTO:modules -->

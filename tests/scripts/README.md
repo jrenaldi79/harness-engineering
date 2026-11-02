@@ -21,6 +21,7 @@ npx jest --config '{}' tests/scripts/release.test.js  # Single file
 | `install-enforcement.test.js` | Enforcement script copying, hook installation, config generation |
 | `install-enforcement-existing.test.js` | Existing projects: ESLint flat-config and Vitest detection |
 | `install-python.test.js` | Python stack installer: checks, config, pytest path, `.githooks`, rules, gitignore, docs |
+| `install-agent-routing.test.js` | Machine-level subagent routing: settings merge, Explore agent, guidance, re-runs, invalid settings |
 | `python-checks-e2e.test.js` | Installed Python checks block real staged changes; their pytest suites pass (needs python3; pytest optional) |
 | `settings-schema.test.js` | `Tool(specifier)` permission syntax and nested hook shape in shipped and repo settings |
 | `marketplace-schema.test.js` | Plugin manifest validation (plugin.json, marketplace.json) |

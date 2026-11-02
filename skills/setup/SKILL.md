@@ -187,6 +187,14 @@ Adapt the template to include:
 
 If no global CLAUDE.md exists in the project's parent directory, read `$TEMPLATES_DIR/global-claude.md` and generate an adapted version for the detected stack.
 
+**Machine-level subagent routing (ask first):** this changes `~/.claude` for every project on the machine, so ask before running it, and run it on its own if the user only asks to set up subagent routing:
+
+```bash
+node $SCRIPTS_DIR/install-agent-routing.js
+```
+
+It sets Sonnet as the default subagent model, adds a Haiku `Explore` agent, and appends the routing guidance to `~/.claude/CLAUDE.md`. Existing choices are kept and reported. Tell the user a new session is needed for it to take effect.
+
 ---
 
 ## Phase 6: Verify Setup

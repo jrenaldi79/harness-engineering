@@ -362,6 +362,7 @@ harness-engineering/
 │   │   ├── init-project.js       # Node/TS project scaffolding
 │   │   ├── install-enforcement.js # Copies enforcement tooling into target project
 │   │   ├── install-python.js     # Python stack: checks, .githooks, rules, docs
+│   │   ├── install-agent-routing.js # Machine-level subagent model routing in ~/.claude
 │   │   ├── generate-claude-md.js # Generates tailored CLAUDE.md files
 │   │   ├── lib/
 │   │   │   ├── check-secrets.js      # Blocks commits containing API keys or tokens
