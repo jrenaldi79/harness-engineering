@@ -45,7 +45,7 @@ bash scripts/install-hooks.sh   # Install git hooks (pre-commit + pre-push)
 [Source inventory](docs/index.md#source-inventory)
 - skills: 49 files
 - scripts: 6 files
-- tests: 42 files
+- tests: 43 files
 - plugins: 11 files
 <!-- prettier-ignore-end -->
 <!-- /AUTO:tree -->
@@ -77,7 +77,7 @@ User runs /setup
 | --- | --- |
 | skills | 49 |
 | scripts | 6 |
-| tests | 42 |
+| tests | 43 |
 | plugins | 11 |
 <!-- prettier-ignore-end -->
 <!-- /AUTO:modules -->
@@ -133,6 +133,8 @@ full setup reuses their installer and target scripts work without the plugin cac
 
 <!-- AUTO:docs -->
 <!-- prettier-ignore-start -->
+This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
+
 [Documentation index](docs/index.md)
 <!-- prettier-ignore-end -->
 <!-- /AUTO:docs -->

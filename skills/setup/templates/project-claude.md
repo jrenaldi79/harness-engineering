@@ -233,6 +233,8 @@ working-tree or CI validation. Keep explanatory prose current in the same change
 ## Documentation reading map
 
 <!-- AUTO:docs -->
+This codebase is yours: what it's for and how it's built are your call, and you'll keep building on it.
+
 [Documentation index](docs/index.md)
 <!-- /AUTO:docs -->
 

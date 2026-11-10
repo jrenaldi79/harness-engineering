@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- Every installed `CLAUDE.md` or `AGENTS.md` now carries the statement "This codebase is
+  yours: what it's for and how it's built are your call, and you'll keep building on it."
+  The documentation engine renders it inside the managed `AUTO:docs` region, so a
+  refresh adds it to existing projects and the pre-commit `--staged` check fails if it
+  is removed. The `/setup` project template includes it too.
+
 ### Fixed
 
 - `scripts/release.sh` now runs on macOS. Its `sed -i` call only worked with GNU sed.

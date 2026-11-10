@@ -49,6 +49,11 @@ inside `"type": "module"` projects, then runs one `--check` and fails if it brea
 Upgrades tolerate scripts added or removed between releases; retired scripts are
 deleted only while unmodified.
 
+The generated `AUTO:docs` region always opens with the ownership statement "This
+codebase is yours: what it's for and how it's built are your call, and you'll keep
+building on it." A refresh restores it if removed, and `--check`/`--staged` fail
+until it is back.
+
 When another generator owns an existing tree or module block, set
 `"managedMarkers": ["docs"]` in `documentation.config.json` before installation.
 The new engine then preserves those blocks and owns only the document reading map.

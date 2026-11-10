@@ -56,7 +56,7 @@ test('#4 marker scanner ignores quoted markers in code spans and fences and repo
 test('#6 --no-section appends only the marker pair and a one-line pointer',t=>{
  const root=fixture(t);put(root,'CLAUDE.md','Authored\n');
  load('install').install(root,{section:false});
- const text=read(root,'CLAUDE.md');assert.ok(text.includes('<!-- AUTO:docs -->'));assert.ok(!text.includes('Statuses:'));assert.ok(text.split('\n').length<=10,text);
+ const text=read(root,'CLAUDE.md');assert.ok(text.includes('<!-- AUTO:docs -->'));assert.ok(!text.includes('Statuses:'));assert.ok(text.split('\n').length<=12,text);// +2 for the required ownership statement
  const other=fixture(t);put(other,'CLAUDE.md','Authored\n');
  assert.equal(spawnSync(process.execPath,[path.join(scripts,'install.js'),'--target='+other,'--no-section'],{encoding:'utf8'}).status,0);
  assert.ok(!read(other,'CLAUDE.md').includes('Statuses:'));
